@@ -17,6 +17,7 @@ public:
 	AHero();
 	virtual void Tick(float DeltaTime) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool IsShooting;
 
 	UPROPERTY(BlueprintReadWrite)

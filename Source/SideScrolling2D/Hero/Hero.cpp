@@ -130,6 +130,9 @@ void AHero::FlipComponents()
 void AHero::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	UE_LOG(LogTemp, Display, TEXT("isshooting: %s"), IsShooting ? TEXT("true") : TEXT("false"));
+
 	if (PlayerController)
 	{
 		GetAngle();
@@ -139,6 +142,7 @@ void AHero::Tick(float DeltaTime)
 	FlipComponents();
 
 	Dash(DeltaTime);
+	IsShooting = false;
 }
 
 void AHero::Move(const FInputActionValue& Value)
@@ -280,7 +284,10 @@ void AHero::Dash(float DeltaTime)
 
 
 //This is just setting isShooting to false if ShootAction is completed. 
-void AHero::SetShootFalse(const FInputActionValue& Value){IsShooting = false;}
+void AHero::SetShootFalse(const FInputActionValue& Value)
+{
+	IsShooting = false;
+}
 
 
 //This is for adding input listeners. 
