@@ -6,7 +6,7 @@
 #include "PaperZDAnimationComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "GunBase.h"
+#include "SideScrolling2D/Guns/GunBase.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 
@@ -150,13 +150,24 @@ void AHero::Move(const FInputActionValue& Value)
 	
 	if (MoveDirection.SquaredLength() > 1)
 	{
-			MoveDirection.Normalize();
+		MoveDirection.Normalize();
 	}
 	
 	//I had to - for MoveDirection because Enhanced movement wants like that.
 	const FVector MovementVector3D(MoveDirection.X, -MoveDirection.Y, 0);
 	
 	AddMovementInput(MovementVector3D);
+}
+
+void AHero::Shoot(const FInputActionValue& Value)
+{
+	//For Completed Dash Action, Is Shooting set to false
+	IsShooting = true;
+
+	if (Gun)
+	{
+		Gun->Shoot();
+	}
 }
 
 void AHero::Dash(const FInputActionValue& Value)
@@ -268,6 +279,10 @@ void AHero::Dash(float DeltaTime)
 }
 
 
+//This is just setting isShooting to false if ShootAction is completed. 
+void AHero::SetShootFalse(const FInputActionValue& Value){IsShooting = false;}
+
+
 //This is for adding input listeners. 
 void AHero::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -277,5 +292,8 @@ void AHero::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	{
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AHero::Move);
 		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &AHero::Dash);
+		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Canceled, this, &AHero::SetShootFalse);
+		EnhancedInputComponent->BindAction(ShootAction, ETriggerEvent::Triggered, this, &AHero::Shoot);
+		EnhancedInputComponent->BindAction(ShootAction, ETriggerEvent::Completed, this, &AHero::Shoot);
 	}
 }

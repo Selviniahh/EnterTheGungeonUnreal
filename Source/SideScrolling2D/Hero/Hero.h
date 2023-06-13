@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
 #include "GameFramework/Pawn.h"
-#include "Globals.h"
+#include "SideScrolling2D/Globals.h"
 #include "Hero.generated.h"
 
 UCLASS()
@@ -16,6 +16,14 @@ class SIDESCROLLING2D_API AHero : public APawn
 public:
 	AHero();
 	virtual void Tick(float DeltaTime) override;
+
+	bool IsShooting;
+
+	UPROPERTY(BlueprintReadWrite)
+	bool IsDashingCpp = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MouseAngle;
 
 protected:
 	virtual void BeginPlay() override;
@@ -60,6 +68,7 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Shoot(const FInputActionValue& Value);
 	void Dash(const FInputActionValue& Value);
+	void SetShootFalse(const FInputActionValue& Value);
 
 	UFUNCTION()
 	void OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -79,19 +88,15 @@ protected:
 	TArray<FRanges> Ranges;
 
 	TMap<EDirections,FVector2D> SetDirectionBasedOnEnum;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float MouseAngle;
-
+	
 	float LastMouseX, LastMouseY;
 	float DashTimer;
 
-	UPROPERTY(BlueprintReadWrite)
-	bool IsDashingCpp = false;
+	
 	
 	bool StartDashTimer = false;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	class AGunBase* Gun = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

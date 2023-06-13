@@ -53,7 +53,7 @@ protected:
 	virtual void Move();
 
 	UPROPERTY()
-	APaperZDCharacter* Player;
+	class APawn* Player;
 	
 	float DistanceBetweenHero;
 	FVector EnemyLocation;

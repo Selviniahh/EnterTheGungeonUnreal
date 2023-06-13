@@ -54,6 +54,7 @@ AEnemyBase::AEnemyBase()
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
+	//This may be problematic in the future
 	Player = Cast<APaperZDCharacter>(UGameplayStatics::GetPlayerCharacter(this,0));
 
 }
