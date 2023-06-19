@@ -16,7 +16,9 @@ class SIDESCROLLING2D_API AHero : public APawn
 public:
 	AHero();
 	virtual void Tick(float DeltaTime) override;
+	void GetAngle();
 
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool IsShooting;
 
@@ -26,11 +28,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MouseAngle;
 
+	float RunTimer;
+	
 protected:
 	virtual void BeginPlay() override;
 	void FlipComponents();
 	void Dash(float DeltaTime);
-	void GetAngle();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UPaperFlipbookComponent* FlipBook;
@@ -69,7 +72,7 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Shoot(const FInputActionValue& Value);
 	void Dash(const FInputActionValue& Value);
-	void SetShootFalse(const FInputActionValue& Value);
+	// void SetShootFalse(const FInputActionValue& Value);
 
 	UFUNCTION()
 	void OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

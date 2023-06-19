@@ -28,8 +28,14 @@ struct FRanges
 	GENERATED_BODY()
 	float Min;
 	float Max;
-};
 
+	FRanges() : Min(0), Max(0)  // default constructor
+	{}
+
+	FRanges(float MinVal, float MaxVal) : Min(MinVal), Max(MaxVal)  // custom constructor that takes two arguments
+	{}
+	
+};
 UCLASS()
 class SIDESCROLLING2D_API AGlobals : public AActor
 {

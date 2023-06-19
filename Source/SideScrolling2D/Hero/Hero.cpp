@@ -34,28 +34,6 @@ AHero::AHero()
 	HeroAnimation->InitRenderComponent(FlipBook);
 	MovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("MovementComponent"));
 
-}
-
-// Called when the game starts or when spawned
-void AHero::BeginPlay()
-{
-	Super::BeginPlay();
-	Gun = nullptr;
-	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &AHero::OnBoxComponentBeginOverlap);
-	
-	PlayerController = Cast<APlayerController>(GetController());
-
-	if (PlayerController)
-	{
-		//Enhanced input initialization shits
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
-		}
-		
-		PlayerController->bShowMouseCursor = true;
-	}
-
 	Ranges = {
 		{1,55}, //Right
 		{55,75}, //Front Hand Right
@@ -78,33 +56,51 @@ void AHero::BeginPlay()
 		{EDirections::Back_Hand_Right, FVector2D(0, 1.0)},
 		{EDirections::Back_Diagonal_Right, FVector2D(1.0, 1.0)},
 	};
+}
 
+// Called when the game starts or when spawned
+void AHero::BeginPlay()
+{
+	Super::BeginPlay();
+	Tags.Add("Hero");
+	Gun = nullptr;
+	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &AHero::OnBoxComponentBeginOverlap);
+	
+	PlayerController = Cast<APlayerController>(GetController());
 
+	if (PlayerController)
+	{
+		//Enhanced input initialization shits
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+		}
+		
+		PlayerController->bShowMouseCursor = true;
+	}
 }
 
 void AHero::FlipComponents()
 {
-	// Set Flip for Dash
+	GetAngle();
 	 if (IsDashingCpp)
 	 {
 	 	//Trim to 3 digits. 
 	 	FVector2D RoundedMoveDirection(FMath::RoundHalfToEven(MoveDirection.X * 1000) / 1000, FMath::RoundHalfToEven(MoveDirection.Y * 1000) / 1000);
-
+	
 	 	if (RoundedMoveDirection == FVector2D(-0.707,0.707) || RoundedMoveDirection == FVector2D(-0.707,-0.707) || RoundedMoveDirection == FVector2D(-1.0,0.0))
 	 	{
-	 		UE_LOG(LogTemp, Display, TEXT("Flipping"));
-	
 	 		FlipBook->SetRelativeScale3D(FVector(-1.0,-1.0,1.0));
 	 	}
 	 	else
 	 	{
-	 		UE_LOG(LogTemp, Display, TEXT("Revert Flip"));
 	 		FlipBook->SetRelativeScale3D(FVector(1.0,1.0,1.0));
+
 	 	}
 	 }
 	
 	 //Set Flip for other directions
-	 else
+	 else 
 	{
 		//Revert Flip
 		if (CurrentDirection == Right || CurrentDirection == Front_Hand_Right || CurrentDirection == Back_Diagonal_Right || CurrentDirection == Back_Hand_Right)
@@ -123,16 +119,12 @@ void AHero::FlipComponents()
 			HandSocket->SetRelativeRotation(FRotator(MouseAngle * -1,0,90));
 		}
 	}
-	
-	
 }
 
 void AHero::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	UE_LOG(LogTemp, Display, TEXT("isshooting: %s"), IsShooting ? TEXT("true") : TEXT("false"));
-
 	if (PlayerController)
 	{
 		GetAngle();
@@ -143,10 +135,20 @@ void AHero::Tick(float DeltaTime)
 
 	Dash(DeltaTime);
 	IsShooting = false;
+
+	if (IsDashingCpp == true)
+	{
+		RunTimer = 0;
+	}
+	else
+	{
+		RunTimer += DeltaTime;
+	}
 }
 
 void AHero::Move(const FInputActionValue& Value)
 {
+	GetAngle();
 	if (!IsDashingCpp)
 	{
 		MoveDirection = Value.Get<FVector2D>();
@@ -163,27 +165,28 @@ void AHero::Move(const FInputActionValue& Value)
 	AddMovementInput(MovementVector3D);
 }
 
+//Come here
 void AHero::Shoot(const FInputActionValue& Value)
 {
+	GetAngle();
 	//For Completed Dash Action, Is Shooting set to false
-	IsShooting = true;
+	if (IsDashingCpp) return;
 
-	if (Gun)
+	if (Gun && Gun->PressedTimer > Gun->PressTime && GetWorld())
 	{
+		IsShooting = true;
 		Gun->Shoot();
 	}
 }
 
 void AHero::Dash(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("Dash is running:"));
-
-	//I guess I will never need it's action values
-	bool DashClicked = Value.Get<bool>();
+	if (MovementComponent->Velocity.Length() == 0 || !Gun) return;
 
 	//Start Dashing and apply changes
 	if (DashTimer == 0)
 	{
+		GetAngle();
 		IsDashingCpp = true;
 		MovementComponent->MaxSpeed = 300;
 		HandComponent->SetVisibility(false);
@@ -197,6 +200,7 @@ void AHero::OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AAct
 	if (OtherActor->ActorHasTag("Gun"))
 	{
 		Gun = Cast<AGunBase>(OtherActor);
+		Gun->SetOwner(this);
 
 		const FAttachmentTransformRules AttachmentTransformRules(EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, true);
 		Gun->FlipBook->AttachToComponent(HandSocket,AttachmentTransformRules);
@@ -225,14 +229,13 @@ void AHero::GetAngle()
 	{
 		MouseAngle += 360;
 	}
-	// UE_LOG(LogTemp, Display, TEXT("MouseAngle: %f"), MouseAngle);
 }
 
 //This thing will set mouse direction based on angle
-
 void AHero::SetMouseDirectionEnum()
 {
-	if (!IsDashingCpp)
+	GetAngle();
+	if (true)
 	{
 		for (int i = 0; i < Ranges.Num(); ++i)
 		{
@@ -257,6 +260,8 @@ void AHero::Dash(float DeltaTime)
 {
 	if (IsDashingCpp)
 	{
+		GetAngle();
+		Gun->MuzzleFlash->SetVisibility(false);
 		StartDashTimer = true;
 		DashTimer += DeltaTime;
 
@@ -282,14 +287,6 @@ void AHero::Dash(float DeltaTime)
 	}
 }
 
-
-//This is just setting isShooting to false if ShootAction is completed. 
-void AHero::SetShootFalse(const FInputActionValue& Value)
-{
-	IsShooting = false;
-}
-
-
 //This is for adding input listeners. 
 void AHero::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -299,7 +296,6 @@ void AHero::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	{
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AHero::Move);
 		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &AHero::Dash);
-		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Canceled, this, &AHero::SetShootFalse);
 		EnhancedInputComponent->BindAction(ShootAction, ETriggerEvent::Triggered, this, &AHero::Shoot);
 		EnhancedInputComponent->BindAction(ShootAction, ETriggerEvent::Completed, this, &AHero::Shoot);
 	}
