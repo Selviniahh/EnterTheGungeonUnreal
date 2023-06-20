@@ -48,12 +48,13 @@ public:
 
 	
 
+	
+
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 1))
-	TSubclassOf<AGunBase> EnemyGun;
-
+	
+	//Gun itself
 	UPROPERTY()
 	AGunBase* MagnumGun;
 };

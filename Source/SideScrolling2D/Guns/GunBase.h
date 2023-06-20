@@ -42,9 +42,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxProjectileRange;
 
-	//Cooldown timer
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float PressedTimer;
+	//Cooldown timer probably soon will be deprecated 
+	
 
 	void Shoot();
 

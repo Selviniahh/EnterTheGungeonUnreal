@@ -6,6 +6,13 @@
 #include "GameFramework/Actor.h"
 #include "ProjectileBase.generated.h"
 
+UENUM(BlueprintType)
+enum class EprojectileType : uint8
+{
+	PLAYER_PROJECTILE UMETA(DisplayName = "Player Projectile"),
+	ENEMY_PROJECTILE UMETA(DisplayName = "Enemy Projectile")
+};
+
 UCLASS()
 class SIDESCROLLING2D_API AProjectileBase : public AActor
 {
@@ -30,6 +37,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Projectiles")
 	class UPaperFlipbook* HitImpact;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Projectile")
+	EprojectileType ProjectileType = EprojectileType::ENEMY_PROJECTILE;
+
 	float TravelledProjectileRange;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Projectiles")
@@ -41,6 +51,7 @@ public:
 protected:
 	UFUNCTION()
 	void OnFlipBookFinishedPlaying();
+	void StopAndHit(AActor* OtherActor);
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 

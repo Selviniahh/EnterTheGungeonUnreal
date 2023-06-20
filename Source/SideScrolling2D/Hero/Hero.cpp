@@ -124,6 +124,7 @@ void AHero::FlipComponents()
 void AHero::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	Time += DeltaTime;
 	
 	if (PlayerController)
 	{
@@ -172,8 +173,9 @@ void AHero::Shoot(const FInputActionValue& Value)
 	//For Completed Dash Action, Is Shooting set to false
 	if (IsDashingCpp) return;
 
-	if (Gun && Gun->PressedTimer > Gun->PressTime && GetWorld())
+	if (Gun && GetWorld() && Time > PressTimer)
 	{
+		Time = 0;
 		IsShooting = true;
 		Gun->Shoot();
 	}
@@ -201,6 +203,7 @@ void AHero::OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AAct
 	{
 		Gun = Cast<AGunBase>(OtherActor);
 		Gun->SetOwner(this);
+		Gun->Tags.Add("HeroGun");
 
 		const FAttachmentTransformRules AttachmentTransformRules(EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, true);
 		Gun->FlipBook->AttachToComponent(HandSocket,AttachmentTransformRules);

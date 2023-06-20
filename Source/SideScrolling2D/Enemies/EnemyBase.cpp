@@ -68,6 +68,7 @@ void AEnemyBase::BeginPlay()
 	Hero = Cast<AHero>(UGameplayStatics::GetPlayerPawn(this,0));
 	Tags.Add("Enemy");
 	BoxCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemyBase::OnBoxComponentBeginOverlap);
+	
 }
 
 void AEnemyBase::Tick(float DelatTime)
@@ -144,7 +145,7 @@ void AEnemyBase::SetEnemyDirectionEnum()
 	if (CurrentDirection == Right || CurrentDirection == Front_Hand_Right || CurrentDirection == Back_Diagonal_Right || CurrentDirection == Back_Hand_Right)
 	{
 		FlipBook->SetRelativeScale3D(FVector(1.0,1.0,1.0));
-		HandComponent->SetRelativeLocation(FVector(8.0,7,0.0));
+		HandComponent->SetRelativeLocation(FVector(HandCompLoc.X,HandCompLoc.Y,0.0));
 		HandSocket->SetRelativeScale3D(FVector(1.0,1.0,1.0));
 		HandSocket->SetRelativeRotation(FRotator(EnemyAngle * -1,0,90));
 	}
@@ -152,7 +153,7 @@ void AEnemyBase::SetEnemyDirectionEnum()
 	else
 	{
 		FlipBook->SetRelativeScale3D(FVector(-1.0,-1.0,1.0));
-		HandComponent->SetRelativeLocation(FVector(-9.0,7,0.0));
+		HandComponent->SetRelativeLocation(FVector(HandCompLocFlip.X,HandCompLocFlip.Y,0.0));
 		HandSocket->SetRelativeScale3D(FVector(1.0,-1.0,1.0));
 		HandSocket->SetRelativeRotation(FRotator(EnemyAngle * -1,0,90));
 

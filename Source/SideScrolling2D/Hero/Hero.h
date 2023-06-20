@@ -19,13 +19,13 @@ public:
 	void GetAngle();
 
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite)
 	bool IsShooting;
 
 	UPROPERTY(BlueprintReadWrite)
 	bool IsDashingCpp = false;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite)
 	float MouseAngle;
 
 	float RunTimer;
@@ -86,7 +86,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector2D MouseDirection;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	float Time;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float PressTimer;
+
+	UPROPERTY(BlueprintReadWrite)
 	TEnumAsByte<EDirections> CurrentDirection;
 
 	TArray<FRanges> Ranges;
@@ -103,6 +108,6 @@ protected:
 	UPROPERTY(BlueprintReadWrite)
 	class AGunBase* Gun = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite)
 	FVector2D MoveDirection; 
 };

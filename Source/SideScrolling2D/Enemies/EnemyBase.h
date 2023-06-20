@@ -6,6 +6,7 @@
 #include "SideScrolling2D/Globals.h"
 #include "EnemyBase.generated.h"
 
+class AGunBase;
 struct FRanges;
 
 UCLASS()
@@ -48,19 +49,6 @@ protected:
 	class UHealthComponent* HealthComponent;
 	
 
-	//Variables
-	//Actual direction vector ranging from -1 to 1
-	UPROPERTY(BlueprintReadWrite, Category="Direction")
-	FVector2D EnemyDirectionVector;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 6))
-	float KnockBackMultiply;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 7))
-	float KnockBackSpeed;
-	
-	bool bShouldKnockBack;
-
 	//Functions
 	UFUNCTION()
 	void OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -69,11 +57,26 @@ protected:
 	virtual void Death();
 	virtual void JustPlayShootAnimation();
 	virtual void Move();
-
 	
-	//Properties
+	//Variables
+	//Actual direction vector ranging from -1 to 1
+
+	//EnemyGun
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 1))
+	TSubclassOf<AGunBase> EnemyGun;
+
 	UPROPERTY()
 	class AHero* Hero;
+	
+	//Knockbacks
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 6))
+	float KnockBackMultiply;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 7))
+	float KnockBackSpeed;
+	
+	bool bShouldKnockBack;
+
 	
 	float DistanceBetweenHero;
 	FVector EnemyLocation;
@@ -82,22 +85,55 @@ protected:
 	FVector DeadDirection3D;
 	FVector TargetLocation;
 
+	//When Dead play animation based on this direction
 	UPROPERTY(BlueprintReadWrite)
 	FVector2D DeadDirection;
 
 	
-	//Just for Movement normalized Direction not actual direction for animation
-	UPROPERTY(BlueprintReadWrite)
-	FVector2D EnemyMovementDirection;
-	
-
-	//Direction ranges (0-30, 30-65, 65-100, 100-150, 150-185, 185-240, 240-280, 280-320)
+	//Direction ranges struct (0-30, 30-65, 65-100, 100-150, 150-185, 185-240, 240-280, 280-320)
 	TArray<FRanges> Ranges;
 
+	//Enum itself
 	UPROPERTY(BlueprintReadWrite)
 	TEnumAsByte<EDirections> CurrentDirection;
 
+	//Dictionary for setting direction based on enum
 	TMap<EDirections,FVector2D> SetDirectionBasedOnEnum;
+
+	//Just for Movement normalized Direction not actual direction for animation
+	UPROPERTY(BlueprintReadWrite)
+	FVector2D EnemyMovementDirection;
+
+	//Actual Direction Vector2D
+	UPROPERTY(BlueprintReadWrite, Category="Direction")
+	FVector2D EnemyDirectionVector;
+
+	//Flipping
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Flipping", meta=(DisplayPriority = 1))
+	FVector2D HandCompLoc;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Flipping", meta=(DisplayPriority = 2)) 
+	FVector2D HandCompLocFlip;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Flipping", meta=(DisplayPriority = 2)) 
+	FVector GunScale;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Flipping", meta=(DisplayPriority = 2)) 
+	FVector AfterAttachRelativeLoc; //0,-1,-1
+
+	
+	//What every second enemy should start cooldown 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 8))
+	float CooldownTimer;
+
+	//When in cooldown how long the cooldown should stay 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 9))
+	float CooldownDurationTimer;
+	
+
+	float CooldownTime;
+	float CooldownDuration;
+
 
 
 private:

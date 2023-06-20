@@ -61,27 +61,6 @@ void AGunBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (Hero)
-	{
-		PressedTimer += DeltaTime;
-	}
-
-	//I deleted here and it worked.
-	// if (GetOwner() == (UGameplayStatics::GetPlayerPawn(GetWorld(),0)))
-	// {
-	// 	if (Hero->IsDashingCpp || !Hero->IsShooting)
-	// 	{
-	// 		MuzzleFlash->SetLooping(false);
-	// 		MuzzleFlash->SetVisibility(false);
-	// 	}
-	// }
-	// else
-	// {
-	// 	//if gun's owner is not player than disable muzzle flash 
-	// 	MuzzleFlash->SetLooping(false);
-	// 	MuzzleFlash->SetVisibility(false);
-	// }
-
 }
 
 void AGunBase::Shoot()
@@ -93,9 +72,8 @@ void AGunBase::Shoot()
 		if (Hero->IsDashingCpp || 0.1 >= Hero->RunTimer) return;
 	}
 	
-	if (PressedTimer > PressTime && GetWorld())
+	if (GetWorld())
 	{
-		PressedTimer = 0;
 
 		//Define the spawn location and rotation
 		const FVector Location = ArrowComponent->GetComponentLocation();
@@ -105,6 +83,8 @@ void AGunBase::Shoot()
 		if (GetOwner() != (UGameplayStatics::GetPlayerPawn(GetWorld(),0)))
 		{
 			AProjectileBase* Projectile = GetWorld()->SpawnActor<AProjectileBase>(ProjectileType, Location, Rotation);
+			Projectile->Tags.Add("EnemyProjectile");
+			Projectile->ProjectileType = EprojectileType::ENEMY_PROJECTILE;
 			Projectile->SetOwner(this);
 			Projectile->MaxProjectileRange = MaxProjectileRange;
 
@@ -113,6 +93,7 @@ void AGunBase::Shoot()
 
 			Projectile->ProjectileMovement->SetVelocityInLocalSpace(ProjectileVelocity);
 			Hero->GetAngle();
+
 			Projectile->SetActorRotation(FRotator(0, Hero->MouseAngle, 0));
 		}
 
@@ -121,6 +102,8 @@ void AGunBase::Shoot()
 		{
 			AProjectileBase* Projectile = GetWorld()->SpawnActor<AProjectileBase>(ProjectileType, Location, Rotation);
 			Projectile->SetOwner(this);
+			Projectile->ProjectileType = EprojectileType::PLAYER_PROJECTILE;
+
 			Projectile->MaxProjectileRange = MaxProjectileRange;
 
 			//Set the velocity assign velocity to projectile movement comp and then set the rotation of the projectile same as the gun rotation. 

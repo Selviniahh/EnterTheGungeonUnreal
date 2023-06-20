@@ -47,14 +47,47 @@ void AProjectileBase::OnFlipBookFinishedPlaying()
 
 void AProjectileBase::OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	//Later add enemy tag and if enemy tag is true make this otherwise don't
-	if (!OtherActor->ActorHasTag("Projectile") && !OtherActor->ActorHasTag("Hero"))
+
+	//For Projectiles fired by enemies 
+	if (ProjectileType == EprojectileType::ENEMY_PROJECTILE)
 	{
-		ProjectileMovement->SetVelocityInLocalSpace(FVector(0,0,0));
-		FlipBook->SetFlipbook(HitImpact);
-		FlipBook->SetLooping(false);
+		//if projectile fired by enemy hit the player
+		if (OtherActor->ActorHasTag("Enemy"))
+		{
+			// UE_LOG(LogTemp, Display, TEXT("This is Enemy shooting itself: "));
+			return;
+			//Don't do anything
+		}
+		
+		if (OtherActor->ActorHasTag("Hero"))
+		{
+			// UE_LOG(LogTemp, Display, TEXT("This is Enemy projectile: "));
+			StopAndHit(OtherActor);
+		}
+
+		//if projectile fired by enemy hit himself
 	}
 
+	//This is projectile that player is shooting
+	else if (ProjectileType == EprojectileType::PLAYER_PROJECTILE)
+	{
+		//DO something when the projectile Hits an enemy
+		if (OtherActor->ActorHasTag("Enemy"))
+		{
+			// UE_LOG(LogTemp, Display, TEXT("This is player projectile: %s "), *OtherActor->GetName());
+			StopAndHit(OtherActor);
+		}
+	}
+}
+
+void AProjectileBase::StopAndHit(AActor* OtherActor)
+{
+	//Stop the projectile and play the hit animation
+	ProjectileMovement->SetVelocityInLocalSpace(FVector(0,0,0));
+	FlipBook->SetFlipbook(HitImpact);
+	FlipBook->SetLooping(false);
+
+	//Apply damage
 	auto MyOwner = GetOwner();
 	if (MyOwner == nullptr) return;
 
@@ -65,7 +98,6 @@ void AProjectileBase::OnBoxComponentBeginOverlap(UPrimitiveComponent* Overlapped
 	{
 		UGameplayStatics::ApplyDamage(OtherActor, Damage, MyOvnerInstigator, this, DamageTypeClass);
 	}
-	
 }
 
 // Called every frame

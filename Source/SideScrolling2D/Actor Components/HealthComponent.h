@@ -23,14 +23,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool IsDead;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Health = 0.f;
+	
+	
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 private:
-	UPROPERTY(EditAnywhere)
+	
 	float MaxHealth = 100.0f;
-	float Health = 0.f;
+	
 
 	UFUNCTION()
 	void DamageTaken(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
