@@ -22,6 +22,8 @@ ABulletMan::ABulletMan()
 	
 	//This is not default
 	MaxShoots = ShootsLeft;
+	LineTraceLength = 200;
+	LineTraceStartLength = 20;
 	//Don't forget to set gun object, animBP
 }
 
@@ -50,6 +52,9 @@ void ABulletMan::BeginPlay()
 
 		//Get the health component
 		HealthComponent = FindComponentByClass<UHealthComponent>();
+
+		//Initial Movement Speed store
+		InitialMovSpeed = MovementComponent->MaxSpeed;
 	}
 }
 
@@ -57,7 +62,18 @@ void ABulletMan::Tick(float DelatTime)
 {
 	Super::Tick(DelatTime);
 	CooldownTime += DelatTime;
-	// UE_LOG(LogTemp, Display, TEXT("Cooldown: %f"), CooldownTime);
+	
+	LineTrace();
+	if (LineTrace())
+	{
+		MovementComponent->MaxSpeed = InitialMovSpeed /2;
+		SlowedDownOnce = true;
+	}
+	else
+	{
+		if (SlowedDownOnce)
+			MovementComponent->MaxSpeed = InitialMovSpeed;
+	}
 
 
 	//Check Timer for setting charging bool
@@ -88,8 +104,6 @@ void ABulletMan::Tick(float DelatTime)
 			CanSetDirection = false; 
 		}
 	}
-	
-	//Lastly Move
 	Move();
 }
 
@@ -112,7 +126,7 @@ void ABulletMan::JustPlayShootAnimation()
 {
 	Super::JustPlayShootAnimation();
 	//Make sure that enemy can shoot in enough distance
-	if (DistanceCannotShoot < DistanceBetweenHero && HealthComponent->IsDead) return;
+	if (DistanceCannotShoot < DistanceBetweenHero && HealthComponent->IsDead ) return;
 
 
 	if (Gun && GetWorld())
@@ -146,6 +160,45 @@ void ABulletMan::ShootProjectile()
 			JustPlayShootAnimation();
 		}
 	}
+}
+
+bool ABulletMan::LineTrace()
+{
+	if (GetWorld())
+	{
+		FVector StartLocation = GetActorLocation() + MovementDir * LineTraceStartLength;
+		FVector EndLocation = GetActorLocation() + MovementDir * LineTraceLength;
+		FCollisionQueryParams Params;
+		Params.bTraceComplex = true;
+		TArray<FHitResult> HitResults;
+
+		bool bHit = GetWorld()->LineTraceMultiByChannel(HitResults,StartLocation,EndLocation,ECC_Visibility,Params);
+		
+		for (auto Hit : HitResults)
+		{
+			AActor* ActorHit = Hit.GetActor();
+			
+
+			if (ActorHit && ActorHit->ActorHasTag("Enemy"))
+			{
+				ABulletMan* BulletMan = Cast<ABulletMan>(ActorHit);
+				if (BulletMan->HealthComponent->IsDead)
+				{
+					UE_LOG(LogTemp, Display, TEXT("DEATH ENEMY HIT"));
+					return false;
+				}
+				UE_LOG(LogTemp, Display, TEXT("TRUE"));
+
+				return true;
+			}
+		}
+
+		DrawDebugLine(GetWorld(), StartLocation, EndLocation, Color, false, 0.1f, 0, 1.0f);
+	}
+	
+	UE_LOG(LogTemp, Display, TEXT("FALSE"));
+	return false;
+		
 }
 
 void ABulletMan::CooldownFinished()

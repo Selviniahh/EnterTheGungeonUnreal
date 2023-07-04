@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "PaperZDAnimationComponent.h"
+#include "Components/ArrowComponent.h"
 #include "Components/BoxComponent.h"
 #include "SideScrolling2D/Actor Components/HealthComponent.h"
 #include "SideScrolling2D/Hero/Hero.h"
@@ -39,7 +40,7 @@ AEnemyBase::AEnemyBase()
 	MovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("MovementComponent"));
 
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
-
+	
 	//I changed a little
 	//	Ranges.Add(FRanges(1,55)); //Right
 	Ranges.Add(FRanges(1,35)); //Right
@@ -67,6 +68,7 @@ AEnemyBase::AEnemyBase()
 	HandCompLoc = FVector2D(9.0,7.0);
 	HandCompLocFlip = FVector2D(-8.0,7.0);
 	GunScale = FVector(1.0f,1.0f,1.0f);
+	
 }
 
 void AEnemyBase::BeginPlay()

@@ -17,6 +17,10 @@ class SIDESCROLLING2D_API ABulletMan : public AEnemyBase
 
 public:
 	ABulletMan();
+	
+	UFUNCTION(BlueprintCallable)
+	bool LineTrace();
+	
 	virtual void BeginPlay() override;
 	virtual void Tick(float DelatTime) override;
 	void Move() override;
@@ -35,7 +39,8 @@ public:
 	//This can be used for charge animation duration
 	UPROPERTY(BlueprintReadWrite)
 	FTimerHandle PlayAnimationTimerHandle;
-	
+
+	UPROPERTY(BlueprintReadWrite)
 	FVector MovementDir;
 
 
@@ -57,13 +62,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 5))
 	int ShootsLeft;
 
-	 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	float LineTraceLength;
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	float LineTraceStartLength;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	FColor Color;
+	
 	int MaxShoots;
-
-	
-
-	
+	int InitialMovSpeed;
+	bool SlowedDownOnce;
 
 protected:
 	

@@ -220,7 +220,6 @@ bool AGunBase::LineTrace() const
 	{
 		FVector StartLocation = GetActorLocation();
 		FVector EndLocation = GetActorLocation() + ArrowComponent->GetForwardVector() * 1000; 
-		FHitResult HitResult;
 		FCollisionQueryParams Params;
 		Params.bTraceComplex = true;
 		TArray<FHitResult> HitResults;
