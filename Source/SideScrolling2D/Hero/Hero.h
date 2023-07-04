@@ -18,6 +18,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	void GetAngle();
 
+	UPROPERTY(BlueprintReadWrite)
+	TEnumAsByte<EDirections> CurrentDirection;
 	
 	UPROPERTY(BlueprintReadWrite)
 	bool IsShooting;
@@ -29,6 +31,9 @@ public:
 	float MouseAngle;
 
 	float RunTimer;
+
+	//used to make dynamite guy bullets knockback once even if it hit multiple times
+	bool IsKnockBacked;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -90,9 +95,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float PressTimer;
-
-	UPROPERTY(BlueprintReadWrite)
-	TEnumAsByte<EDirections> CurrentDirection;
 
 	TArray<FRanges> Ranges;
 

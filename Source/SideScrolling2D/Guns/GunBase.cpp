@@ -10,8 +10,8 @@
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Math/TransformCalculus3D.h"
 #include "SideScrolling2D/Projectiles/ProjectileBase.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 AGunBase::AGunBase()
@@ -27,20 +27,24 @@ AGunBase::AGunBase()
 
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
 	BoxComponent->SetupAttachment(FlipBook);
+	BoxComponent->InitBoxExtent(FVector(9,2,3));
 
 	MuzzleFlash = CreateDefaultSubobject<UPaperFlipbookComponent>(TEXT("MuzzleFlash"));
 	MuzzleFlash->SetupAttachment(BoxComponent);
 
 	ArrowComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComponent"));
 	ArrowComponent->SetupAttachment(BoxComponent);
+	ArrowComponent->SetRelativeLocation(FVector(25,0,2));
 
 	PaperZDAnimation = CreateDefaultSubobject<UPaperZDAnimationComponent>(TEXT("PaperZDAnimation"));
 	PaperZDAnimation->InitRenderComponent(FlipBook);
 
-	//Delete all of these later on
+	//Giving default values 
 	PressTime = 0.3f;
 	Velocity = 400.f;
-	MaxProjectileRange = 150.f;
+	MaxProjectileRange = 5000.f;
+
+	
 	
 }
 
@@ -48,7 +52,6 @@ AGunBase::AGunBase()
 void AGunBase::BeginPlay()
 {
 	Super::BeginPlay();
-	Tags.Add("Gun");
 
 	Hero = Cast<AHero>(UGameplayStatics::GetPlayerPawn(this,0));
 	MuzzleFlash->SetVisibility(false);
@@ -57,15 +60,18 @@ void AGunBase::BeginPlay()
 }
 
 // Called every frame
+
 void AGunBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	
 }
+
 
 void AGunBase::Shoot()
 {
-
+	
 	//first check if the owner is player (Maybe this gun is equipped from enemy) If hero is dashing or after the dash if cooldown (Run Timer) is <1 than DON'T SHOOT! 
 	if (GetOwner() == (UGameplayStatics::GetPlayerPawn(GetWorld(),0)))
 	{
@@ -74,14 +80,14 @@ void AGunBase::Shoot()
 	
 	if (GetWorld())
 	{
-
 		//Define the spawn location and rotation
 		const FVector Location = ArrowComponent->GetComponentLocation();
 		const FRotator Rotation = FRotator(0,0,0);
 
-		//Spawn for enemy
+		//Spawn for enemy Base function that has been copy pasted many times
 		if (GetOwner() != (UGameplayStatics::GetPlayerPawn(GetWorld(),0)))
 		{
+			if (LineTrace() && bShouldCheckLineTrace) return;
 			AProjectileBase* Projectile = GetWorld()->SpawnActor<AProjectileBase>(ProjectileType, Location, Rotation);
 			Projectile->Tags.Add("EnemyProjectile");
 			Projectile->ProjectileType = EprojectileType::ENEMY_PROJECTILE;
@@ -109,12 +115,134 @@ void AGunBase::Shoot()
 			//Set the velocity assign velocity to projectile movement comp and then set the rotation of the projectile same as the gun rotation. 
 			const FVector ProjectileVelocity = FVector(ArrowComponent->GetForwardVector().X * Velocity, ArrowComponent->GetForwardVector().Y * Velocity, 0);
 
+
 			Projectile->ProjectileMovement->SetVelocityInLocalSpace(ProjectileVelocity);
 			Hero->GetAngle();
 			Projectile->SetActorRotation(FRotator(0, Hero->MouseAngle, 0));
 		}
 	}
 }
+
+//Extra shoot function for cool shootings 2. copy
+void AGunBase::Shoot(const FVector& ProjectileVelocity)
+{
+	const FVector Location = ArrowComponent->GetComponentLocation();
+
+	if (GetOwner() != (UGameplayStatics::GetPlayerPawn(GetWorld(),0)))
+	{
+		if (LineTrace() && bShouldCheckLineTrace) return;
+		AProjectileBase* Projectile = GetWorld()->SpawnActor<AProjectileBase>(ProjectileType, Location, FRotator(0,0,0));
+		Projectile->Tags.Add("EnemyProjectile");
+		Projectile->ProjectileType = EprojectileType::ENEMY_PROJECTILE;
+		Projectile->SetOwner(this);
+		Projectile->MaxProjectileRange = MaxProjectileRange;
+
+		//Set the velocity assign velocity to projectile movement comp and then set the rotation of the projectile same as the gun rotation. 
+
+		Projectile->ProjectileMovement->SetVelocityInLocalSpace(ProjectileVelocity);
+
+		Projectile->SetActorRotation(FRotator(0, Hero->MouseAngle, 0));
+	}
+}
+
+//Extra shoot function for cool shootings including location 3. copy
+void AGunBase::Shoot(const FVector& ProjectileVelocity, const FVector& Location)
+{
+
+	if (GetOwner() != (UGameplayStatics::GetPlayerPawn(GetWorld(),0)))
+	{
+		if (LineTrace() && bShouldCheckLineTrace) return;
+		AProjectileBase* Projectile = GetWorld()->SpawnActor<AProjectileBase>(ProjectileType, Location, FRotator(0,0,0));
+		Projectile->Tags.Add("EnemyProjectile");
+		Projectile->ProjectileType = EprojectileType::ENEMY_PROJECTILE;
+		Projectile->SetOwner(this);
+		Projectile->MaxProjectileRange = MaxProjectileRange;
+
+		//Set the velocity assign velocity to projectile movement comp and then set the rotation of the projectile same as the gun rotation. 
+
+		Projectile->ProjectileMovement->SetVelocityInLocalSpace(ProjectileVelocity);
+		Hero->GetAngle(); //remove this line later
+
+		Projectile->SetActorRotation(FRotator(0, 0, 0));
+	}
+}
+
+//Extra shoot function for cool shootings including location and delay 4. copy
+void AGunBase::Shoot(const FVector& ProjectileVelocity, const FVector& Location, float Delay, float CurrentProjectileCount, float NumberOfProjectiles)
+{
+
+	if (GetOwner() != (UGameplayStatics::GetPlayerPawn(GetWorld(),0)))
+	{
+		if (LineTrace() && bShouldCheckLineTrace) return;
+		AProjectileBase* Projectile = GetWorld()->SpawnActor<AProjectileBase>(ProjectileType, Location, FRotator(0,0,0));
+		Projectile->Tags.Add(Tags[0]);
+		Projectile->ProjectileType = EprojectileType::ENEMY_PROJECTILE;
+		Projectile->SetOwner(this);
+		Projectile->MaxProjectileRange = MaxProjectileRange;
+
+		//Initially, set the projectile's velocity to zero.
+		Projectile->ProjectileMovement->SetVelocityInLocalSpace(FVector(0,0,0));
+		Projectile->SetActorRotation(FRotator(0, 0, 0));
+		bIsAttacking = false;
+		Projectile->StoredVelocity = ProjectileVelocity;
+
+		Projectiles.Add(Projectile);
+		//Only set the timer if the current projectile count is last projectile
+		if (CurrentProjectileCount -1 <= NumberOfProjectiles)
+		{
+			FTimerDelegate TimerDel;
+			FTimerHandle TimerHandle;
+			TimerDel.BindUObject(this, &AGunBase::ApplyVelocityToProjectile);
+			GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDel, Delay, false);	
+		}
+	}
+	
+}
+
+//Projectile velocity was 0 now it will be changed
+void AGunBase::ApplyVelocityToProjectile()
+{
+	for (const auto Projectile : Projectiles)
+	{
+		if (Projectile != nullptr && Projectile->IsValidLowLevel())
+		{
+			bIsAttacking = true;
+			Projectile->ProjectileMovement->SetVelocityInLocalSpace(Projectile->StoredVelocity);
+
+		}
+	}
+	Projectiles.Empty();
+}
+
+bool AGunBase::LineTrace() const
+{
+	if (GetWorld())
+	{
+		FVector StartLocation = GetActorLocation();
+		FVector EndLocation = GetActorLocation() + ArrowComponent->GetForwardVector() * 1000; 
+		FHitResult HitResult;
+		FCollisionQueryParams Params;
+		Params.bTraceComplex = true;
+		TArray<FHitResult> HitResults;
+        
+		bool bHit = GetWorld()->LineTraceMultiByChannel(HitResults,StartLocation,EndLocation,ECC_Visibility,Params);
+		
+		for (auto Hit : HitResults)
+		{
+			AActor* ActorHit = Hit.GetActor();
+
+			if (ActorHit && ActorHit->ActorHasTag("Enemy"))
+			{
+				UE_LOG(LogTemp, Display, TEXT("TRUE"));
+
+				return true;
+			}
+		}
+	}
+	UE_LOG(LogTemp, Display, TEXT("FALSE"));
+	return false;
+}
+
 
 // Called to bind functionality to input
 void AGunBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

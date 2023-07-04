@@ -24,7 +24,7 @@ protected:
 	virtual void BeginPlay() override;
 	
 	//Components
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MovementDir")
 	class USceneComponent* SceneComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -39,19 +39,21 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USceneComponent* HandSocket;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MovementDir")
 	class UFloatingPawnMovement* MovementComponent;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Movement")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MovementDir")
 	class UPaperZDAnimationComponent* AnimComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MovementDir")
 	class UHealthComponent* HealthComponent;
+
+	
 	
 
 	//Functions
 	UFUNCTION()
-	void OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	virtual void OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	void SetEnemyDirectionEnum();
 	virtual void Death();
@@ -69,25 +71,29 @@ protected:
 	class AHero* Hero;
 	
 	//Knockbacks
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 6))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 8))
 	float KnockBackMultiply;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 7))
 	float KnockBackSpeed;
 	
 	bool bShouldKnockBack;
-
+	bool bCanSetDirectionAndFlip = true;
 	
 	float DistanceBetweenHero;
 	FVector EnemyLocation;
 	float EnemyAngle;
 	bool CanSetDirection = true;
 	FVector DeadDirection3D;
-	FVector TargetLocation;
+	FVector EnemyTargetLocation;
 
 	//When Dead play animation based on this direction
 	UPROPERTY(BlueprintReadWrite)
 	FVector2D DeadDirection;
+
+	//Spawn bool to not let it move when spawning
+	UPROPERTY(BlueprintReadWrite)
+	bool Spawning; 
 
 	
 	//Direction ranges struct (0-30, 30-65, 65-100, 100-150, 150-185, 185-240, 240-280, 280-320)
@@ -100,7 +106,7 @@ protected:
 	//Dictionary for setting direction based on enum
 	TMap<EDirections,FVector2D> SetDirectionBasedOnEnum;
 
-	//Just for Movement normalized Direction not actual direction for animation
+	//Just for MovementDir normalized Direction not actual direction for animation
 	UPROPERTY(BlueprintReadWrite)
 	FVector2D EnemyMovementDirection;
 
@@ -122,17 +128,11 @@ protected:
 	FVector AfterAttachRelativeLoc; //0,-1,-1
 
 	
-	//What every second enemy should start cooldown 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 8))
+	//Cooldown duration when shoots left == 0
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 6))
 	float CooldownTimer;
 
-	//When in cooldown how long the cooldown should stay 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 9))
-	float CooldownDurationTimer;
-	
-
 	float CooldownTime;
-	float CooldownDuration;
 
 
 

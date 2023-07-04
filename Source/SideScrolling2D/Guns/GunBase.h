@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "SideScrolling2D/Projectiles/ProjectileBase.h"
+
 #include "GunBase.generated.h"
 
 
@@ -42,11 +43,44 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxProjectileRange;
 
-	//Cooldown timer probably soon will be deprecated 
+	float TimerForVelocity;
+
+	UPROPERTY(BlueprintReadWrite)
+	bool bIsAttacking;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	class UArrowComponent* ArrowComponent;
+
+	FTimerHandle LineTraceTimer;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool bShouldCheckLineTrace = true;
+
+	FName GunTagName; 
+
+	
 	
 
+
+	//Normal shoot both for enemy and hero. Also base function for down two
 	void Shoot();
 
+	//This is initially designed for BulletManShotGun different direction shooting
+	void Shoot(const FVector& ProjectileVelocity);
+
+	//This is initially designed for BulletManShotGun death shooting when it's dead
+	void Shoot(const FVector& ProjectileVelocity, const FVector& Location);
+
+	//shoow with designated Velocity location delay and also validate if last projectile has been shoot
+	void Shoot(const FVector& ProjectileVelocity, const FVector& Location, float Delay, float CurrentProjectileCount, float NumberOfProjectiles);
+
+	UFUNCTION(BlueprintCallable)
+	void ApplyVelocityToProjectile();
+
+	bool LineTrace() const;
+
+	UPROPERTY()
+	TArray<AProjectileBase*> Projectiles;
 
 protected:
 	// Called when the game starts or when spawned
@@ -58,8 +92,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UBoxComponent* BoxComponent;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	class UArrowComponent* ArrowComponent;
+
+	FTimerHandle UnusedHandle;
+
 
 	
 

@@ -11,6 +11,7 @@
 #include "SideScrolling2D/Actor Components/HealthComponent.h"
 #include "SideScrolling2D/Hero/Hero.h"
 
+
 AEnemyBase::AEnemyBase()
 {
 	//Default Component definitions
@@ -39,11 +40,12 @@ AEnemyBase::AEnemyBase()
 
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 
-	
-	Ranges.Add(FRanges(1,55)); //Right
-	Ranges.Add(FRanges(55,75)); //Front Hand Right
-	Ranges.Add(FRanges(75,115)); //Front Hand Left
-	Ranges.Add(FRanges(115,190)); //Left
+	//I changed a little
+	//	Ranges.Add(FRanges(1,55)); //Right
+	Ranges.Add(FRanges(1,35)); //Right
+	Ranges.Add(FRanges(35,75)); //Front Hand Right
+	Ranges.Add(FRanges(75,135)); //Front Hand Left
+	Ranges.Add(FRanges(135,190)); //Left
 	Ranges.Add(FRanges(190,245)); //Diagonal_Left
 	Ranges.Add(FRanges(245,265)); //Back_Hand_Left
 	Ranges.Add(FRanges(265,290)); //Back_Hand_Right
@@ -60,6 +62,11 @@ AEnemyBase::AEnemyBase()
 		{EDirections::Back_Hand_Right, FVector2D(0, 1.0)},
 		{EDirections::Back_Diagonal_Right, FVector2D(1.0, 1.0)},
 	};
+
+	//Giving the defaults value to prevent any stupid confusions 
+	HandCompLoc = FVector2D(9.0,7.0);
+	HandCompLocFlip = FVector2D(-8.0,7.0);
+	GunScale = FVector(1.0f,1.0f,1.0f);
 }
 
 void AEnemyBase::BeginPlay()
@@ -88,10 +95,11 @@ void AEnemyBase::Tick(float DelatTime)
 	//KnockBack
 	if (bShouldKnockBack || HealthComponent->IsDead)
 	{
-		const FVector NewLocation = (FMath::VInterpTo(GetActorLocation(), TargetLocation, GetWorld()->GetDeltaSeconds(), KnockBackSpeed));
+		const FVector NewLocation = (FMath::VInterpTo(GetActorLocation(), EnemyTargetLocation, GetWorld()->GetDeltaSeconds(), KnockBackSpeed));
 		SetActorLocation(NewLocation);
 
-		if (NewLocation.Equals(TargetLocation,1.0f))
+		//Making sure KnockBack is finished
+		if (NewLocation.Equals(EnemyTargetLocation,1.0f))
 		{
 			bShouldKnockBack = false;
 		}
@@ -100,19 +108,18 @@ void AEnemyBase::Tick(float DelatTime)
 
 void AEnemyBase::Move()
 {
-	//Later
 }
 
 void AEnemyBase::OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (!HealthComponent->IsDead && !OtherActor->ActorHasTag("EnemyGun"))
+	if (!HealthComponent->IsDead && !OtherActor->ActorHasTag("EnemyGun") && !OtherActor->ActorHasTag("EnemyProjectile"))
 	{
-		// UE_LOG(LogTemp, Display, TEXT("Overlap is working %s "), *OtherActor->GetName());
-
+		//KnockBack logic                     //projectile
 		DeadDirection3D = GetActorLocation() - OtherActor->GetActorLocation();
 		DeadDirection3D.Normalize();
 		DeadDirection = FVector2D(DeadDirection3D.X, DeadDirection3D.Y);
-		TargetLocation = GetActorLocation() + FVector(DeadDirection.X * KnockBackMultiply,DeadDirection.Y * KnockBackMultiply, 0);
+		//Target must be move away so it has to be location + dead direction 
+		EnemyTargetLocation = GetActorLocation() + FVector(DeadDirection.X * KnockBackMultiply,DeadDirection.Y * KnockBackMultiply, 0);
 
 		bShouldKnockBack = true; 
 	}
@@ -120,6 +127,7 @@ void AEnemyBase::OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp,
 
 void AEnemyBase::SetEnemyDirectionEnum()
 {
+	if (!bCanSetDirectionAndFlip) return;
 	//Set direction and FlipBook based on the angle between the enemy and the hero
 	EnemyAngle = FMath::RadiansToDegrees(FMath::Atan2(Hero->GetActorLocation().Y - EnemyLocation.Y, Hero->GetActorLocation().X - EnemyLocation.X));
 	if (EnemyAngle < 0)
@@ -137,6 +145,7 @@ void AEnemyBase::SetEnemyDirectionEnum()
 				CurrentDirection = Right;
 			}
 		}
+	
 		if (SetDirectionBasedOnEnum.Contains(CurrentDirection))
 		{
 			EnemyMovementDirection = SetDirectionBasedOnEnum[CurrentDirection];

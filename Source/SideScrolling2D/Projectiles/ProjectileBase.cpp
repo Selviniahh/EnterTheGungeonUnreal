@@ -27,6 +27,7 @@ AProjectileBase::AProjectileBase()
 
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovement");
 	MaxProjectileRange = 700;
+	LifeSpanDistance = 1000;
 }
 
 // Called when the game starts or when spawned
@@ -37,11 +38,17 @@ void AProjectileBase::BeginPlay()
 	Tags.Add("Projectile");
 	BoxComponent->OnComponentBeginOverlap.AddDynamic(this,&AProjectileBase::OnBoxComponentBeginOverlap);
 	FlipBook->OnFinishedPlaying.AddDynamic(this, &AProjectileBase::OnFlipBookFinishedPlaying);
+
+	InitialLoc = GetActorLocation();
 	
 }
 
 void AProjectileBase::OnFlipBookFinishedPlaying()
 {
+	//Enemy projectiles doesn't have impact animations so they don't need to destroyed
+	if (Owner && Owner->Owner)
+		if (Owner->Owner->ActorHasTag("Enemy")) return;
+	
 	Destroy();
 }
 
@@ -51,10 +58,10 @@ void AProjectileBase::OnBoxComponentBeginOverlap(UPrimitiveComponent* Overlapped
 	//For Projectiles fired by enemies 
 	if (ProjectileType == EprojectileType::ENEMY_PROJECTILE)
 	{
-		//if projectile fired by enemy hit the player
+		Tags.Add("EnemyProjectile");
+		//if projectile fired by enemy hit the enemy
 		if (OtherActor->ActorHasTag("Enemy"))
 		{
-			// UE_LOG(LogTemp, Display, TEXT("This is Enemy shooting itself: "));
 			return;
 			//Don't do anything
 		}
@@ -71,6 +78,8 @@ void AProjectileBase::OnBoxComponentBeginOverlap(UPrimitiveComponent* Overlapped
 	//This is projectile that player is shooting
 	else if (ProjectileType == EprojectileType::PLAYER_PROJECTILE)
 	{
+		Tags.Add("PlayerProjectile");
+
 		//DO something when the projectile Hits an enemy
 		if (OtherActor->ActorHasTag("Enemy"))
 		{
@@ -84,6 +93,7 @@ void AProjectileBase::StopAndHit(AActor* OtherActor)
 {
 	//Stop the projectile and play the hit animation
 	ProjectileMovement->SetVelocityInLocalSpace(FVector(0,0,0));
+	//Hit impact will finish and then it will destroy
 	FlipBook->SetFlipbook(HitImpact);
 	FlipBook->SetLooping(false);
 
@@ -103,6 +113,9 @@ void AProjectileBase::StopAndHit(AActor* OtherActor)
 // Called every frame
 void AProjectileBase::Tick(float DeltaTime)
 {
+	// UE_LOG(LogTemp, Display, TEXT("Owner: %s"), *Owner->Owner->GetName());
+
+
 	SetActorLocation(FVector(GetActorLocation().X, GetActorLocation().Y, -240));
 	TravelledProjectileRange = ProjectileMovement->Velocity.Length();
 
@@ -113,7 +126,12 @@ void AProjectileBase::Tick(float DeltaTime)
 		FlipBook->SetFlipbook(HitImpact);
 		FlipBook->SetLooping(false);
 		ProjectileMovement->SetVelocityInLocalSpace(FVector(0,0,0));
+	}
 
+
+	if (FVector::Distance(InitialLoc, GetActorLocation()) > LifeSpanDistance)
+	{
+		Destroy();
 	}
 	Super::Tick(DeltaTime);
 }

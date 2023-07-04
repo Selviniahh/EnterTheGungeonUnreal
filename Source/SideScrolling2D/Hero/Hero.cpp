@@ -56,6 +56,8 @@ AHero::AHero()
 		{EDirections::Back_Hand_Right, FVector2D(0, 1.0)},
 		{EDirections::Back_Diagonal_Right, FVector2D(1.0, 1.0)},
 	};
+
+	//For hero guns, never ever forget to add "Gun" keyword to tags in BP 
 }
 
 // Called when the game starts or when spawned
@@ -208,6 +210,12 @@ void AHero::OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AAct
 		const FAttachmentTransformRules AttachmentTransformRules(EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, true);
 		Gun->FlipBook->AttachToComponent(HandSocket,AttachmentTransformRules);
 	}
+
+	if (OtherActor->ActorHasTag("RubberBullet"))
+	{
+		
+	}
+	
 }
 
 void AHero::GetAngle()

@@ -46,11 +46,22 @@ public:
 	float MaxProjectileRange;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Damage; 
+	float Damage;
+
+	FVector StoredVelocity;
+	FVector InitialLoc;
+
+	//After traveled distance length > this value, it will be destroyed
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	float LifeSpanDistance;
+
+	
+
+	
 
 protected:
 	UFUNCTION()
-	void OnFlipBookFinishedPlaying();
+	virtual void OnFlipBookFinishedPlaying();
 	void StopAndHit(AActor* OtherActor);
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -62,7 +73,7 @@ protected:
 	class UBoxComponent* BoxComponent;
 
 	UFUNCTION()
-	void OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	virtual void OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 
 public:
