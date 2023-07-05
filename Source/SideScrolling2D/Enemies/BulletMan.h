@@ -19,7 +19,9 @@ public:
 	ABulletMan();
 	
 	UFUNCTION(BlueprintCallable)
-	bool LineTrace();
+	bool BoxTraceForSlowDown();
+
+	bool BoxTraceForStop();
 	
 	virtual void BeginPlay() override;
 	virtual void Tick(float DelatTime) override;
@@ -62,14 +64,36 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 5))
 	int ShootsLeft;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	float LineTraceLength;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	//For Slowing Down
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "BoxTraceForSlowDown", meta=(DisplayPriority = 1))
 	float LineTraceStartLength;
 	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "BoxTraceForSlowDown", meta=(DisplayPriority = 2))
+	float LineTraceLength;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "BoxTraceForSlowDown", meta=(DisplayPriority = 3))
+	FVector BoxHalfSizeSlow;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "BoxTraceForSlowDown", meta=(DisplayPriority = 4))
 	FColor Color;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "BoxTraceForSlowDown", meta=(DisplayPriority = 5))
+	bool ShouldDrawDebugBox;
+
+	
+	//For Stopping
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "BoxTraceForStop", meta=(DisplayPriority = 1))
+	float BoxTraceStartLength;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "BoxTraceForStop", meta=(DisplayPriority = 2))
+	float BoxTraceLength;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "BoxTraceForStop", meta=(DisplayPriority = 3))
+	FVector BoxHalfSizeStop;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "BoxTraceForStop", meta=(DisplayPriority = 4))
+	bool ShouldDrawDebugBoxStop;
+
 	
 	int MaxShoots;
 	int InitialMovSpeed;
