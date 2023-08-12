@@ -5,6 +5,7 @@
 #include "PaperTileMap.h"
 
 #include "PaperTileLayer.h"
+#include "Components/BoxComponent.h"
 #include "PaperTileMapComponent.h"
 
 
@@ -26,6 +27,8 @@ ARoomActor::ARoomActor()
 	DoorSocketExit = CreateDefaultSubobject<USceneComponent>(TEXT("DoorSocketExit"));
 	DoorSocketExit->SetupAttachment(RootComponent);
 
+	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
+	BoxComponent->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned

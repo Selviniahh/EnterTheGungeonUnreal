@@ -7,6 +7,7 @@
 #include "RoomActor.generated.h"
 
 
+class UBoxComponent;
 class UPaperTileMap;
 
 UCLASS()
@@ -27,6 +28,11 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	USceneComponent* DoorSocketExit;
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UStaticMeshComponent* ZortComp;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UBoxComponent* BoxComponent;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	int X;
