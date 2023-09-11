@@ -29,22 +29,24 @@ public:
 	USceneComponent* DoorSocketExit;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	UStaticMeshComponent* ZortComp;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	UBoxComponent* BoxComponent;
-	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int X;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int Y;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int X2;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int Y2;
-	
-	void SetRoomDesign(UPaperTileMap* NewDesign);
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	FIntPoint PathStartOffset;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	FIntPoint PathEndOffset;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions")
+	TArray<FIntPoint> EnterExclusions;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions")
+	TArray<FIntPoint> ExitExclusions;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions")
+	FIntPoint ExitSocketCheck; 
+
+	
 private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Components, meta=(AllowPrivateAccess="true"))

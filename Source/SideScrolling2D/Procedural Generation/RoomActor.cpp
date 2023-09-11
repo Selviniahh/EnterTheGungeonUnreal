@@ -15,6 +15,7 @@ ARoomActor::ARoomActor()
 	PrimaryActorTick.bCanEverTick = true;
 
 	RootScene = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
+	RootScene->SetRelativeLocation(FVector(0,0,0));
 	RootComponent = RootScene;
 	
 	//No need to give something in BP for now
@@ -23,19 +24,23 @@ ARoomActor::ARoomActor()
 
 	DoorSocketEnter = CreateDefaultSubobject<USceneComponent>(TEXT("DoorSocketEnter"));
 	DoorSocketEnter->SetupAttachment(RootComponent);
+	DoorSocketEnter->ComponentTags.Add("Enter");
 
 	DoorSocketExit = CreateDefaultSubobject<USceneComponent>(TEXT("DoorSocketExit"));
 	DoorSocketExit->SetupAttachment(RootComponent);
+	DoorSocketExit->ComponentTags.Add("Exit");
 
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
 	BoxComponent->SetupAttachment(RootComponent);
+	
+	
 }
 
 // Called when the game starts or when spawned
 void ARoomActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
+		
 	
 }
 
