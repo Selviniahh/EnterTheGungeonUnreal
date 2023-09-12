@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ProceduralMap.h"
 #include "GameFramework/Actor.h"
+#include "RoomActor.h"
 #include "ProceduralGeneration.generated.h"
 
 struct FTileStruct;
@@ -21,6 +21,66 @@ struct FRoomConnection
 	FIntPoint PathStartOffset; 
 	FIntPoint PathEndOffset;
 	int MaxCheckAmount;
+};
+
+UENUM()
+enum EDirection2 : uint8
+{
+	Dir_Left,
+	Dir_Right,
+	Dir_Up,
+	Dir_Down,
+	Dir_None
+};
+
+USTRUCT()
+struct FPathNode
+{
+	GENERATED_BODY()
+	bool Visited = false;
+	int X = 0;
+	int Y = 0;
+	int HCost = 0;
+	int GCost = 0;
+	FPathNode* Parent = nullptr;
+	EDirection2 Direction = EDirection2::Dir_None;
+	FRotator Rotation = FRotator(0,0,0);
+	static int GetHCost(int StartX, int StartY, int GoalX, int GoalY)
+	{
+		return FMath::Abs(StartX - GoalX) + FMath::Abs(StartY - GoalY);
+	}
+	int FCost()
+	{
+		return GCost + HCost;
+	}
+
+};
+//Merged Path Into Tile
+USTRUCT()
+struct FTileStruct
+{
+	GENERATED_BODY()
+	bool Blocked = false;
+	bool Path = false;
+	FVector Location = FVector(0,0,0); //Rest is for pathfinding
+
+	
+	bool Visited = false;
+	int X = 0;
+	int Y = 0;
+	int HCost = 0;
+	int GCost = 0;
+	FTileStruct* Parent;
+	EDirection2 Direction = EDirection2::Dir_None;
+	FRotator Rotation = FRotator(0,0,0);
+	static int GetHCost(int StartX, int StartY, int GoalX, int GoalY)
+	{
+		return FMath::Abs(StartX - GoalX) + FMath::Abs(StartY - GoalY);
+	}
+	int FCost()
+	{
+		return GCost + HCost;
+	}
 };
 
 UCLASS()
