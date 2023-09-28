@@ -2,6 +2,8 @@
 
 #include "Grenade.h"
 
+#include <GameFramework/DamageType.h>
+
 #include "Components/ArrowComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/GameplayStatics.h"

@@ -2,9 +2,6 @@
 
 
 #include "RoomActor.h"
-#include "PaperTileMap.h"
-
-#include "PaperTileLayer.h"
 #include "Components/BoxComponent.h"
 #include "PaperTileMapComponent.h"
 

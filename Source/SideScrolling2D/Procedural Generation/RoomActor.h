@@ -19,6 +19,9 @@ public:
 	// Sets default values for this actor's properties
 	ARoomActor();
 
+	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	int PathCost = 0;
+	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	USceneComponent* RootScene;
 	
@@ -46,6 +49,7 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions")
 	FIntPoint ExitSocketCheck; 
 
+	
 	
 private:
 

@@ -153,12 +153,10 @@ void AProceduralMap::InitializeGrid(ARoomActor* LastSpawnRoom, FVector* SocketEx
 	StartLocation = CenterLocation - FVector((MapSizeX * TileSizeX) / 2.0f, (MapSizeY * TileSizeY) / 2.0f, 0.f);
 	StartX = FMath::TruncToInt((SocketExitLoc->X - StartLocation.X) / TileSizeX);
 	StartY = FMath::TruncToInt((SocketExitLoc->Y - StartLocation.Y) / TileSizeY);
-
 	//resize tiles array
 	Tiles.SetNum(MapSizeX);
 	for (int i = 0; i < MapSizeX; ++i)
 		Tiles[i].SetNum(MapSizeY);
-
 	//resize Nodes
 	FPathNodes.SetNum(MapSizeX);
 	for (int i = 0; i < MapSizeX; ++i)
@@ -172,7 +170,6 @@ void AProceduralMap::InitializeGrid(ARoomActor* LastSpawnRoom, FVector* SocketEx
 			//For each tile generation, visited must be set false by default. Otherwise, it will remain true for next tile generations. 
 			FPathNodes[x][y].Visited = false;
 			FPathNodes[x][y].Parent = nullptr;
-			
 			
 			
 			//Set Tiles blocked true and give all default init for PathNodes 

@@ -55,6 +55,7 @@ struct FPathNode
 	}
 
 };
+
 //Merged Path Into Tile
 USTRUCT()
 struct FTileStruct
@@ -172,13 +173,21 @@ public:
 	/*Room spawn counter. It will increment as new rooms are spawned*/
 	int SpawnedRoomCount;
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int MaxSideBranchCount = 50;
+	int MaxSideBranchRoom = 50;
 	int NumOfSideBranchRoom;
 	
 	float CurrentDistance;
 	float PreviousDistance = FLT_MAX;  // start with a very large value
-	int IgnoreCount = 3;
 	int FoundPathCost;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	int MaxLargeRoomCount = 5;
+
+	int LargeRoomCounter = 0;
+
+	TArray<FIntPoint> BlockedTileHolder;
+
+	
 
 
 
@@ -211,6 +220,9 @@ public:
 	int BranchLength = 4;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	int MaxPathCostLimit = 100;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	int NormalRoomMaxSafeCheck = 5000;
 
 	/*When room is moved, this is the one to check nevermind update here later*/
@@ -220,9 +232,18 @@ public:
 	FTileStruct* PathStart;
 	FTileStruct* PathEnd;
 
+	//Testing
+// #if	WITH_EDITOR || UE_BUILD_DEBUG
+	bool bGenCompleteTest = false;
+	bool NotValid = false;
+// #endif
+	
 
 
-	/*After the overlapped room is moved to appropriate location, with given necessary information, it will make pathfinding from previous room's exit socket to new spawned overlapped room's enter location */
+
+	/*After the overlapped room is moved to appropriate location, with given necessary information, it will make pathfinding from previous room's exit socket to new spawned overlapped room's enter location
+	 * Responsible to call FindCorridorPath
+	 */
 	void ConnectRoomsWithCorridors();
 	void MakeSideBranchFromLargeRoom();
 	void MakeBranchConnection();
@@ -249,8 +270,8 @@ public:
 	void SpawnRoomForBranchConnection(FName Tag, FIntPoint StartIndex, FIntPoint EndIndex);
 
 	/*Similar how SpawnRoom works but meant to spawn a room for eventually making a connection from one LargeRoom's scene comp to closest LargeRoom's scene comp*/
-	ARoomActor* SpawnFirstBranchRoom(FName Tag, FVector SpawnLoc);
-	ARoomActor* SpawnBranchRoom(FName Tag, int SpawnCounter);
+	ARoomActor* SpawnFirstBranchRoom(FName Tag, FVector SpawnLoc, USceneComponent* SceneComponent, ARoomActor* LargeRoom, TArray<ARoomActor*>& RoomsToBeAdded);
+	ARoomActor* SpawnBranchRoom(FName Tag, int SpawnCounter, TArray<ARoomActor*>& RoomsToBeAdded);
 
 
 	/*Before spawning any room, Tiles array that will be used for entire checks will be initialized. */
@@ -280,6 +301,8 @@ public:
 	/*Same as SetTilesBlocked. But it returns blocked ones to be reverted back shortly. Designed to be used with SpawnRoomForBranchConnection*/
 	TArray<FIntPoint> BlockAndRetrieveTiles(ARoomActor* Room, FVector SpawnLoc);
 
+	void IncrementCounterIfLargeRoomSpawned();
+
 	/*After a path found, it's required to reset all visited for A* pathfinding*/
 	inline void ResetAllVisited()
 	{
@@ -291,11 +314,20 @@ public:
 			}
 		}
 	};
-
+		
 	/*Extra check if the calculated areas are exist in tiles array*/
 	inline bool IsValid(int x, int y)
 	{
 		return x >= 0 && x < MapSizeX && y >= 0 && y < MapSizeY;
+	}
+
+	/*Test Only.*/
+	inline void SetFlagIfNotValid(int x, int y)
+	{
+		if (!IsValid(x,y))
+		{
+			NotValid = true;
+		}
 	}
 
 	/*Convert given relative index points to world location */
@@ -469,6 +501,11 @@ public:
 		if (Name == "StraightUp") return "StraightDown";
 		if (Name == "StraightDown") return "StraightUp";
 		return "Dir_None";
+	}
+
+	inline bool CanSpawnLargeRoom()
+	{
+		return LargeRoomCounter < MaxLargeRoomCount;
 	}
 
 protected:
