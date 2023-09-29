@@ -53,7 +53,6 @@ struct FPathNode
 	{
 		return GCost + HCost;
 	}
-
 };
 
 //Merged Path Into Tile
@@ -64,7 +63,6 @@ struct FTileStruct
 	bool Blocked = false;
 	bool Path = false;
 	FVector Location = FVector(0,0,0); //Rest is for pathfinding
-
 	
 	bool Visited = false;
 	int X = 0;
@@ -92,30 +90,6 @@ class SIDESCROLLING2D_API AProceduralGeneration : public AActor
 public:
 	AProceduralGeneration();
 	
-	/* Stored to make calculations for Last Spawned Room. (Connect LastSpawnedRoom's exit socket with new room)*/
-	UPROPERTY()
-	ARoomActor* LastSpawnedRoom;
-
-	/* Stored to make calculations for Last Spawned LARGE Room.*/
-	UPROPERTY()
-	ARoomActor* LastSpawnLargeRoom;
-
-	/*For determining Corridor directions, rotations */
-	FName NextRoomExitTag;
-	FName NextRoomEnterTag;
-	TArray<FRoomConnection> RoomConnections;
-
-	UPROPERTY()
-	TArray<ARoomActor*> LargeRooms;
-	
-	/*Add all the rooms to be randomly select and spawned.*/
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TArray<TSubclassOf<ARoomActor>> RoomDesigns;
-	
-	/*Solely for debug purposes. The added room will be used to check overlaps with original rooms. Intended to force rooms to have overlaps. */
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TSubclassOf<ARoomActor> BlockRoom;
-	
 	/* Meant to be changed later on*/
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<ARoomActor> StraightCorr;
@@ -124,122 +98,139 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<ADoorActor> Door;
 
-	/*First room Start location is set to be center of the map (map size /2). Later on make it */
-	FVector FirstRoomStartLoc;
+	UPROPERTY()
+	TArray<ARoomActor*> LargeRooms;
 
-	int SafeCheckAmount;
-		
+	/*Add all the rooms to be randomly select and spawned.*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 1))
+	TArray<TSubclassOf<ARoomActor>> RoomDesigns;
+	
 	/*Total number of rooms to be spawned*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 2))
 	int NumberOfRooms = 10;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	bool SpawnCorridor = true;
+	/*Valid for both main and side branching*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 3))
+	int MaxLargeRoomCount = 5;
+	
+	/*Given amount of tiles will be included to make all the algorithm checks. Make sure it's long enough if you planning to spawn large amount of rooms*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 4))
+	int MapSizeX = 1000;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 5))
+	/*Given amount of tiles will be included to make all the algorithm checks. Make sure it's long enough if you planning to spawn large amount of rooms*/
+	int MapSizeY = 1000;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 6))
+	/*The tile size for entire map. It's important to give precise small amount otherwise there will be tile offset issues when a path trying to be found for connecting two rooms with corridors.*/
+	int TileSizeX = 16;
+	/*The tile size for entire map. It's important to give precise small amount otherwise there will be tile offset issues when a path trying to be found for connecting two rooms with corridors.*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 7))
+	int TileSizeY = 16;
 
-	/*Path visualization color is red*/
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	bool VisualizeCorridorPath = true;
+	/* Determines the buffer size when a room is overlapped and moved to a non-overlapping position.A smaller value might cause the overlapped room to be squeezed closer to other rooms.
+	 * A larger value will create a larger distance from other rooms.*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 8))
+	int BufferSize = 6;
 
-	/*Begin and End socket visualization color is Cyan*/
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	bool VisualizeEnterAndExitPathStartTile = true;
+	/*Not yet implemented*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 9))
+	int MaxPathCostLimit = 1000;
 
-	/*All excluded tiles are purple*/
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	bool VisualizeAllExclusions = false;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 10))
+	int NormalRoomMaxSafeCheck = 5000;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	bool VisualiseOverlaps = false;
+	/*When room is moved, this is the one to check never mind update here later*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 11))
+	int LargeRoomMaxSafeCheck = 2000;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	bool VisualiseVisited = false;
+	/*How many side branch room in total should it spawn when side branching*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Side Branching", meta=(DisplayPriority = 1))
+	int MaxSideBranchRoom = 50;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	bool VisualiseEndSocketCheck = false;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	bool PrintRelativeIndexOffset = false;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	bool VisualizeEndSocketOverlapCheck = false;
+	/*The max branch length for side branching*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Side Branching", meta=(DisplayPriority = 2))
+	int BranchLength = 4;
 
 	/*Make sure Room sequence length is equal to -1 Number of rooms. Secondly, give index numbers of Room designs. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Generation")
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 1))
 	TArray<int32> RoomSequence;
 
-	int CurrentIndex = 0;
+	/*For debug purposes the location for each given BlockRoom's location. Block room will be spawned at given location*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 2))
+	TArray<FVector> BlockRoomLocations;
+	
+	/*Solely for debug purposes. The added room will be used to check overlaps with original rooms. Intended to force rooms to have overlaps. */
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 3))
+	TSubclassOf<ARoomActor> BlockRoom;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 4))
+	bool VisualiseOverlaps = false;
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 5))
+	bool VisualiseVisited = false;
+	
+	/*Begin and End socket visualization color is Cyan*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 6))
+	bool VisualizeBeginAndEndTiles = true;
+
+	/*Path visualization color is red*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 7))
+	bool VisualizeCorridorPath = true;
+	
+	/*All excluded tiles are purple*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 8))
+	bool VisualizeAllExclusions = false;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 9))
+	bool VisualiseEndSocketCheck = false;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 10))
+	bool VisualizeEndSocketOverlapCheck = false;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 11))
+	bool SpawnCorridor = true;
+	
+	
+	/* Stored to make calculations for Last Spawned Room. (Connect LastSpawnedRoom's exit socket with new room)*/
+	UPROPERTY()
+	ARoomActor* LastSpawnedRoom;
+
+	/* Stored to make calculations for Last Spawned LARGE Room.*/
+	UPROPERTY()
+	ARoomActor* LastSpawnLargeRoom;
+
+	/*2D tiles array for make all the tile checks like assigning each tile as blocked or finding a* costs.*/
+	TArray<TArray<FTileStruct>> Tiles;
+	
+	/*For determining Corridor directions, rotations */
+	FName NextRoomExitTag;
+	FName NextRoomEnterTag;
+	TArray<FRoomConnection> RoomConnections;
+	
+	int CurrentIndex = 0;
+	int RecursiveCallAmount = 0;
 	
 	/*Room spawn counter. It will increment as new rooms are spawned*/
 	int SpawnedRoomCount;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int MaxSideBranchRoom = 50;
+	
 	int NumOfSideBranchRoom;
 	
 	float CurrentDistance;
 	float PreviousDistance = FLT_MAX;  // start with a very large value
 	int FoundPathCost;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int MaxLargeRoomCount = 5;
-
+	
 	int LargeRoomCounter = 0;
 
 	TArray<FIntPoint> BlockedTileHolder;
 
+	/*First room Start location is set to be center of the map (map size /2). Later on make it */
+	FVector FirstRoomStartLoc;
+	int SafeCheckAmount;
 	
-
-
-
-	/*Given amount of tiles will be included to make all the algorithm checks. Make sure it's long enough if you planning to spawn large amount of rooms*/
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int MapSizeX = 1000;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	/*Given amount of tiles will be included to make all the algorithm checks. Make sure it's long enough if you planning to spawn large amount of rooms*/
-	int MapSizeY = 1000;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	/*The tile size for entire map. It's important to give precise small amount otherwise there will be tile offset issues when a path trying to be found for connecting two rooms with corridors.*/
-	int TileSizeX = 16;
-	/*The tile size for entire map. It's important to give precise small amount otherwise there will be tile offset issues when a path trying to be found for connecting two rooms with corridors.*/
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int TileSizeY = 16;
-
-	/*For debug purposes the location for each given BlockRoom's location. Block room will be spawned at given location*/
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TArray<FVector> BlockRoomLocations;
-
-	/*2D tiles array for make all the tile checks like assigning each tile as blocked or finding a* costs.*/
-	TArray<TArray<FTileStruct>> Tiles;
-
-	/* Determines the buffer size when a room is overlapped and moved to a non-overlapping position.A smaller value might cause the overlapped room to be squeezed closer to other rooms.
-	 * A larger value will create a larger distance from other rooms.*/
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int BufferSize = 6;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int BranchLength = 4;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int MaxPathCostLimit = 100;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int NormalRoomMaxSafeCheck = 5000;
-
-	/*When room is moved, this is the one to check nevermind update here later*/
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	int LargeRoomMaxSafeCheck = 2000;
-
-	FTileStruct* PathStart;
-	FTileStruct* PathEnd;
-
 	//Testing
 // #if	WITH_EDITOR || UE_BUILD_DEBUG
 	bool bGenCompleteTest = false;
 	bool NotValid = false;
 // #endif
-	
-
-
 
 	/*After the overlapped room is moved to appropriate location, with given necessary information, it will make pathfinding from previous room's exit socket to new spawned overlapped room's enter location
 	 * Responsible to call FindCorridorPath
@@ -271,6 +262,7 @@ public:
 
 	/*Similar how SpawnRoom works but meant to spawn a room for eventually making a connection from one LargeRoom's scene comp to closest LargeRoom's scene comp*/
 	ARoomActor* SpawnFirstBranchRoom(FName Tag, FVector SpawnLoc, USceneComponent* SceneComponent, ARoomActor* LargeRoom, TArray<ARoomActor*>& RoomsToBeAdded);
+	
 	ARoomActor* SpawnBranchRoom(FName Tag, int SpawnCounter, TArray<ARoomActor*>& RoomsToBeAdded);
 
 
@@ -469,7 +461,8 @@ public:
 		if (NextRoomExitTag == "StraightUp") return EDirection2::Dir_Up;
 		if (NextRoomExitTag == "StraightDown") return EDirection2::Dir_Down;
 		return EDirection2::Dir_None;
-	}inline EDirection2 ConvertNextRoomEnterTagToDirection()
+	}
+	inline EDirection2 ConvertNextRoomEnterTagToDirection()
 	{
 		if (NextRoomEnterTag == "SideRight") return EDirection2::Dir_Right;
 		if (NextRoomEnterTag == "SideLeft")	return EDirection2::Dir_Left;

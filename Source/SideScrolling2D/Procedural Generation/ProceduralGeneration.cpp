@@ -29,14 +29,14 @@ void AProceduralGeneration::ConnectRoomsWithCorridors()
 	{
 		FIntPoint StartIndex = WorldToIndex(Connection.StartPoint);
 
-		// if (VisualizeEnterAndExitPathStartTile)
+		// if (VisualizeBeginAndEndTiles)
 		// {
 		// 	DrawDebugBox(GetWorld(),Tiles[StartIndex.X + Connection.PathStartOffset.X][StartIndex.Y + Connection.PathStartOffset.Y].Location + FVector(TileSizeX/2,TileSizeY/2,0),FVector(TileSizeX/2,TileSizeY/2,TileSizeY/2),FColor::Cyan,true);
 		// }
 		
 		FIntPoint EndIndex = WorldToIndex(Connection.EndPoint);
 
-		// if (VisualizeEnterAndExitPathStartTile)
+		// if (VisualizeBeginAndEndTiles)
 		// {
 		// 	DrawDebugBox(GetWorld(),Tiles[EndIndex.X + Connection.PathEndOffset.X][EndIndex.Y + Connection.PathEndOffset.Y].Location + FVector(TileSizeX/2,TileSizeY/2,0),FVector(TileSizeX/2,TileSizeY/2,TileSizeY/2),FColor::Cyan,true);
 		// }
@@ -132,81 +132,74 @@ void AProceduralGeneration::MakeSideBranchFromLargeRoom()
 	
 }
 
-void AProceduralGeneration::MakeBranchConnection()
-{
-	// Step 1: Store all the LargeRooms in an array
-	TArray<ARoomActor*> AvailableLargeRooms = LargeRooms;
+// void AProceduralGeneration::MakeBranchConnection()
+// {
+// 	// Step 1: Store all the LargeRooms in an array
+// 	TArray<ARoomActor*> AvailableLargeRooms = LargeRooms;
+//
+// 	// Step 2: Store valid scene comps (Sockets) in another array
+// 	TArray<USceneComponent*> AvailableSockets;
+//
+// 	// Iterate through each LargeRoom to check each of its scene comps
+// 	for (auto CurrentRoom : AvailableLargeRooms)
+// 	{
+// 		TArray<USceneComponent*> CurrentRoomSockets;
+// 		CurrentRoom->GetComponents<USceneComponent*>(CurrentRoomSockets);
+//
+// 		// For each scene comp of the current LargeRoom
+// 		for (auto CurrentSocket : CurrentRoomSockets)
+// 		{
+// 			FString SocketName = CurrentSocket->GetName();
+// 			if (SocketName == "RootScene" || SocketName == "TileMapComponent" || SocketName == "BoxComponent" || SocketName == "DoorSocketEnter") continue;
+// 			
+// 			// Try to find a path to each scene comp of all other LargeRooms. NOTE: It can be same room.
+// 			for (auto OtherRoom : AvailableLargeRooms)
+// 			{
+// 				TArray<USceneComponent*> OtherRoomSockets;
+// 				OtherRoom->GetComponents<USceneComponent*>(OtherRoomSockets);
+//
+// 				// For each scene comp in the other LargeRooms. NOTE: It can be same room but different scene comp.
+// 				for (auto OtherSocket : OtherRoomSockets)
+// 				{
+// 					FString OtherSocketName = OtherSocket->GetName();
+// 					if (OtherSocketName == "RootScene" || OtherSocketName == "TileMapComponent" || OtherSocketName == "BoxComponent" || OtherSocketName == "DoorSocketEnter" || OtherSocket == CurrentSocket) continue;
+// 					FIntPoint Start = WorldToIndex(CurrentSocket->GetComponentLocation());
+// 					FIntPoint End = WorldToIndex(OtherSocket->GetComponentLocation());
+//
+// 					//Based on The CurrentSocket and OtherSocket make offsets to Start and End. But there's a catch. Even offset applied, collision returns true if initial location is colliding. 
+// 					OffsetLargeRoomSceneComps(OtherRoom,*CurrentSocket, *OtherSocket, Start, End);
+// 					
+// 					//If it cannot find path, reset visited to false and try again. If path can be found, add sockets to list. 
+// 					if (!FindCorridorPath(Start.X, Start.Y, End.X, End.Y, FIntPoint(0,0), FIntPoint(0,0), false, 1000))
+// 					{
+// 						ResetAllVisited();
+// 						//It couldn't find one 
+// 						if (!FindCorridorPath(Start.X, Start.Y, End.X, End.Y, FIntPoint(0,0), FIntPoint(0,0), false, 1000))
+// 						{
+// 							UE_LOG(LogTemp, Warning, TEXT("Couldn't start connection between: %s,%s. Room's name are %s,%s"), *CurrentSocket->GetFName().ToString(),*OtherSocket->GetFName().ToString(), *CurrentRoom->GetFName().ToString(),*OtherRoom->GetFName().ToString());
+// 						}
+// 						else
+// 						{
+// 							// Add both scene comps to the array if they can form a corridor path
+// 							AvailableSockets.AddUnique(CurrentSocket);
+// 							AvailableSockets.AddUnique(OtherSocket);
+// 							SpawnRoomForBranchConnection(ExpectedTag(CurrentSocket->ComponentTags[0]),Start, End);
+// 						}
+// 					}
+// 					else //This means without any issue, it found a path. 
+// 					{
+// 						// Add both scene comps to the array if they can form a corridor path
+// 						AvailableSockets.AddUnique(CurrentSocket);
+// 						AvailableSockets.AddUnique(OtherSocket);
+// 						SpawnRoomForBranchConnection(ExpectedTag(CurrentSocket->ComponentTags[0]),Start, End);
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+// }
 
-	// Step 2: Store valid scene comps (Sockets) in another array
-	TArray<USceneComponent*> AvailableSockets;
-
-	// Iterate through each LargeRoom to check each of its scene comps
-	for (auto CurrentRoom : AvailableLargeRooms)
-	{
-		TArray<USceneComponent*> CurrentRoomSockets;
-		CurrentRoom->GetComponents<USceneComponent*>(CurrentRoomSockets);
-
-		// For each scene comp of the current LargeRoom
-		for (auto CurrentSocket : CurrentRoomSockets)
-		{
-			FString SocketName = CurrentSocket->GetName();
-			if (SocketName == "RootScene" || SocketName == "TileMapComponent" || SocketName == "BoxComponent" || SocketName == "DoorSocketEnter") continue;
-			
-			// Try to find a path to each scene comp of all other LargeRooms. NOTE: It can be same room.
-			for (auto OtherRoom : AvailableLargeRooms)
-			{
-				TArray<USceneComponent*> OtherRoomSockets;
-				OtherRoom->GetComponents<USceneComponent*>(OtherRoomSockets);
-
-				// For each scene comp in the other LargeRooms. NOTE: It can be same room but different scene comp.
-				for (auto OtherSocket : OtherRoomSockets)
-				{
-					FString OtherSocketName = OtherSocket->GetName();
-					if (OtherSocketName == "RootScene" || OtherSocketName == "TileMapComponent" || OtherSocketName == "BoxComponent" || OtherSocketName == "DoorSocketEnter" || OtherSocket == CurrentSocket) continue;
-					FIntPoint Start = WorldToIndex(CurrentSocket->GetComponentLocation());
-					FIntPoint End = WorldToIndex(OtherSocket->GetComponentLocation());
-
-					//Based on The CurrentSocket and OtherSocket make offsets to Start and End. But there's a catch. Even offset applied, collision returns true if initial location is colliding. 
-					OffsetLargeRoomSceneComps(OtherRoom,*CurrentSocket, *OtherSocket, Start, End);
-
-					
-					
-					//If it cannot find path, reset visited to false and try again. If path can be found, add sockets to list. 
-					if (!FindCorridorPath(Start.X, Start.Y, End.X, End.Y, FIntPoint(0,0), FIntPoint(0,0), false, 50000))
-					{
-						for (int x = 0; x < MapSizeX; ++x)
-						{
-							for (int y = 0; y < MapSizeY; ++y)
-							{
-								Tiles[x][y].Visited = false;
-							}
-						}
-						//It couldn't find one 
-						if (!FindCorridorPath(Start.X, Start.Y, End.X, End.Y, FIntPoint(0,0), FIntPoint(0,0), false, 50000))
-						{
-							UE_LOG(LogTemp, Warning, TEXT("Couldn't start connection between: %s,%s. Room's name are %s,%s"), *CurrentSocket->GetFName().ToString(),*OtherSocket->GetFName().ToString(), *CurrentRoom->GetFName().ToString(),*OtherRoom->GetFName().ToString());
-						}
-						else
-						{
-							// Add both scene comps to the array if they can form a corridor path
-							AvailableSockets.AddUnique(CurrentSocket);
-							AvailableSockets.AddUnique(OtherSocket);
-							SpawnRoomForBranchConnection(ExpectedTag(DirectionToTag(PathStart->Direction)),Start, End);
-						}
-					}
-					else //This means without any issue, it found a path. 
-					{
-						// Add both scene comps to the array if they can form a corridor path
-						AvailableSockets.AddUnique(CurrentSocket);
-						AvailableSockets.AddUnique(OtherSocket);
-						SpawnRoomForBranchConnection(ExpectedTag(DirectionToTag(PathStart->Direction)),Start, End);
-					}
-				}
-			}
-		}
-	}
-}
-
+#pragma message("Not working Visit later")
 void AProceduralGeneration::SocketExclusionForLargeRoom(ARoomActor* Room)
 {
 	TArray<USceneComponent*> SceneComponents;
@@ -295,6 +288,7 @@ void AProceduralGeneration::SocketExclusionForLargeRoom(ARoomActor* Room)
 	}
 }
 
+#pragma message("Not working Visit later")
 void AProceduralGeneration::OffsetLargeRoomSceneComps(ARoomActor* Room, USceneComponent& SceneComp1,USceneComponent& SceneComp2, FIntPoint& Start, FIntPoint& End)
 {
 	FString Name1 = SceneComp1.GetFName().ToString().Append(TEXT("_Offset"));
@@ -320,7 +314,7 @@ void AProceduralGeneration::OffsetLargeRoomSceneComps(ARoomActor* Room, USceneCo
 		}
 	}
 
-	if (VisualizeEnterAndExitPathStartTile)
+	if (VisualizeBeginAndEndTiles)
 	{
 		DrawDebugBox(GetWorld(),Tiles[Start.X][Start.Y].Location + FVector(TileSizeX/2,TileSizeY/2,0),FVector(TileSizeX/2,TileSizeY/2,TileSizeY/2),FColor::Green,true);
 		DrawDebugBox(GetWorld(),Tiles[End.X][End.Y].Location + FVector(TileSizeX/2,TileSizeY/2,0),FVector(TileSizeX/2,TileSizeY/2,TileSizeY/2),FColor::Green,true);
@@ -381,12 +375,11 @@ void AProceduralGeneration::GenerateMap()
 		}
 		bGenCompleteTest = true;
 	}
-	//It working correct. Now test MakeBranchConnection
 
 	//Wrapped with while loop in case the algorithm generates new large rooms and they also need to be processed
 	while (!LargeRooms.IsEmpty())
 	{
-		MakeSideBranchFromLargeRoom();
+		 MakeSideBranchFromLargeRoom();
 	}
 
 	/*Not working. I'll take care of it later */
@@ -461,7 +454,7 @@ void AProceduralGeneration::SpawnRoom(FName Tag)
 		SetTilesBlocked(NextRoom,NextRoomLocation);
 		NextRoom = GetWorld()->SpawnActor<ARoomActor>(RoomDesigns[RandomIndex], NextRoomLocation, Rotation);
 		
-		// if (VisualizeEnterAndExitPathStartTile)
+		// if (VisualizeBeginAndEndTiles)
 		// {
 		// 	FIntPoint StartIndex = WorldToIndex(LastSpawnedRoom->DoorSocketExit->GetComponentLocation());
 		// 	DrawDebugBox(GetWorld(),Tiles[StartIndex.X + LastSpawnedRoom->PathStartOffset.X][StartIndex.Y + LastSpawnedRoom->PathStartOffset.Y].Location + FVector(TileSizeX/2,TileSizeY/2,0),FVector(TileSizeX/2,TileSizeY/2,TileSizeY/2),FColor::Cyan,true);
@@ -492,7 +485,7 @@ void AProceduralGeneration::SpawnRoom(FName Tag)
 		SetSocketExclusion(NextRoom);
 		ConnectRoomsWithCorridors();
 		
-		if (VisualizeEnterAndExitPathStartTile)
+		if (VisualizeBeginAndEndTiles)
 		{
 			FIntPoint StartIndex = WorldToIndex(LastSpawnedRoom->DoorSocketExit->GetComponentLocation());
 			DrawDebugBox(GetWorld(),Tiles[StartIndex.X + Connection.PathStartOffset.X][StartIndex.Y + Connection.PathStartOffset.Y].Location + FVector(TileSizeX/2,TileSizeY/2,0),FVector(TileSizeX/2,TileSizeY/2,TileSizeY/2),FColor::Cyan,true);
@@ -514,9 +507,9 @@ void AProceduralGeneration::SpawnRoom(FName Tag)
 	}
 }
 
+#pragma message("Not working Visit later")
 void AProceduralGeneration::SpawnRoomForBranchConnection(FName Tag, FIntPoint StartIndex, FIntPoint EndIndex)
 {
-	FVector TargetLoc = FVector(0,0,0); //Placeholder
 	FRoomConnection Connection = FRoomConnection();
 	const FRotator Rotation(0.0f, 0.0f, -90.0f);
 	FVector NextRoomLocation = IndexToWorld(StartIndex.X,StartIndex.Y) + FVector(0,0,1);
@@ -528,47 +521,45 @@ void AProceduralGeneration::SpawnRoomForBranchConnection(FName Tag, FIntPoint St
 	{
 		ARoomActor* NextRoom = Cast<ARoomActor>(RoomDesigns[i]->GetDefaultObject());
 		if (NextRoom->DoorSocketEnter->ComponentHasTag(Tag) && !NextRoom->ActorHasTag("NoExit") && !NextRoom->ActorHasTag("LargeRoom"))
-		{ 
+		{
+			NextRoomLocation = IndexToWorld(StartIndex.X,StartIndex.Y) + FVector(0,0,1); //Reassigning here is required because if it overlaps with MoveOverlappedRoom function, NextRoomLocation is modified
+			
 			if (IsEndSocketOverlapping(NextRoom,NextRoomLocation) || IsColliding(NextRoom, NextRoomLocation))
 			{
 				NextRoomLocation = IndexToWorld(StartIndex.X,StartIndex.Y) + FVector(0,0,1);
 				MoveOverlappedRoom(NextRoom, NextRoomLocation);
+				NextRoom->IsOverlapped = true; 
 			}
 				
-				TArray<FIntPoint> BlockedTiles = BlockAndRetrieveTiles(NextRoom,NextRoomLocation);
+				// TArray<FIntPoint> BlockedTiles = BlockAndRetrieveTiles(NextRoom,NextRoomLocation);
 				FVector RelativeLoc = NextRoom->DoorSocketExit->GetRelativeLocation();
 				RelativeLoc.Y = -RelativeLoc.Z;
 				RelativeLoc.Z = 0;
 				FVector Pos = NextRoomLocation + RelativeLoc;
 				FIntPoint Start2 = WorldToIndex(Pos);
 
-				if (FindCorridorPath(Start2.X, Start2.Y, EndIndex.X, EndIndex.Y, NextRoom->PathStartOffset, NextRoom->PathEndOffset, false, 10000))
+				if (FindCorridorPath(Start2.X, Start2.Y, EndIndex.X, EndIndex.Y - 1, NextRoom->PathStartOffset, NextRoom->PathEndOffset, false, 1000))
 				{
 					ValidRooms.Add(NextRoom);
-					PathCost.Add(FoundPathCost);	
+					PathCost.Add(FoundPathCost);
 				}
-				else
-				{
-					for (int x = 0; x < MapSizeX; ++x)
-					{
-						for (int y = 0; y < MapSizeY; ++y)
-						{
-							Tiles[x][y].Visited = false;
-						}
-					}
-					if (FindCorridorPath(Start2.X, Start2.Y, EndIndex.X, EndIndex.Y, NextRoom->PathStartOffset, NextRoom->PathEndOffset, false, 10000))
-					{
-						ValidRooms.Add(NextRoom);
-						PathCost.Add(FoundPathCost);
-					}
-
-				}
-
+				// else
+				// {
+				// 	ResetAllVisited();
+				// 	if (FindCorridorPath(Start2.X, Start2.Y, EndIndex.X, EndIndex.Y - 1, NextRoom->PathStartOffset, NextRoom->PathEndOffset, false, 1000))
+				// 	{
+				// 		ValidRooms.Add(NextRoom);
+				// 		PathCost.Add(FoundPathCost);
+				// 	}
+				// }
 				//After pathfinding attempt, unblock the tiles because room is not spawned yet. But to make pathfinding correct, it was required to be set as blocked. 
-				for (auto BlockedTile : BlockedTiles)
-				{
-					Tiles[BlockedTile.X][BlockedTile.Y].Blocked = false;
-				}
+				// for (auto BlockedTile : BlockedTiles)
+				// {
+				// 	Tiles[BlockedTile.X][BlockedTile.Y].Blocked = false;
+				// 	Tiles[BlockedTile.X][BlockedTile.Y].Visited = false;
+				// }
+
+			
 			}
 	}
 
@@ -588,69 +579,96 @@ void AProceduralGeneration::SpawnRoomForBranchConnection(FName Tag, FIntPoint St
 	ARoomActor* NextRoom = ValidRooms[MinIndex];
 	if (!NextRoom) return;
 	
-	if (CurrentDistance < PreviousDistance || CurrentDistance == PreviousDistance ) //If we still can get close 
+	//alernative part
+	NextRoom = GetWorld()->SpawnActor<ARoomActor>(NextRoom->GetClass(), NextRoomLocation, Rotation);
+	SetTilesBlocked(NextRoom,NextRoomLocation);
+
+	if (NextRoom->IsOverlapped)
 	{
-		NextRoomExitTag = NextRoom->DoorSocketExit->ComponentTags[0]; //Just useful to spawning corridors. Nothing to do with rooms
-		NextRoomEnterTag = NextRoom->DoorSocketEnter->ComponentTags[0];
-
-		//If room overlaps at previous room's door exit location 
-		if (!IsEndSocketOverlapping(NextRoom,NextRoomLocation) && !IsColliding(NextRoom, NextRoomLocation))
-		{
-			NextRoom = GetWorld()->SpawnActor<ARoomActor>(NextRoom->GetClass(), NextRoomLocation, Rotation);
-			SetTilesBlocked(NextRoom,NextRoomLocation);
-
-			LastSpawnedRoom = NextRoom;
-			if (LastSpawnedRoom->ActorHasTag("LargeRoom")) LargeRoomCounter++;
-			SetSocketExclusion(LastSpawnedRoom);
-			CurrentDistance = FVector::Distance(LastSpawnedRoom->DoorSocketExit->GetComponentLocation(), TargetLoc);
-			// GetWorld()->SpawnActor<ADoorActor>(Door,LastSpawnedRoom->DoorSocketExit->GetComponentLocation(), Rotation);
-		}
-		else
-		{
-			MoveOverlappedRoom(NextRoom, NextRoomLocation);
-			NextRoom = GetWorld()->SpawnActor<ARoomActor>(NextRoom->GetClass(), NextRoomLocation, Rotation);
-			SetTilesBlocked(NextRoom,NextRoomLocation);
-
-			// After spawning a room, store the connection information:
-			Connection.StartPoint = LastSpawnedRoom->DoorSocketExit->GetComponentLocation();
-			Connection.EndPoint = NextRoom->DoorSocketEnter->GetComponentLocation();
-			Connection.PathEndOffset = NextRoom->PathEndOffset;
-			Connection.PathStartOffset = LastSpawnedRoom->PathStartOffset;
-			Connection.MaxCheckAmount = DetermineSafeCheckAmount(NextRoom);
-
-			SetSocketExclusion(NextRoom);
-			RoomConnections.Add(Connection);
-			ConnectRoomsWithCorridors();
-
-			LastSpawnedRoom = NextRoom;
-			if (LastSpawnedRoom->ActorHasTag("LargeRoom")) LargeRoomCounter++;
-			CurrentDistance = FVector::Distance(LastSpawnedRoom->DoorSocketExit->GetComponentLocation(), TargetLoc);
-			// GetWorld()->SpawnActor<ADoorActor>(Door,LastSpawnedRoom->DoorSocketExit->GetComponentLocation(), Rotation);
-		}
-
-		if (CurrentDistance > PreviousDistance && CurrentDistance != PreviousDistance)
-		{
-				// We're not getting closer, so stop the recursion and spawn a corridor.
-				FIntPoint Start = WorldToIndex(LastSpawnedRoom->DoorSocketExit->GetComponentLocation());
-				FIntPoint End = WorldToIndex(TargetLoc);
-				FindCorridorPath(Start.X,Start.Y,End.X,End.Y,Connection.PathStartOffset,Connection.PathEndOffset,true, 10000); //This means we spawn corridor
-				return; // Ensure we exit the function
-		}
+		Connection.StartPoint = LastSpawnedRoom->DoorSocketExit->GetComponentLocation();
+		Connection.EndPoint = NextRoom->DoorSocketEnter->GetComponentLocation();
+		Connection.PathEndOffset = NextRoom->PathEndOffset;
+		Connection.PathStartOffset = LastSpawnedRoom->PathStartOffset;
+		Connection.MaxCheckAmount = DetermineSafeCheckAmount(NextRoom);
+		RoomConnections.Add(Connection);
+		ConnectRoomsWithCorridors();
 	}
-	else //Here also means we cannot get closer. 
-	{
-		// We're not getting closer, so stop the recursion and spawn a corridor.
-		FIntPoint Start = WorldToIndex(LastSpawnedRoom->DoorSocketExit->GetComponentLocation());
-		FIntPoint End = WorldToIndex(TargetLoc);
-		FindCorridorPath(Start.X,Start.Y,End.X,End.Y,Connection.PathStartOffset,Connection.PathEndOffset,true, 10000); //This means we spawn corridor
-		return; // Ensure we exit the function
-	}
-
-	PreviousDistance = CurrentDistance;
-	FName DoorSocketExitTag = ExpectedTag(FName(LastSpawnedRoom->DoorSocketExit->ComponentTags[0]));
+	
+	SetSocketExclusion(NextRoom);
+	LastSpawnedRoom = NextRoom;
 
 	// Now make the recursive call, since we're still making progress towards the target.
-	SpawnRoomForBranchConnection(DoorSocketExitTag,WorldToIndex(LastSpawnedRoom->DoorSocketExit->GetComponentLocation()) + LastSpawnedRoom->PathStartOffset, EndIndex);
+	RecursiveCallAmount++;
+	if (RecursiveCallAmount == 2)
+	{
+		return;
+	}
+	SpawnRoomForBranchConnection(ExpectedTag(LastSpawnedRoom->DoorSocketExit->ComponentTags[0]),WorldToIndex(LastSpawnedRoom->DoorSocketExit->GetComponentLocation()) + LastSpawnedRoom->PathStartOffset, EndIndex);
+
+
+	// if (CurrentDistance < PreviousDistance || CurrentDistance == PreviousDistance ) //If we still can get close 
+	// {
+	// 	NextRoomExitTag = NextRoom->DoorSocketExit->ComponentTags[0]; //Just useful to spawning corridors. Nothing to do with rooms
+	// 	NextRoomEnterTag = NextRoom->DoorSocketEnter->ComponentTags[0];
+	//
+	// 	//If room overlaps at previous room's door exit location  //TODO: I Cannot understand why we wrote this entire thing. Don't we already checked before if it not overlaps already
+	// 	if (!IsEndSocketOverlapping(NextRoom,NextRoomLocation) && !IsColliding(NextRoom, NextRoomLocation))
+	// 	{
+	// 		NextRoom = GetWorld()->SpawnActor<ARoomActor>(NextRoom->GetClass(), NextRoomLocation, Rotation);
+	// 		SetTilesBlocked(NextRoom,NextRoomLocation);
+	//
+	// 		LastSpawnedRoom = NextRoom;
+	// 		if (LastSpawnedRoom->ActorHasTag("LargeRoom")) LargeRoomCounter++;
+	// 		SetSocketExclusion(LastSpawnedRoom);
+	// 		CurrentDistance = FVector::Distance(LastSpawnedRoom->DoorSocketExit->GetComponentLocation(), IndexToWorld(EndIndex.X, EndIndex.Y));
+	// 		// GetWorld()->SpawnActor<ADoorActor>(Door,LastSpawnedRoom->DoorSocketExit->GetComponentLocation(), Rotation);
+	// 	}
+	// 	else
+	// 	{ //I doubt here will be ever needed cuz we already make all the collision check before. 
+	// 		MoveOverlappedRoom(NextRoom, NextRoomLocation);
+	// 		NextRoom = GetWorld()->SpawnActor<ARoomActor>(NextRoom->GetClass(), NextRoomLocation, Rotation);
+	// 		SetTilesBlocked(NextRoom,NextRoomLocation);
+	//
+	// 		// After spawning a room, store the connection information:
+	// 		Connection.StartPoint = LastSpawnedRoom->DoorSocketExit->GetComponentLocation();
+	// 		Connection.EndPoint = NextRoom->DoorSocketEnter->GetComponentLocation();
+	// 		Connection.PathEndOffset = NextRoom->PathEndOffset;
+	// 		Connection.PathStartOffset = LastSpawnedRoom->PathStartOffset;
+	// 		Connection.MaxCheckAmount = DetermineSafeCheckAmount(NextRoom);
+	//
+	// 		SetSocketExclusion(NextRoom);
+	// 		RoomConnections.Add(Connection);
+	// 		ConnectRoomsWithCorridors();
+	//
+	// 		LastSpawnedRoom = NextRoom;
+	// 		if (LastSpawnedRoom->ActorHasTag("LargeRoom")) LargeRoomCounter++;
+	// 		CurrentDistance = FVector::Distance(LastSpawnedRoom->DoorSocketExit->GetComponentLocation(), IndexToWorld(EndIndex.X, EndIndex.Y));
+	// 		// GetWorld()->SpawnActor<ADoorActor>(Door,LastSpawnedRoom->DoorSocketExit->GetComponentLocation(), Rotation);
+	// 	}
+	//
+	// 	if (CurrentDistance > PreviousDistance && CurrentDistance != PreviousDistance)
+	// 	{
+	// 			// We're not getting closer, so stop the recursion and spawn a corridor.
+	// 			FIntPoint Start = WorldToIndex(LastSpawnedRoom->DoorSocketExit->GetComponentLocation());
+	// 			FIntPoint End = WorldToIndex(IndexToWorld(EndIndex.X, EndIndex.Y));
+	// 			FindCorridorPath(Start.X,Start.Y,End.X,End.Y,Connection.PathStartOffset,Connection.PathEndOffset,true, 10000); //This means we spawn corridor
+	// 			return; // Ensure we exit the function
+	// 	}
+	// }
+	// else //Here also means we cannot get closer. 
+	// {
+	// 	// We're not getting closer, so stop the recursion and spawn a corridor.
+	// 	FIntPoint Start = WorldToIndex(LastSpawnedRoom->DoorSocketExit->GetComponentLocation());
+	// 	FIntPoint End = WorldToIndex(IndexToWorld(EndIndex.X, EndIndex.Y));
+	// 	FindCorridorPath(Start.X,Start.Y,End.X,End.Y,Connection.PathStartOffset,Connection.PathEndOffset,true, 10000); //This means we spawn corridor
+	// 	return; // Ensure we exit the function
+	// }
+	//
+	// PreviousDistance = CurrentDistance;
+	// FName DoorSocketExitTag = ExpectedTag(FName(LastSpawnedRoom->DoorSocketExit->ComponentTags[0]));
+	//
+	// // Now make the recursive call, since we're still making progress towards the target.
+	// SpawnRoomForBranchConnection(DoorSocketExitTag,WorldToIndex(LastSpawnedRoom->DoorSocketExit->GetComponentLocation()) + LastSpawnedRoom->PathStartOffset, EndIndex);
 }
 
 ARoomActor* AProceduralGeneration::SpawnFirstBranchRoom(FName Tag, FVector SpawnLoc, USceneComponent* SceneComp, ARoomActor* LargeRoom, TArray<ARoomActor*>& RoomsToBeAdded)
@@ -933,9 +951,7 @@ bool AProceduralGeneration::FindCorridorPath(int StartX, int StartY, int GoalX, 
 	Start->Visited = true;
 	Start->HCost = FPathNode::GetHCost(StartX, StartY, GoalX, GoalY);
 	OpenList.Add(Start);
-
 	
-
 	while (OpenList.Num() > 0 && SafeCheck < MaxIterationAmount)
 	{
 		// Find the node with the smallest FCost
@@ -975,12 +991,6 @@ bool AProceduralGeneration::FindCorridorPath(int StartX, int StartY, int GoalX, 
 					{
 						return false; 
 					}
-				}
-
-				if (!PathSequence.IsEmpty())
-				{
-					PathEnd = PathSequence[0];
-					PathStart = PathSequence[PathSequence.Num() -2];
 				}
 			}
 
@@ -1050,6 +1060,9 @@ bool AProceduralGeneration::FindCorridorPath(int StartX, int StartY, int GoalX, 
 	}
 	return false; 
 }
+
+//Different one I don't fucking care anything anymore
+
 
 
 void AProceduralGeneration::SpawnCorridors(int goalX, int goalY)
@@ -1344,7 +1357,7 @@ void AProceduralGeneration::SetSocketExclusion(ARoomActor* Room)
 {
 	//Enter
 	FIntPoint Index = WorldToIndex(Room->DoorSocketEnter->GetComponentLocation());
-	// if (VisualizeEnterAndExitPathStartTile)
+	// if (VisualizeBeginAndEndTiles)
 	// {
 	// 	DrawDebugBox(GetWorld(),Tiles[Index.X + Room->PathStartOffset.X][Index.Y + Room->PathStartOffset.Y].Location + FVector(TileSizeX/2,TileSizeY/2,0),FVector(TileSizeX/2,TileSizeY/2,TileSizeY/2),FColor::Cyan,true);
 	// }
@@ -1373,7 +1386,7 @@ void AProceduralGeneration::SetSocketExclusion(ARoomActor* Room)
 	TArray<FIntPoint> exitExclusions = Room->ExitExclusions;
 	
 	Index = WorldToIndex(Room->DoorSocketExit->GetComponentLocation());
-	// if (VisualizeEnterAndExitPathStartTile)
+	// if (VisualizeBeginAndEndTiles)
 	// {
  // 		DrawDebugBox(GetWorld(),Tiles[Index.X + Room->PathEndOffset.X][Index.Y + Room->PathEndOffset.Y].Location + FVector(TileSizeX/2,TileSizeY/2,0),FVector(TileSizeX/2,TileSizeY/2,TileSizeY/2),FColor::Cyan,true);
 	// }

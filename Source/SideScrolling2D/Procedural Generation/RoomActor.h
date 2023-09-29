@@ -49,6 +49,8 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions")
 	FIntPoint ExitSocketCheck; 
 
+	//Just will be used with Branch Connection
+	bool IsOverlapped;
 	
 	
 private:
