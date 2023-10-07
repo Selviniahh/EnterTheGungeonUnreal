@@ -7,6 +7,7 @@
 #include "RoomActor.generated.h"
 
 
+class ADoorActor;
 class UBoxComponent;
 class UPaperTileMap;
 
@@ -18,9 +19,16 @@ class SIDESCROLLING2D_API ARoomActor : public AActor
 public:
 	// Sets default values for this actor's properties
 	ARoomActor();
+	bool CheckFirstTagValid(USceneComponent* SceneComp) const;
 
-	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	UPROPERTY()
 	int PathCost = 0;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TSubclassOf<ADoorActor> EnterDoor;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TSubclassOf<ADoorActor> ExitDoor;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	USceneComponent* RootScene;
@@ -47,11 +55,20 @@ public:
 	TArray<FIntPoint> ExitExclusions;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions")
-	FIntPoint ExitSocketCheck; 
+	TArray<FIntPoint> ExitSocketChecks;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions")
+	FIntPoint ExitSocketCheckOffset;
+	
+	TArray<FString> ValidTags;
+	mutable TWeakObjectPtr<UActorComponent> LastWarnedComponent;
 
 	//Just will be used with Branch Connection
 	bool IsOverlapped;
 	
+	// virtual bool CanEditChange(const FEditPropertyChain& PropertyChain) const override;
+	// virtual bool CanEditChange(const FProperty* InProperty) const override;
+	virtual bool CanEditChangeComponent(const UActorComponent* Component, const FProperty* InProperty) const override;
 	
 private:
 

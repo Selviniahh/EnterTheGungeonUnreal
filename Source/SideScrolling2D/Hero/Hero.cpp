@@ -2,6 +2,7 @@
 
 
 #include "Hero.h"
+#include "GameFramework/PlayerController.h"
 #include "PaperFlipbookComponent.h"
 #include "PaperZDAnimationComponent.h"
 #include "EnhancedInputComponent.h"
@@ -9,6 +10,7 @@
 #include "SideScrolling2D/Guns/GunBase.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
+#include "Engine/LocalPlayer.h"
 
 // Sets default values
 AHero::AHero()

@@ -21,6 +21,8 @@ struct FRoomConnection
 	FIntPoint PathStartOffset; 
 	FIntPoint PathEndOffset;
 	int MaxCheckAmount;
+
+	FString RoomName;
 };
 
 UENUM()
@@ -95,8 +97,8 @@ public:
 	TSubclassOf<ARoomActor> StraightCorr;
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<ARoomActor> TurnCorridor;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TSubclassOf<ADoorActor> Door;
+	// UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	// TSubclassOf<ADoorActor> Door;
 
 	UPROPERTY()
 	TArray<ARoomActor*> LargeRooms;
@@ -132,8 +134,8 @@ public:
 	int BufferSize = 6;
 
 	/*Not yet implemented*/
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 9))
-	int MaxPathCostLimit = 1000;
+	// UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 9))
+	// int MaxPathCostLimit = 1000;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 10))
 	int NormalRoomMaxSafeCheck = 5000;
@@ -180,9 +182,6 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 8))
 	bool VisualizeAllExclusions = false;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 9))
-	bool VisualiseEndSocketCheck = false;
-
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 10))
 	bool VisualizeEndSocketOverlapCheck = false;
 
@@ -193,10 +192,15 @@ public:
 	/* Stored to make calculations for Last Spawned Room. (Connect LastSpawnedRoom's exit socket with new room)*/
 	UPROPERTY()
 	ARoomActor* LastSpawnedRoom;
+	
 
 	/* Stored to make calculations for Last Spawned LARGE Room.*/
 	UPROPERTY()
 	ARoomActor* LastSpawnLargeRoom;
+
+	/*for IsEndSocketOverlapping, don't display message box more than once for same rooms*/
+	UPROPERTY()
+	ARoomActor* LastCheckedRoom = nullptr;
 
 	/*2D tiles array for make all the tile checks like assigning each tile as blocked or finding a* costs.*/
 	TArray<TArray<FTileStruct>> Tiles;
@@ -225,75 +229,91 @@ public:
 	/*First room Start location is set to be center of the map (map size /2). Later on make it */
 	FVector FirstRoomStartLoc;
 	int SafeCheckAmount;
-	
-	//Testing
-// #if	WITH_EDITOR || UE_BUILD_DEBUG
-	bool bGenCompleteTest = false;
-	bool NotValid = false;
-// #endif
 
 	/*After the overlapped room is moved to appropriate location, with given necessary information, it will make pathfinding from previous room's exit socket to new spawned overlapped room's enter location
 	 * Responsible to call FindCorridorPath
 	 */
-	void ConnectRoomsWithCorridors();
-	void MakeSideBranchFromLargeRoom();
-	void MakeBranchConnection();
-
-	/*For large rooms that has multiple exits, to make socket exclusion, in BP editor declare an IntPoint named "SceneComponentName_Exclude" and give exclusions.*/
-	void SocketExclusionForLargeRoom(ARoomActor* Room);
-
-	/*Not working correct. I'll take a look later on. */
-	void OffsetLargeRoomSceneComps(ARoomActor* Room, USceneComponent& SceneComp1,USceneComponent& SceneComp2, FIntPoint& Start, FIntPoint& End);
 	
 	/*Based on previous spawned rooms exit socket tag, it will try to spawn a room with correct corresponded tag.  */
 	void GenerateMap();
-	
-	int DetermineSafeCheckAmount(ARoomActor* NextRoom) const;
 
-	/*There might be always edge cases where a room is spawned without overlap but there's not enough space left to make a connection from end socket to another room's enter socket. To prevent this problem,
-	 *it will be checked end socket has minimum 3 available tile buffer width. If not, the room will be acted as overlapped*/
-	bool IsEndSocketOverlapping(ARoomActor* NextRoom, const FVector& SpawnLoc);
+	/*Before spawning any room, Tiles array that will be used for entire checks will be initialized. */
+	void InitWorldTiles();
 
 	/*Place where most of the functions are used. It'll try to spawn if not collided. If collided, Make all the collision & tile checks and spawn corridor to connect them.*/
 	void SpawnRoom(FName Tag);
 
 	
-	void SpawnRoomForBranchConnection(FName Tag, FIntPoint StartIndex, FIntPoint EndIndex);
+	/*Collision check with calculating the given room actor's box component's area that will occupy before spawning the room. If the area the room is meant to spawn already marked as "Blocked" from Tiles array, true will be returned */
+	bool IsColliding(ARoomActor* Room, FVector SpawnLoc);
+
+	/*There might be always edge cases where a room is spawned without overlap but there's not enough space left to make a connection from end socket to another room's enter socket. To prevent this problem,
+	 *it will be checked end socket has minimum 3 available tile buffer width. If not, the room will be acted as overlapped*/
+	bool IsEndSocketOverlapping(ARoomActor* NextRoom, const FVector& SpawnLoc);
+
+	/**Checks if the buffer zone around a given room collides in the world. //Same as IsColliding. Just setting given indexes to be blocked.*/
+	bool IsBufferZoneColliding(ARoomActor* Room, FVector SpawnLoc);
+
+	/*After the room is spawned, set the spawned room's occupied positions as blocked for tile array indexes.*/
+	void SetTilesBlocked(ARoomActor* Room, FVector SpawnLoc);
+	
+	/**For Socket enter and exit, given amounts will be discarded from tiles and unmark as blocked.*/
+	void SetSocketExclusion(ARoomActor* Room);
+
+	/*After it overlapped with a room, the room will be moved to non overlapping position.*/
+	bool MoveOverlappedRoom(ARoomActor* NextRoom,  FVector& NextRoomLocation);
+
+	void ConnectRoomsWithCorridors();
+
+	/*After a room is overlapped and it moved to another position where it doesn't overlap anymore, a path will be try to be found from previous room's door socket exit to new room's door socket enter with using a* pathfinding. */
+	bool FindCorridorPath(int StartX, int StartY, int GoalX, int GoalY, FIntPoint StartOffset, FIntPoint EndOffset, bool SpawnCorr, int MaxIterationAmount, FString RoomName);
+
+	/*After pathfinding is finished, it will spawn the corridors on the found path*/
+	void SpawnCorridors(int goalX, int goalY);
+
+	/*Number of how many checks it should make for different kind of rooms. If the given amount is exceed, IsColliding function will abort */
+	int DetermineSafeCheckAmount(ARoomActor* NextRoom) const;
 
 	/*Similar how SpawnRoom works but meant to spawn a room for eventually making a connection from one LargeRoom's scene comp to closest LargeRoom's scene comp*/
 	ARoomActor* SpawnFirstBranchRoom(FName Tag, FVector SpawnLoc, USceneComponent* SceneComponent, ARoomActor* LargeRoom, TArray<ARoomActor*>& RoomsToBeAdded);
 	
 	ARoomActor* SpawnBranchRoom(FName Tag, int SpawnCounter, TArray<ARoomActor*>& RoomsToBeAdded);
 
+	/*For large rooms that has multiple exits, to make socket exclusion, in BP editor declare an IntPoint named "SceneComponentName_Exclude" and give exclusions.*/
+	void SocketExclusionForLargeRoom(ARoomActor* Room);
+	
+	void MakeSideBranchFromLargeRoom();
 
-	/*Before spawning any room, Tiles array that will be used for entire checks will be initialized. */
-	void InitWorldTiles();
-	
-	/*After a room is overlapped and it moved to another position where it doesn't overlap anymore, a path will be try to be found from previous room's door socket exit to new room's door socket enter with using a* pathfinding. */
-	bool FindCorridorPath(int StartX, int StartY, int GoalX, int GoalY, FIntPoint StartOffset, FIntPoint EndOffset, bool SpawnCorr, int MaxIterationAmount);
-	
-	/*After pathfinding is finished, it will spawn the corridors on the found path*/
-	void SpawnCorridors(int goalX, int goalY);
-	
-	/*Collision check with calculating the given room actor's box component's area that will occupy before spawning the room. If the area the room is meant to spawn already marked as "Blocked" from Tiles array, true will be returned */
-	bool IsColliding(ARoomActor* Room, FVector SpawnLoc);
-	
-	/**Checks if the buffer zone around a given room collides in the world.*/
-	bool IsBufferZoneColliding(ARoomActor* Room, FVector SpawnLoc);
-	
-	/**For Socket enter and exit, given amounts will be discarded from tiles and unmark as blocked.*/
-	void SetSocketExclusion(ARoomActor* Room);
-	
-	/*After it overlapped with a room, the room will be moved to non overlapping position.*/
-	bool MoveOverlappedRoom(ARoomActor* NextRoom,  FVector& NextRoomLocation);
-	
-	/*After the room is spawned, set the spawned room's occupied positions as blocked for tile array indexes.*/
-	void SetTilesBlocked(ARoomActor* Room, FVector SpawnLoc);
+	void MakeBranchConnection();
+
+
+	/*Not working correct. I'll take a look later on. */
+	void OffsetLargeRoomSceneComps(ARoomActor* Room, USceneComponent& SceneComp1,USceneComponent& SceneComp2, FIntPoint& Start, FIntPoint& End);
+
+
+	void SpawnRoomForBranchConnection(FName Tag, FIntPoint StartIndex, FIntPoint EndIndex);
+
 
 	/*Same as SetTilesBlocked. But it returns blocked ones to be reverted back shortly. Designed to be used with SpawnRoomForBranchConnection*/
 	TArray<FIntPoint> BlockAndRetrieveTiles(ARoomActor* Room, FVector SpawnLoc);
 
-	void IncrementCounterIfLargeRoomSpawned();
+	//Visualizing
+	void VisualizeBeginEndTiles(ARoomActor* NextRoom, FRoomConnection Connection);
+
+	/*Bypass debug spawning NoExitRoom */
+	inline bool CanIgnoreExitRoomSpawning(ARoomActor* NextRoom)
+	{
+		if (RoomSequence.Num() > 0)
+		{
+			return true; 
+		}
+		
+		if (NextRoom->ActorHasTag("NoExit"))
+		{
+			return false;
+		}
+		return true;
+	}
 
 	/*After a path found, it's required to reset all visited for A* pathfinding*/
 	inline void ResetAllVisited()
@@ -311,15 +331,6 @@ public:
 	inline bool IsValid(int x, int y)
 	{
 		return x >= 0 && x < MapSizeX && y >= 0 && y < MapSizeY;
-	}
-
-	/*Test Only.*/
-	inline void SetFlagIfNotValid(int x, int y)
-	{
-		if (!IsValid(x,y))
-		{
-			NotValid = true;
-		}
 	}
 
 	/*Convert given relative index points to world location */
