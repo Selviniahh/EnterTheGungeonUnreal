@@ -193,7 +193,6 @@ public:
 	UPROPERTY()
 	ARoomActor* LastSpawnedRoom;
 	
-
 	/* Stored to make calculations for Last Spawned LARGE Room.*/
 	UPROPERTY()
 	ARoomActor* LastSpawnLargeRoom;
@@ -201,6 +200,9 @@ public:
 	/*for IsEndSocketOverlapping, don't display message box more than once for same rooms*/
 	UPROPERTY()
 	ARoomActor* LastCheckedRoom = nullptr;
+
+	/*Which room set as blocked*/
+	TMap<TWeakObjectPtr<ARoomActor>, TArray<FIntPoint>> RoomExclusions;
 
 	/*2D tiles array for make all the tile checks like assigning each tile as blocked or finding a* costs.*/
 	TArray<TArray<FTileStruct>> Tiles;
@@ -229,6 +231,7 @@ public:
 	/*First room Start location is set to be center of the map (map size /2). Later on make it */
 	FVector FirstRoomStartLoc;
 	int SafeCheckAmount;
+	bool DrawOnce = true;
 
 	/*After the overlapped room is moved to appropriate location, with given necessary information, it will make pathfinding from previous room's exit socket to new spawned overlapped room's enter location
 	 * Responsible to call FindCorridorPath
@@ -266,7 +269,7 @@ public:
 	void ConnectRoomsWithCorridors();
 
 	/*After a room is overlapped and it moved to another position where it doesn't overlap anymore, a path will be try to be found from previous room's door socket exit to new room's door socket enter with using a* pathfinding. */
-	bool FindCorridorPath(int StartX, int StartY, int GoalX, int GoalY, FIntPoint StartOffset, FIntPoint EndOffset, bool SpawnCorr, int MaxIterationAmount, FString RoomName);
+	bool FindCorridorPath(int StartX, int StartY, int GoalX, int GoalY, FIntPoint StartOffset, FIntPoint EndOffset, bool SpawnCorr, int MaxIterationAmount, FString RoomName, int* PathCost = nullptr);
 
 	/*After pathfinding is finished, it will spawn the corridors on the found path*/
 	void SpawnCorridors(int goalX, int goalY);
@@ -277,7 +280,7 @@ public:
 	/*Similar how SpawnRoom works but meant to spawn a room for eventually making a connection from one LargeRoom's scene comp to closest LargeRoom's scene comp*/
 	ARoomActor* SpawnFirstBranchRoom(FName Tag, FVector SpawnLoc, USceneComponent* SceneComponent, ARoomActor* LargeRoom, TArray<ARoomActor*>& RoomsToBeAdded);
 	
-	ARoomActor* SpawnBranchRoom(FName Tag, int SpawnCounter, TArray<ARoomActor*>& RoomsToBeAdded);
+	ARoomActor* SpawnBranchRoom(FName Tag, int SpawnCounter, TArray<ARoomActor*>& RoomsToBeAdded, bool& EndBranch);
 
 	/*For large rooms that has multiple exits, to make socket exclusion, in BP editor declare an IntPoint named "SceneComponentName_Exclude" and give exclusions.*/
 	void SocketExclusionForLargeRoom(ARoomActor* Room);
@@ -451,15 +454,15 @@ public:
 	}
 	inline FRotator DetermineLastCorrRotation(EDirection2 LastDir)
 	{
-		if (LastDir == EDirection2::Dir_Up && NextRoomEnterTag == "SideLeft") return FRotator(0, 180, -90); //(Pitch=0.000000,Yaw=-179.999999,Roll=-90.000000) StraightDown
-		if (LastDir == EDirection2::Dir_Down && NextRoomEnterTag == "SideRight") return FRotator(0, 90, -90); //(Pitch=0.000000,Yaw=-90.000000,Roll=-90.000000)
+		if (LastDir == EDirection2::Dir_Up && NextRoomEnterTag == "SideLeft") return FRotator(0, 180, -90); 
+		if (LastDir == EDirection2::Dir_Down && NextRoomEnterTag == "SideRight") return FRotator(0, 90, -90);
 		if (LastDir == EDirection2::Dir_Left && NextRoomEnterTag == "StraightUp") return FRotator(0, -180, -90);
-		if (LastDir == EDirection2::Dir_Up && NextRoomEnterTag == "SideRight") return FRotator(0, 0, -90);
+		if (LastDir == EDirection2::Dir_Up && NextRoomEnterTag == "SideRight") return FRotator(0, -90, -90); //This has been changed
 		if (LastDir == EDirection2::Dir_Right && NextRoomEnterTag == "StraightUp") return FRotator(0, -180, -90);
 		if (LastDir == EDirection2::Dir_Right && NextRoomEnterTag == "StraightDown") return FRotator(0, 0, -90); 
 		if (LastDir == EDirection2::Dir_Right && NextRoomEnterTag == "SideLeft") return FRotator(0, 0, -90);
 		if (LastDir == EDirection2::Dir_Left && NextRoomEnterTag == "SideRight") return FRotator(0, 0, -90);
-		if (LastDir == EDirection2::Dir_Down && NextRoomEnterTag == "StraightUp") return FRotator(0, 180, -90); //(Pitch=0.000000,Yaw=-90.000000,Roll=-90.000000)
+		if (LastDir == EDirection2::Dir_Down && NextRoomEnterTag == "StraightUp") return FRotator(0, 180, -90);
 		if (LastDir == EDirection2::Dir_Down && NextRoomEnterTag == "SideLeft") return FRotator(0, 90, -90); 
 		if (LastDir == EDirection2::Dir_Up && NextRoomEnterTag == "StraightDown") return FRotator(0, 90, -90);
 		if (LastDir == EDirection2::Dir_Left && NextRoomEnterTag == "StraightDown") return FRotator(0, 90, -90);

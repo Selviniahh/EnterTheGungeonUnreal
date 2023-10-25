@@ -359,7 +359,10 @@ void AProceduralMap::SpawnCorridors(int goalX, int goalY)
 			FRotator FirstCorrRot = DetermineFirstTurnRotation(NextDir);
 			
 			//Assigning rot is done. Now spawn turned corr
-			GetWorld()->SpawnActor(TurnCorridor, &SpawnLoc, &FirstCorrRot);
+			if (FirstCorrRot != FRotator(31,31,31))
+			{
+				GetWorld()->SpawnActor(TurnCorridor, &SpawnLoc, &FirstCorrRot);
+			}
 		}
 		
 		Results.Add(LocStack.top());
@@ -392,7 +395,10 @@ void AProceduralMap::SpawnCorridors(int goalX, int goalY)
 		{
 			// Assuming TurnCorridor has the right rotation logic inside it
 			FRotator TurnCorrRot = DetermineTurnRotation(CurrDir, NextDir);
-			GetWorld()->SpawnActor(TurnCorridor, &SpawnLoc, &TurnCorrRot);
+			if (TurnCorrRot != FRotator(31,31,31))
+			{
+				GetWorld()->SpawnActor(TurnCorridor, &SpawnLoc, &TurnCorrRot);
+			}
 		}
 		Results.Add(LocStack.top());
 		LocStack.pop();
@@ -404,9 +410,9 @@ void AProceduralMap::SpawnCorridors(int goalX, int goalY)
 	FVector SpawnLoc = LocStack.top() - FVector(TileSizeX / 2, TileSizeY /2, 0);
 	FRotator LastCorrRot = DetermineLastCorrRotation(CurrDir);
 	
-	if (CurrDir == ConvertNextRoomExitTagToDirection())
+	if (CurrDir == ConvertNextRoomExitTagToDirection() && LastCorrRot != FRotator(31,31,31))
 		GetWorld()->SpawnActor(StraightCorr, &SpawnLoc, &RotStack.top());
-	else
+	else if (LastCorrRot != FRotator(31,31,31))
 		GetWorld()->SpawnActor(TurnCorridor, &SpawnLoc, &LastCorrRot);
 	
 	Results.Add(LocStack.top());

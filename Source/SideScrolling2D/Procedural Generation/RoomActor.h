@@ -29,6 +29,12 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<ADoorActor> ExitDoor;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TSubclassOf<ADoorActor> NoExitDoorSide;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TSubclassOf<ADoorActor> NoExitDoorStraight;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	USceneComponent* RootScene;
@@ -48,28 +54,46 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	FIntPoint PathEndOffset;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions")
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions", meta=(DisplayPriority = 1))
 	TArray<FIntPoint> EnterExclusions;
-	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions")
-	TArray<FIntPoint> ExitExclusions;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions")
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions", meta=(DisplayPriority = 2))
+	TArray<FIntPoint> ExitExclusions;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions", meta=(DisplayPriority = 3))
+	FIntPoint EnterExclusionOffset;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions", meta=(DisplayPriority = 4))
+	FIntPoint ExitExclusionOffset;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions", meta=(DisplayPriority = 5))
 	TArray<FIntPoint> ExitSocketChecks;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions")
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Exclusions", meta=(DisplayPriority = 6))
 	FIntPoint ExitSocketCheckOffset;
 	
 	TArray<FString> ValidTags;
-	mutable TWeakObjectPtr<UActorComponent> LastWarnedComponent;
+	// mutable TWeakObjectPtr<UActorComponent> LastWarnedComponent;
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool VisualizeBlocked = false;
+
+	UFUNCTION(BlueprintCallable)
+	void VisualizeAllBlocked();
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool VisualizeBeginAndEndTiles = false;
+
+	UFUNCTION(BlueprintCallable)
+	void VisualizeBeginEndTiles();
+	
 	//Just will be used with Branch Connection
 	bool IsOverlapped;
 	
 	// virtual bool CanEditChange(const FEditPropertyChain& PropertyChain) const override;
 	// virtual bool CanEditChange(const FProperty* InProperty) const override;
-	virtual bool CanEditChangeComponent(const UActorComponent* Component, const FProperty* InProperty) const override;
-	
+	// virtual bool CanEditChangeComponent(const UActorComponent* Component, const FProperty* InProperty) const override;
+
 private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Components, meta=(AllowPrivateAccess="true"))
