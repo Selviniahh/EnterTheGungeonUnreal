@@ -390,19 +390,19 @@ public:
 		}
 		else if (LastSpawnedRoom->DoorSocketExit->ComponentHasTag("SideLeft"))
 		{
-			if (NextDir == Dir_Down) return FRotator(0, 0, -90);
+			if (NextDir == Dir_Down) return FRotator(0, -180, -90);
 			if (NextDir == Dir_Up) return FRotator(0, -90, -90);
 		}
 
 		else if (LastSpawnedRoom->DoorSocketExit->ComponentHasTag("StraightUp"))
 		{
 			if (NextDir == Dir_Right) return FRotator(0, 0, -90);
-			if (NextDir == Dir_Left) 	return FRotator(0, -270, -90);
+			if (NextDir == Dir_Left) 	return FRotator(0, -90, -90);
 		}
 
 		else if (LastSpawnedRoom->DoorSocketExit->ComponentHasTag("StraightDown"))
 		{
-			if (NextDir == Dir_Right)	return  FRotator(0, -90, -90);
+			if (NextDir == Dir_Right)	return  FRotator(0, -270, -90);
 			if (NextDir == Dir_Left) 	return FRotator(0, 0, -90);
 		}
 		return FRotator(31,31,31);
@@ -455,7 +455,7 @@ public:
 	inline FRotator DetermineLastCorrRotation(EDirection2 LastDir)
 	{
 		if (LastDir == EDirection2::Dir_Up && NextRoomEnterTag == "SideLeft") return FRotator(0, 180, -90); 
-		if (LastDir == EDirection2::Dir_Down && NextRoomEnterTag == "SideRight") return FRotator(0, 90, -90);
+		if (LastDir == EDirection2::Dir_Down && NextRoomEnterTag == "SideRight") return FRotator(0, 0, -90);
 		if (LastDir == EDirection2::Dir_Left && NextRoomEnterTag == "StraightUp") return FRotator(0, -180, -90);
 		if (LastDir == EDirection2::Dir_Up && NextRoomEnterTag == "SideRight") return FRotator(0, -90, -90); //This has been changed
 		if (LastDir == EDirection2::Dir_Right && NextRoomEnterTag == "StraightUp") return FRotator(0, -180, -90);
