@@ -284,15 +284,11 @@ public:
 
 	/*For large rooms that has multiple exits, to make socket exclusion, in BP editor declare an IntPoint named "SceneComponentName_Exclude" and give exclusions.*/
 	void SocketExclusionForLargeRoom(ARoomActor* Room);
-	
+	FIntPoint GetOffsetFromGivenVarName(ARoomActor* Room);
+
 	void MakeSideBranchFromLargeRoom();
 
 	void MakeBranchConnection();
-
-
-	/*Not working correct. I'll take a look later on. */
-	void OffsetLargeRoomSceneComps(ARoomActor* Room, USceneComponent& SceneComp1,USceneComponent& SceneComp2, FIntPoint& Start, FIntPoint& End);
-
 
 	void SpawnRoomForBranchConnection(FName Tag, FIntPoint StartIndex, FIntPoint EndIndex);
 
