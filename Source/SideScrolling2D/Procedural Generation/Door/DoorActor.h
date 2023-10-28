@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "DoorActor.generated.h"
 
+class AHero;
 class UBoxComponent;
 class UPaperFlipbookComponent;
 
@@ -30,7 +31,13 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	UBoxComponent* BoxComponent;
 
+	bool IsOverlapping = false;
+
 protected:
+	UFUNCTION()
+	void OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	void OnBoxComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 

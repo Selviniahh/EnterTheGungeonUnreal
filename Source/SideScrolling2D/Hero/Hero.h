@@ -20,6 +20,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 	TEnumAsByte<EDirections> CurrentDirection;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UPaperFlipbookComponent* FlipBook;
 	
 	UPROPERTY(BlueprintReadWrite)
 	bool IsShooting;
@@ -40,8 +43,7 @@ protected:
 	void FlipComponents();
 	void Dash(float DeltaTime);
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UPaperFlipbookComponent* FlipBook;
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UPaperZDAnimationComponent* HeroAnimation;
