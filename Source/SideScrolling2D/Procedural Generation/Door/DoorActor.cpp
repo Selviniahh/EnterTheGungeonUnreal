@@ -44,14 +44,13 @@ void ADoorActor::BeginPlay()
 
 void ADoorActor::OnBoxComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	IsOverlapping = false;
 	UE_LOG(LogTemp, Warning, TEXT("End Overlap"));
+	OnDoorEndOverlap.Broadcast();
 
 }
 
 void ADoorActor::OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	IsOverlapping = true;
 	UE_LOG(LogTemp, Warning, TEXT("Begin Overlap"));
 
 	if (AHero* Hero = Cast<AHero>(OtherActor))

@@ -31,7 +31,9 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	UBoxComponent* BoxComponent;
 
-	bool IsOverlapping = false;
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDoorEndOverlapDelegate);
+	UPROPERTY(BlueprintAssignable)
+	FDoorEndOverlapDelegate OnDoorEndOverlap;
 
 protected:
 	UFUNCTION()

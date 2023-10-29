@@ -7,6 +7,7 @@
 #include "RoomActor.generated.h"
 
 
+class AEnemyBase;
 class ADoorActor;
 class UBoxComponent;
 class UPaperTileMap;
@@ -73,7 +74,6 @@ public:
 	FIntPoint ExitSocketCheckOffset;
 	
 	TArray<FString> ValidTags;
-	// mutable TWeakObjectPtr<UActorComponent> LastWarnedComponent;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	bool VisualizeBlocked = false;
@@ -86,9 +86,29 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void VisualizeBeginEndTiles();
+
+	UFUNCTION(Blueprintable)
+	void CategorizeAndSortSceneCompsByTag();
 	
 	//Just will be used with Branch Connection
 	bool IsOverlapped;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	int WaveAmount = 1;
+
+	UPROPERTY()
+	ADoorActor* EnterDoorActor;
+
+	TMap<int32, TArray<USceneComponent*>> TaggedSceneComponents;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TArray<TSubclassOf<AEnemyBase>> EnemyClass;
+	
+	TArray<AEnemyBase*> SpawnedEnemies;
+
+	void SetEnterDoorActor(ADoorActor* DoorActor);
+
+	
 	
 	// virtual bool CanEditChange(const FEditPropertyChain& PropertyChain) const override;
 	// virtual bool CanEditChange(const FProperty* InProperty) const override;

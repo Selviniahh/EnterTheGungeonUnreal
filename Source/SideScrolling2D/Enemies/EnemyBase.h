@@ -7,7 +7,35 @@
 #include "EnemyBase.generated.h"
 
 class AGunBase;
-struct FRanges;
+
+USTRUCT()
+struct FRanges
+{
+	GENERATED_BODY()
+	float Min;
+	float Max;
+
+	FRanges() : Min(0), Max(0)  // default constructor
+	{}
+
+	FRanges(float MinVal, float MaxVal) : Min(MinVal), Max(MaxVal)  // custom constructor that takes two arguments
+	{}
+	
+};
+
+UENUM()
+enum EDirections : uint8
+{
+	//No hand directions specified you'll switch hands when angle is > or < something. 
+	Right,
+	Front_Hand_Right,
+	Front_Hand_Left,
+	Left,
+	Back_Diagonal_Left,
+	Back_Hand_Left,
+	Back_Hand_Right,
+	Back_Diagonal_Right,
+};
 
 UCLASS()
 class SIDESCROLLING2D_API AEnemyBase : public APawn

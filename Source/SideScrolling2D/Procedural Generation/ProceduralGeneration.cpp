@@ -186,7 +186,8 @@ void AProceduralGeneration::SpawnRoom(FName Tag)
 	{
 		NextRoom = GetWorld()->SpawnActor<ARoomActor>(RoomDesigns[RandomIndex], NextRoomLocation, Rotation);
 		SetTilesBlocked(NextRoom,NextRoomLocation);
-		GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor,NextRoomLocation + FVector(0,0,3), Rotation);
+		ADoorActor* Door = GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor,NextRoomLocation + FVector(0,0,3), Rotation);
+		NextRoom->SetEnterDoorActor(Door);
 
 		
 		
@@ -200,8 +201,11 @@ void AProceduralGeneration::SpawnRoom(FName Tag)
 		MoveOverlappedRoom(NextRoom, NextRoomLocation);
 		NextRoom = GetWorld()->SpawnActor<ARoomActor>(RoomDesigns[RandomIndex], NextRoomLocation, Rotation);
 		SetTilesBlocked(NextRoom, NextRoomLocation);
-		GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor,NextRoomLocation + FVector(0,0,3), Rotation);
+		ADoorActor* Door = GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor,NextRoomLocation + FVector(0,0,3), Rotation);
 		GetWorld()->SpawnActor<ADoorActor>(NextRoom->ExitDoor,NextRoom->DoorSocketExit->GetComponentLocation() + FVector(0,0,3), Rotation);
+		NextRoom->EnterDoorActor = Door;
+		NextRoom->SetEnterDoorActor(Door);
+
 		
 		//It overlapped so there will be corridor. We need to spawn a door for the nextroom's door socket exit socket location.
 		//But we don't know if exit is staright or side so also I need to get Exit tag and spawn it. 
@@ -865,7 +869,9 @@ void AProceduralGeneration::MakeSideBranchFromLargeRoom()
 						else
 							DoorClass = LargeRoom->NoExitDoorStraight;
 					
-						GetWorld()->SpawnActor<ADoorActor>(DoorClass,Socket->GetComponentLocation() + FVector(0,0,3), Socket->GetComponentRotation());	
+						ADoorActor* Door = GetWorld()->SpawnActor<ADoorActor>(DoorClass,Socket->GetComponentLocation() + FVector(0,0,3), Socket->GetComponentRotation());
+						SpawnedFirstRoom->SetEnterDoorActor(Door);
+
 					}
 				}
 				
@@ -948,7 +954,9 @@ ARoomActor* AProceduralGeneration::SpawnFirstBranchRoom(FName Tag, FVector Spawn
 	{
 		NextRoom = GetWorld()->SpawnActor<ARoomActor>(RoomDesigns[RandomIndex], NextRoomLocation, Rotation);
 		SetTilesBlocked(NextRoom,NextRoomLocation);
-		GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor,NextRoomLocation + FVector(0,0,3), Rotation);
+		ADoorActor* Door = GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor,NextRoomLocation + FVector(0,0,3), Rotation);
+		NextRoom->SetEnterDoorActor(Door);
+
 
 		
 		SetSocketExclusion(NextRoom);
@@ -1006,7 +1014,9 @@ ARoomActor* AProceduralGeneration::SpawnBranchRoom(FName Tag, int SpawnCounter, 
 	{
 		NextRoom = GetWorld()->SpawnActor<ARoomActor>(RoomDesigns[RandomIndex], NextRoomLocation, Rotation);
 		SetTilesBlocked(NextRoom,NextRoomLocation);
-		GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor,NextRoomLocation + FVector(0,0,3), Rotation);
+		ADoorActor* Door = GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor,NextRoomLocation + FVector(0,0,3), Rotation);
+		NextRoom->SetEnterDoorActor(Door);
+
 		
 		LastSpawnedRoom = NextRoom;
 		if (LastSpawnedRoom->ActorHasTag("LargeRoom")) LargeRoomCounter++;
@@ -1061,8 +1071,9 @@ ARoomActor* AProceduralGeneration::SpawnBranchRoom(FName Tag, int SpawnCounter, 
 				{
 					NextRoom = GetWorld()->SpawnActor<ARoomActor>(RoomDesigns[RandomIndex], NextRoomLocation, Rotation);
 					SetTilesBlocked(NextRoom,NextRoomLocation);
-					GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor,NextRoomLocation + FVector(0,0,3), Rotation);
-		
+					ADoorActor* Door = GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor,NextRoomLocation + FVector(0,0,3), Rotation);
+					NextRoom->SetEnterDoorActor(Door);
+
 					// LastSpawnedRoom = NextRoom;
 					if (LastSpawnedRoom->ActorHasTag("LargeRoom")) LargeRoomCounter++;
 					SetSocketExclusion(LastSpawnedRoom);
@@ -1100,8 +1111,9 @@ ARoomActor* AProceduralGeneration::SpawnBranchRoom(FName Tag, int SpawnCounter, 
 		BlockedTileHolder.Empty();
 		NextRoom = GetWorld()->SpawnActor<ARoomActor>(RoomDesigns[RandomIndex], NextRoomLocation, Rotation);
 		SetTilesBlocked(NextRoom, NextRoomLocation);
-		GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor,NextRoomLocation + FVector(0,0,3), Rotation);
+		ADoorActor* Door = GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor,NextRoomLocation + FVector(0,0,3), Rotation);
 		GetWorld()->SpawnActor<ADoorActor>(NextRoom->ExitDoor,NextRoom->DoorSocketExit->GetComponentLocation() + FVector(0,0,3), Rotation);
+		NextRoom->SetEnterDoorActor(Door);
 
 
 		// After spawning a room, store the connection information:
@@ -1473,7 +1485,8 @@ void AProceduralGeneration::SpawnRoomForBranchConnection(FName Tag, FIntPoint St
 	
 	//alernative part
 	NextRoom = GetWorld()->SpawnActor<ARoomActor>(NextRoom->GetClass(), NextRoomLocation, Rotation);
-	GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor,NextRoomLocation + FVector(0,0,3), Rotation); //Comment here if required
+	ADoorActor* Door = GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor,NextRoomLocation + FVector(0,0,3), Rotation); //Comment here if required
+	NextRoom->SetEnterDoorActor(Door);
 
 	SetTilesBlocked(NextRoom,NextRoomLocation);
 
