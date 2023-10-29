@@ -847,7 +847,7 @@ void AProceduralGeneration::MakeSideBranchFromLargeRoom()
 		for (auto Socket : Sockets)
 		{
 			TArray<FName> AllTags = Socket->ComponentTags;
-			if (!AllTags.Contains("Enter") && !AllTags.IsEmpty()  && NumOfSideBranchRoom < MaxSideBranchRoom) //&& !AllTags.Contains("Exit") 
+			if (!AllTags.Contains("Enter") && !AllTags.Contains("Exit") && !AllTags.IsEmpty()  && NumOfSideBranchRoom < MaxSideBranchRoom) //&& !AllTags.Contains("Exit") //Another one
 			{
 				FName SceneTag = Socket->ComponentTags[0];
 				LastSpawnedRoom = nullptr;
