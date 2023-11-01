@@ -41,8 +41,6 @@ AEnemyBase::AEnemyBase()
 
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 	
-	//I changed a little
-	//	Ranges.Add(FRanges(1,55)); //Right
 	Ranges.Add(FRanges(1,35)); //Right
 	Ranges.Add(FRanges(35,75)); //Front Hand Right
 	Ranges.Add(FRanges(75,135)); //Front Hand Left
@@ -51,7 +49,6 @@ AEnemyBase::AEnemyBase()
 	Ranges.Add(FRanges(245,265)); //Back_Hand_Left
 	Ranges.Add(FRanges(265,290)); //Back_Hand_Right
 	Ranges.Add(FRanges(290,310)); //Diagonal_Right
-
 
 	SetDirectionBasedOnEnum = {
 		{EDirections::Right, FVector2D(1.0, 0.0)},
@@ -64,11 +61,10 @@ AEnemyBase::AEnemyBase()
 		{EDirections::Back_Diagonal_Right, FVector2D(1.0, 1.0)},
 	};
 
-	//Giving the defaults value to prevent any stupid confusions 
+	//Giving the defaults values
 	HandCompLoc = FVector2D(9.0,7.0);
 	HandCompLocFlip = FVector2D(-8.0,7.0);
 	GunScale = FVector(1.0f,1.0f,1.0f);
-	
 }
 
 void AEnemyBase::BeginPlay()
@@ -80,14 +76,16 @@ void AEnemyBase::BeginPlay()
 	
 }
 
-void AEnemyBase::Tick(float DelatTime)
+void AEnemyBase::Tick(float DeltaTime)
 {
-	Super::Tick(DelatTime);
-	EnemyLocation = GetActorLocation();
+	Super::Tick(DeltaTime);
 	if (!Hero) return;
-	Move();
 	
+	EnemyLocation = GetActorLocation();
 	DistanceBetweenHero = FVector::Distance(EnemyLocation,Hero->GetActorLocation());
+	
+	Move();
+
 
 	if (CanSetDirection)
 	{
@@ -97,7 +95,7 @@ void AEnemyBase::Tick(float DelatTime)
 	//KnockBack
 	if (bShouldKnockBack || HealthComponent->IsDead)
 	{
-		const FVector NewLocation = (FMath::VInterpTo(GetActorLocation(), EnemyTargetLocation, GetWorld()->GetDeltaSeconds(), KnockBackSpeed));
+		const FVector NewLocation = (FMath::VInterpTo(GetActorLocation(), EnemyTargetLocation, DeltaTime, KnockBackSpeed));
 		SetActorLocation(NewLocation);
 
 		//Making sure KnockBack is finished

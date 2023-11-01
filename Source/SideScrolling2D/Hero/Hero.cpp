@@ -11,6 +11,7 @@
 #include "Components/BoxComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Engine/LocalPlayer.h"
+#include "SideScrolling2D/Enemies/EnemyBase.h"
 
 // Sets default values
 AHero::AHero()
@@ -222,6 +223,8 @@ void AHero::OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AAct
 
 void AHero::GetAngle()
 {
+	if (!PlayerController) return;
+	
 	// Screen position of the mouse
 	float MouseX, MouseY;
 	PlayerController->GetMousePosition(MouseX, MouseY);

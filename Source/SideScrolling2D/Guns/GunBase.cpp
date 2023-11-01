@@ -72,7 +72,7 @@ void AGunBase::Tick(float DeltaTime)
 void AGunBase::Shoot()
 {
 	
-	//first check if the owner is player (Maybe this gun is equipped from enemy) If hero is dashing or after the dash if cooldown (Run Timer) is <1 than DON'T SHOOT! 
+	//first check if the owner is player (Maybe this gun is equipped from enemy) If hero is dashing or after the dash if cooldown (Run Timer) is <1 then DON'T SHOOT! 
 	if (GetOwner() == (UGameplayStatics::GetPlayerPawn(GetWorld(),0)))
 	{
 		if (Hero->IsDashingCpp || 0.1 >= Hero->RunTimer) return;
@@ -109,13 +109,13 @@ void AGunBase::Shoot()
 			AProjectileBase* Projectile = GetWorld()->SpawnActor<AProjectileBase>(ProjectileType, Location, Rotation);
 			Projectile->SetOwner(this);
 			Projectile->ProjectileType = EprojectileType::PLAYER_PROJECTILE;
-
+			
 			Projectile->MaxProjectileRange = MaxProjectileRange;
-
+			
 			//Set the velocity assign velocity to projectile movement comp and then set the rotation of the projectile same as the gun rotation. 
 			const FVector ProjectileVelocity = FVector(ArrowComponent->GetForwardVector().X * Velocity, ArrowComponent->GetForwardVector().Y * Velocity, 0);
-
-
+			
+			
 			Projectile->ProjectileMovement->SetVelocityInLocalSpace(ProjectileVelocity);
 			Hero->GetAngle();
 			Projectile->SetActorRotation(FRotator(0, Hero->MouseAngle, 0));

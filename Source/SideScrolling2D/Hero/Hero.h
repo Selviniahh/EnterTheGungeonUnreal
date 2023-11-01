@@ -5,8 +5,10 @@
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
 #include "GameFramework/Pawn.h"
-#include "SideScrolling2D/Globals.h"
 #include "Hero.generated.h"
+
+struct FRanges;
+enum EDirections : uint8;
 
 UCLASS()
 class SIDESCROLLING2D_API AHero : public APawn

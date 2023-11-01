@@ -50,6 +50,7 @@ public:
 
 	FVector StoredVelocity;
 	FVector InitialLoc;
+	FVector2D SpriteSize;
 
 	//After traveled distance length > this value, it will be destroyed
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
@@ -63,6 +64,7 @@ protected:
 	UFUNCTION()
 	virtual void OnFlipBookFinishedPlaying();
 	void StopAndHit(AActor* OtherActor);
+	void StopAndHit(FVector ImpactPoint);
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 

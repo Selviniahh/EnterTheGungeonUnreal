@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SideScrolling2D/Globals.h"
 #include "EnemyBase.generated.h"
 
 class AGunBase;
@@ -15,12 +14,8 @@ struct FRanges
 	float Min;
 	float Max;
 
-	FRanges() : Min(0), Max(0)  // default constructor
-	{}
-
-	FRanges(float MinVal, float MaxVal) : Min(MinVal), Max(MaxVal)  // custom constructor that takes two arguments
-	{}
-	
+	FRanges() : Min(0), Max(0)  {} // default constructor
+	FRanges(const float MinVal, const float MaxVal) : Min(MinVal), Max(MaxVal) {} // custom constructor that takes two arguments
 };
 
 UENUM()
@@ -44,8 +39,10 @@ class SIDESCROLLING2D_API AEnemyBase : public APawn
 
 public:
 	AEnemyBase();
-	virtual void Tick(float DelatTime) override;
+	virtual void Tick(float DeltaTime) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MovementDir")
+	class UHealthComponent* HealthComponent;
 
 
 protected:
@@ -73,30 +70,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MovementDir")
 	class UPaperZDAnimationComponent* AnimComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MovementDir")
-	class UHealthComponent* HealthComponent;
-
-	
-	
-
-	//Functions
-	UFUNCTION()
-	virtual void OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	void SetEnemyDirectionEnum();
-	virtual void Death();
-	virtual void JustPlayShootAnimation();
-	virtual void Move();
-	
-	//Variables
-	//Actual direction vector ranging from -1 to 1
-
 	//EnemyGun
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 1))
 	TSubclassOf<AGunBase> EnemyGun;
-
-	UPROPERTY()
-	class AHero* Hero;
 	
 	//Knockbacks
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 8))
@@ -104,10 +80,33 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 7))
 	float KnockBackSpeed;
+
+	//Flipping
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Flipping", meta=(DisplayPriority = 1))
+	FVector2D HandCompLoc;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Flipping", meta=(DisplayPriority = 2)) 
+	FVector2D HandCompLocFlip;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Flipping", meta=(DisplayPriority = 2)) 
+	FVector GunScale;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Flipping", meta=(DisplayPriority = 2)) 
+	FVector AfterAttachRelativeLoc; //0,-1,-1
 	
+	//Cooldown duration when shoots left == 0
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 6))
+	float CooldownTimer;
+
+	UPROPERTY()
+	class AHero* Hero;
+	
+	//Spawn bool to not let it move when spawning
+	UPROPERTY(BlueprintReadWrite)
+	bool Spawning;
+
 	bool bShouldKnockBack;
 	bool bCanSetDirectionAndFlip = true;
-	
 	float DistanceBetweenHero;
 	FVector EnemyLocation;
 	float EnemyAngle;
@@ -118,11 +117,6 @@ protected:
 	//When Dead play animation based on this direction
 	UPROPERTY(BlueprintReadWrite)
 	FVector2D DeadDirection;
-
-	//Spawn bool to not let it move when spawning
-	UPROPERTY(BlueprintReadWrite)
-	bool Spawning; 
-
 	
 	//Direction ranges struct (0-30, 30-65, 65-100, 100-150, 150-185, 185-240, 240-280, 280-320)
 	TArray<FRanges> Ranges;
@@ -141,26 +135,16 @@ protected:
 	//Actual Direction Vector2D
 	UPROPERTY(BlueprintReadWrite, Category="Direction")
 	FVector2D EnemyDirectionVector;
-
-	//Flipping
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Flipping", meta=(DisplayPriority = 1))
-	FVector2D HandCompLoc;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Flipping", meta=(DisplayPriority = 2)) 
-	FVector2D HandCompLocFlip;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Flipping", meta=(DisplayPriority = 2)) 
-	FVector GunScale;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Flipping", meta=(DisplayPriority = 2)) 
-	FVector AfterAttachRelativeLoc; //0,-1,-1
-
 	
-	//Cooldown duration when shoots left == 0
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 6))
-	float CooldownTimer;
-
 	float CooldownTime;
+
+	UFUNCTION()
+	virtual void OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	void SetEnemyDirectionEnum();
+	virtual void Death();
+	virtual void JustPlayShootAnimation();
+	virtual void Move();
 
 
 

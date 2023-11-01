@@ -45,7 +45,10 @@ void ADoorActor::BeginPlay()
 void ADoorActor::OnBoxComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	UE_LOG(LogTemp, Warning, TEXT("End Overlap"));
-	OnDoorEndOverlap.Broadcast();
+	if (Cast<AHero>(OtherActor))
+	{
+		OnDoorEndOverlap.Broadcast();
+	}
 
 }
 
@@ -77,7 +80,7 @@ void ADoorActor::OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedCompo
 
 		FVector Impact = HeroLoc - DoorLoc;
 		Impact.Normalize();
-		UE_LOG(LogTemp, Display, TEXT("Impact: %s"), *Impact.ToString());
+		UE_LOG(LogTemp, Display, TEXT("Impact: %s Normal: %s"), *Impact.ToString(), *SweepResult.ImpactNormal.ToString());
 
 		UPaperFlipbookComponent* DoorFB = DoorFBLeft ? DoorFBLeft : DoorFBRight;
 		if (Impact.X > 0)

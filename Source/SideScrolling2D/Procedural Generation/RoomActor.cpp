@@ -39,7 +39,7 @@ ARoomActor::ARoomActor()
 	
 	ValidTags = { TEXT("SideRight"), TEXT("SideLeft"), TEXT("StraightUp"), TEXT("StraightDown") };
 
-	
+	FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, false);
 }
 
 void ARoomActor::SetEnterDoorActor(ADoorActor* DoorActor)
@@ -73,6 +73,7 @@ void ARoomActor::VisualizeBeginEndTiles()
 
 void ARoomActor::CategorizeAndSortSceneCompsByTag()
 {
+	if (!DoOnce) return;
 	TArray<USceneComponent*> SceneComp;
 	this->GetComponents<USceneComponent>(SceneComp);
 
@@ -119,6 +120,7 @@ void ARoomActor::CategorizeAndSortSceneCompsByTag()
 	 		// SpawnedEnemies.Add(SpawnedEnemy);
 	 	}
 	 }
+	DoOnce = false;
 }
 
 bool ARoomActor::CheckFirstTagValid(USceneComponent* SceneComp) const

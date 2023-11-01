@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "BulletMan.h"
-#include "SideScrolling2D/Globals.h"
 #include "AngryBook.generated.h"
 
 

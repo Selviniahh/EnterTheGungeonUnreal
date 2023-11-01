@@ -96,6 +96,8 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	int WaveAmount = 1;
 
+	bool DoOnce = true;
+
 	UPROPERTY()
 	ADoorActor* EnterDoorActor;
 

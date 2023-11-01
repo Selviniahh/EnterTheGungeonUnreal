@@ -7,6 +7,7 @@
 #include "GameFramework/FloatingPawnMovement.h"
 #include "SideScrolling2D/Hero/Hero.h"
 #include "SideScrolling2D/Guns/Magnum.h"
+#include "SideScrolling2D/Actor Components/HealthComponent.h"
 
 ABulletMan::ABulletMan()
 {
@@ -33,10 +34,7 @@ ABulletMan::ABulletMan()
 	BoxTraceStartLength = 20;
 	BoxTraceLength = 30;
 	BoxHalfSizeStop = FVector(12,5,5);
-	
 }
-
-#include "SideScrolling2D/Actor Components/HealthComponent.h"
 
 void ABulletMan::BeginPlay()
 {
@@ -150,8 +148,7 @@ void ABulletMan::JustPlayShootAnimation()
 	Super::JustPlayShootAnimation();
 	//Make sure that enemy can shoot in enough distance
 	if (DistanceCannotShoot < DistanceBetweenHero && HealthComponent->IsDead ) return;
-
-
+	
 	if (Gun && GetWorld())
 	{
 		//Set timer to shoot after gun shoot animation
@@ -195,7 +192,7 @@ bool ABulletMan::BoxTraceForSlowDown()
 		Params.bTraceComplex = true;
 		TArray<FHitResult> HitResults;
 
-		
+		if (!Gun) return false; 
 		FQuat RotationQuat = Gun->GetActorRotation().Quaternion();
 
 		
@@ -240,8 +237,11 @@ bool ABulletMan::BoxTraceForStop()
 		Params.bTraceComplex = true;
 		TArray<FHitResult> HitResults;
 
-		
-		FQuat RotationQuat = Gun->GetActorRotation().Quaternion();
+		FQuat RotationQuat;
+		if (Gun)
+		{
+			 RotationQuat = Gun->GetActorRotation().Quaternion();
+		}
 
 		
 		bool bHit = GetWorld()->SweepMultiByChannel(HitResults,StartLocation,EndLocation,RotationQuat, ECC_Visibility,FCollisionShape::MakeBox(BoxHalfSizeStop), Params);

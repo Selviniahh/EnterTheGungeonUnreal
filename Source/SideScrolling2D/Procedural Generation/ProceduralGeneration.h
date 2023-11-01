@@ -241,7 +241,7 @@ public:
 	void GenerateMap();
 
 	/*Before spawning any room, Tiles array that will be used for entire checks will be initialized. */
-	void InitWorldTiles();
+	virtual void InitWorldTiles();
 
 	/*Place where most of the functions are used. It'll try to spawn if not collided. If collided, Make all the collision & tile checks and spawn corridor to connect them.*/
 	void SpawnRoom(FName Tag);
@@ -278,9 +278,10 @@ public:
 	int DetermineSafeCheckAmount(ARoomActor* NextRoom) const;
 
 	/*Similar how SpawnRoom works but meant to spawn a room for eventually making a connection from one LargeRoom's scene comp to closest LargeRoom's scene comp*/
-	ARoomActor* SpawnFirstBranchRoom(FName Tag, FVector SpawnLoc, USceneComponent* SceneComponent, ARoomActor* LargeRoom, TArray<ARoomActor*>& RoomsToBeAdded);
-	
-	ARoomActor* SpawnBranchRoom(FName Tag, int SpawnCounter, TArray<ARoomActor*>& RoomsToBeAdded, bool& EndBranch);
+	ARoomActor* SpawnFirstBranchRoom(FName Tag, FVector SpawnLoc, USceneComponent& SceneComponent, ARoomActor* LargeRoom, TArray<ARoomActor*>& RoomsToBeAdded);
+
+	bool ContainsManualInstruction(TArray<FName> Names);
+	ARoomActor* SpawnBranchRoom(FName Tag, int& SpawnCounter, TArray<ARoomActor*>& RoomsToBeAdded, bool& EndBranch, TArray<FName>& SocketComps, TArray<ARoomActor*>& RoomsBeAdded);
 
 	/*For large rooms that has multiple exits, to make socket exclusion, in BP editor declare an IntPoint named "SceneComponentName_Exclude" and give exclusions.*/
 	void SocketExclusionForLargeRoom(ARoomActor* Room);
@@ -514,7 +515,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	void VisualizeOverlaps();
+	virtual void VisualizeOverlaps();
 	void VisualizeVisited();
 
 public:
