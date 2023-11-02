@@ -389,6 +389,7 @@ public:
 		{
 			if (NextDir == Dir_Down) return FRotator(0, -180, -90);
 			if (NextDir == Dir_Up) return FRotator(0, -90, -90);
+			if (NextDir == Dir_Left) return FRotator(0, 0, -90); //(Pitch=0.000000,Yaw=0.000000,Roll=-90.000000)
 		}
 
 		else if (LastSpawnedRoom->DoorSocketExit->ComponentHasTag("StraightUp"))

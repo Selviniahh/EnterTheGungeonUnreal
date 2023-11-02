@@ -739,7 +739,15 @@ void AProceduralGeneration::SpawnCorridors(int goalX, int goalY)
 			//Assigning rot is done. Now spawn turned corr
 			if (FirstCorrRot != FRotator(31,31,31))
 			{
-				ARoomActor* Corridor = GetWorld()->SpawnActor<ARoomActor>(TurnCorridor, SpawnLoc, FirstCorrRot);
+				ARoomActor* Corridor;
+				if (FirstCorrRot == FRotator(0,0,-90) || FirstCorrRot == FRotator(0,90,-90))
+				{
+					Corridor = GetWorld()->SpawnActor<ARoomActor>(StraightCorr, SpawnLoc, FirstCorrRot);
+				}
+				else
+				{
+					Corridor = GetWorld()->SpawnActor<ARoomActor>(TurnCorridor, SpawnLoc, FirstCorrRot);
+				}
 				SetTilesBlocked(Corridor,SpawnLoc);
 			}
 
@@ -1032,15 +1040,8 @@ ARoomActor* AProceduralGeneration::SpawnBranchRoom(FName Tag, int& SpawnCounter,
 	{
 		while (!NextRoom->DoorSocketEnter->ComponentHasTag(Tag) || NextRoom->ActorHasTag("NoExit") || (!SpawnLargeRoom && NextRoom->ActorHasTag("LargeRoom")))
 		{
-			if (!ContainsManualInstruction(SocketComps) && !NextRoom->ActorHasTag("NoExit"))
-			{
-				RandomIndex = FMath::RandRange(0, RoomDesigns.Num() - 1);
-				NextRoom = Cast<ARoomActor>(RoomDesigns[RandomIndex]->GetDefaultObject());
-			}
-			if (NextRoom->ActorHasTag("NoExit"))
-			{
-				break;
-			}
+			RandomIndex = FMath::RandRange(0, RoomDesigns.Num() - 1);
+			NextRoom = Cast<ARoomActor>(RoomDesigns[RandomIndex]->GetDefaultObject());
 		}
 	}
 	
