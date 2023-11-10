@@ -31,9 +31,7 @@ public:
 	virtual void CooldownFinished();
 
 
-	//Follow the player until there's a this distance between player and enemy
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Default Values", meta=(DisplayPriority = 2))
-	float MoveRange; 
+	 
 
 	UPROPERTY(BlueprintReadWrite)
 	FTimerHandle FireTimerHandle;
@@ -42,8 +40,7 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	FTimerHandle PlayAnimationTimerHandle;
 
-	UPROPERTY(BlueprintReadWrite)
-	FVector MovementDir;
+	
 
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
@@ -101,9 +98,7 @@ public:
 
 protected:
 	
-	//Gun itself
-	UPROPERTY()
-	AGunBase* Gun;
+	
 
 	//Created to let manual shooting for subclasses. If you want to make enemy shoot manually, set this to false
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 10))

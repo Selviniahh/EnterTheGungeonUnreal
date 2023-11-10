@@ -7,6 +7,7 @@
 #include "PaperZDAnimationComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Components/ArrowComponent.h"
 #include "SideScrolling2D/Guns/GunBase.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
@@ -90,7 +91,7 @@ void AHero::FlipComponents()
 	GetAngle();
 	 if (IsDashingCpp)
 	 {
-	 	//Trim to 3 digits. 
+	 	//Trim to 3 digit##s. 
 	 	FVector2D RoundedMoveDirection(FMath::RoundHalfToEven(MoveDirection.X * 1000) / 1000, FMath::RoundHalfToEven(MoveDirection.Y * 1000) / 1000);
 	
 	 	if (RoundedMoveDirection == FVector2D(-0.707,0.707) || RoundedMoveDirection == FVector2D(-0.707,-0.707) || RoundedMoveDirection == FVector2D(-1.0,0.0))
@@ -138,8 +139,8 @@ void AHero::Tick(float DeltaTime)
 	
 	SetMouseDirectionEnum();
 	FlipComponents();
-
 	Dash(DeltaTime);
+	
 	IsShooting = false;
 
 	if (IsDashingCpp == true)

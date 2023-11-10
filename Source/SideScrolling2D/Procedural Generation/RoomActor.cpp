@@ -54,6 +54,7 @@ void ARoomActor::SetEnterDoorActor(ADoorActor* DoorActor)
 void ARoomActor::BeginPlay()
 {
 	Super::BeginPlay();
+	Tags.Add("RoomActor");
 	
 }
 

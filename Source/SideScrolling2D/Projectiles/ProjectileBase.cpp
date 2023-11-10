@@ -41,10 +41,29 @@ void AProjectileBase::BeginPlay()
 	Tags.Add("Projectile");
 	BoxComponent->OnComponentBeginOverlap.AddDynamic(this,&AProjectileBase::OnBoxComponentBeginOverlap);
 	FlipBook->OnFinishedPlaying.AddDynamic(this, &AProjectileBase::OnFlipBookFinishedPlaying);
-	SpriteSize = FlipBook->GetFlipbook()->GetSpriteAtFrame(0)->GetSourceSize();
 
 	InitialLoc = GetActorLocation();
 	
+}
+
+void AProjectileBase::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	
+	TravelledProjectileRange = ProjectileMovement->Velocity.Length();
+	
+	if (TravelledProjectileRange > MaxProjectileRange)
+	{
+		// ProjectileMovement->SetVelocityInLocalSpace(FVector(0,0,0));
+		FlipBook->SetFlipbook(HitImpact);
+		FlipBook->SetLooping(false);
+		ProjectileMovement->SetVelocityInLocalSpace(FVector(0,0,0));
+	}
+	
+	if (FVector::Distance(InitialLoc, GetActorLocation()) > LifeSpanDistance)
+	{
+		Destroy();
+	}
 }
 
 void AProjectileBase::OnFlipBookFinishedPlaying()
@@ -58,6 +77,7 @@ void AProjectileBase::OnFlipBookFinishedPlaying()
 
 void AProjectileBase::OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	
 	if (OtherComp->IsA(UPaperTileMapComponent::StaticClass()))
 	{
 		StopAndHit(SweepResult.ImpactPoint);
@@ -93,6 +113,7 @@ void AProjectileBase::OnBoxComponentBeginOverlap(UPrimitiveComponent* Overlapped
 			StopAndHit(OtherActor);
 		}
 	}
+	
 }
 
 void AProjectileBase::StopAndHit(FVector ImpactPoint)
@@ -118,8 +139,13 @@ void AProjectileBase::StopAndHit(FVector ImpactPoint)
 
 	// Hit impact will finish and then it will destroy
 	FlipBook->SetLooping(false);
-}
 
+	if (!FlipBook->GetFlipbook())
+	{
+		Destroy();
+	}
+
+}
 
 
 void AProjectileBase::StopAndHit(AActor* OtherActor)
@@ -141,26 +167,12 @@ void AProjectileBase::StopAndHit(AActor* OtherActor)
 	{
 		UGameplayStatics::ApplyDamage(OtherActor, Damage, EventInstigator, this, DamageTypeClass);
 	}
-}
-
-// Called every frame
-void AProjectileBase::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 	
-	TravelledProjectileRange = ProjectileMovement->Velocity.Length();
-	
-	if (TravelledProjectileRange > MaxProjectileRange)
-	{
-		// ProjectileMovement->SetVelocityInLocalSpace(FVector(0,0,0));
-		FlipBook->SetFlipbook(HitImpact);
-		FlipBook->SetLooping(false);
-		ProjectileMovement->SetVelocityInLocalSpace(FVector(0,0,0));
-	}
-	
-	if (FVector::Distance(InitialLoc, GetActorLocation()) > LifeSpanDistance)
+	if (!FlipBook->GetFlipbook())
 	{
 		Destroy();
 	}
+
 }
 
+// Called every frame

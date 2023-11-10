@@ -12,6 +12,15 @@ class ADoorActor;
 class UBoxComponent;
 class UPaperTileMap;
 
+UENUM()
+enum Direction
+{
+	HorizontalRight,
+	HorizontalLeft,
+	VerticalUp,
+	VerticalDown
+};
+
 UCLASS()
 class SIDESCROLLING2D_API ARoomActor : public AActor
 {
@@ -78,6 +87,12 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	bool VisualizeBlocked = false;
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TEnumAsByte<Direction> EnterSocketDirection;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TEnumAsByte<Direction> ExitSocketDirection;
+	
 	UFUNCTION(BlueprintCallable)
 	void VisualizeAllBlocked();
 

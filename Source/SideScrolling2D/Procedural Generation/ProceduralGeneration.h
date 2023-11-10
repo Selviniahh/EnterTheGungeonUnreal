@@ -92,7 +92,7 @@ class SIDESCROLLING2D_API AProceduralGeneration : public AActor
 public:
 	AProceduralGeneration();
 	
-	/* Meant to be changed later on*/
+	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<ARoomActor> StraightCorr;
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
@@ -154,7 +154,7 @@ public:
 
 	/*Make sure Room sequence length is equal to -1 Number of rooms. Secondly, give index numbers of Room designs. */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 1))
-	TArray<int32> RoomSequence;
+	TArray<int32> DebugRoomSequence;
 
 	/*For debug purposes the location for each given BlockRoom's location. Block room will be spawned at given location*/
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 2))
@@ -303,7 +303,7 @@ public:
 	/*Bypass debug spawning NoExitRoom */
 	inline bool CanIgnoreExitRoomSpawning(ARoomActor* NextRoom)
 	{
-		if (RoomSequence.Num() > 0)
+		if (DebugRoomSequence.Num() > 0)
 		{
 			return true; 
 		}
@@ -338,9 +338,6 @@ public:
 	{
 		int TileX = FMath::RoundToInt(WorldLocation.X / TileSizeX);
 		int TileY = FMath::RoundToInt(WorldLocation.Y / TileSizeY);
-
-		// int TileX = FMath::CeilToInt(WorldLocation.X / TileSizeX);
-		// int TileY = FMath::CeilToInt(WorldLocation.Y / TileSizeY);
 		
 		return FIntPoint(TileX,TileY);
 	}

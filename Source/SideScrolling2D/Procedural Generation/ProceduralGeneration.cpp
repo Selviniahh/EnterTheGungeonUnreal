@@ -42,13 +42,15 @@ void AProceduralGeneration::GenerateMap()
 	const FRotator Rotation(0.0f, 0.0f, -90.0f);
 	ARoomActor* NextRoom = nullptr;
 	//If debugging rooms are given use first one for this purpose otherwise use first room in the room design array. 
-	if (RoomSequence.Num() == 0)
+	if (DebugRoomSequence.Num() == 0)
 	{
+		//Normal one
 		 NextRoom = Cast<ARoomActor>(RoomDesigns[0]->GetDefaultObject());
 	}
 	else
 	{
-		 NextRoom = Cast<ARoomActor>(RoomDesigns[RoomSequence[0]]->GetDefaultObject()); //Later on we will make here completely random as well. Just for now spawn first index as first room as always.
+		//Debugging
+		 NextRoom = Cast<ARoomActor>(RoomDesigns[DebugRoomSequence[0]]->GetDefaultObject()); //Later on we will make here completely random as well. Just for now spawn first index as first room as always.
 	}
 	
 	FirstRoomStartLoc = Tiles[MapSizeX/2][MapSizeY/2].Location + FVector(0,0,2);
@@ -145,10 +147,10 @@ void AProceduralGeneration::SpawnRoom(FName Tag)
 	
 	//If Room sequence given, use those rooms if not given, get random rooms
 	int RandomIndex;
-	if (!RoomSequence.IsEmpty())
+	if (!DebugRoomSequence.IsEmpty())
 	{
-		if (CurrentIndex < RoomSequence.Num())
-			RandomIndex = RoomSequence[CurrentIndex];
+		if (CurrentIndex < DebugRoomSequence.Num())
+			RandomIndex = DebugRoomSequence[CurrentIndex];
 		else
 			return;
 		CurrentIndex++;
@@ -162,10 +164,10 @@ void AProceduralGeneration::SpawnRoom(FName Tag)
 	while (!NextRoom->DoorSocketEnter->ComponentHasTag(Tag) || !CanIgnoreExitRoomSpawning(NextRoom)) //|| MoveOverlappedRoom(NextRoom,NextRoomLocation)
 	{
 		//If Room sequence given, use those rooms if not given, get random rooms
-		if (!RoomSequence.IsEmpty())
+		if (!DebugRoomSequence.IsEmpty())
 		{
-			if (CurrentIndex < RoomSequence.Num())
-				RandomIndex = RoomSequence[CurrentIndex];
+			if (CurrentIndex < DebugRoomSequence.Num())
+				RandomIndex = DebugRoomSequence[CurrentIndex];
 			else
 				return;
 			CurrentIndex++;
@@ -298,7 +300,7 @@ bool AProceduralGeneration::IsEndSocketOverlapping(ARoomActor* NextRoom, const F
 		}
 		if (IsValid(CurrentX,CurrentY) && Tiles[CurrentX][CurrentY].Blocked)
 		{
-			if (IsColliding(NextRoom, IndexToWorld(CurrentX,CurrentY)) && RoomSequence.Num() > 0) //Only Generate message box in debugging
+			if (IsColliding(NextRoom, IndexToWorld(CurrentX,CurrentY))) //Only Generate message box in debugging
 			{
 				UE_LOG(LogTemp, Warning, TEXT("EndSocketOverlap ovelaps with the actor itself. "));
 				if (NextRoom != LastCheckedRoom)
@@ -377,7 +379,7 @@ void AProceduralGeneration::SetTilesBlocked(ARoomActor* Room, FVector SpawnLoc)
 	TopLeftCorner.Y = WorldLoc.Y - BoxExtends.Z;
 	TopLeftCorner.Z = 0;
 
-	// Dimensions of each tile
+	// Amount of tile the room has
 	int TilesX = FMath::CeilToInt(BoxExtends.X * 2 / TileSizeX); //For some reason tile generation for room's X axis starts early. I had to offset to right and reduce 1 extra tile generation on X. I offset 1 axis to right and reduced 1 tile generation.
 	int TilesZ = FMath::CeilToInt(BoxExtends.Z * 2 / TileSizeY);
 
@@ -410,10 +412,6 @@ void AProceduralGeneration::SetSocketExclusion(ARoomActor* Room)
 	//Enter
 	if (!Room) return;
 	FIntPoint Index = WorldToIndex(Room->DoorSocketEnter->GetComponentLocation());
-	// if (VisualizeBeginAndEndTiles) //Disabled for the purpose visualize only when overlapped
-	// {
-	// 	DrawDebugBox(GetWorld(),Tiles[Index.X + Room->PathStartOffset.X][Index.Y + Room->PathStartOffset.Y].Location + FVector(TileSizeX/2,TileSizeY/2,0),FVector(TileSizeX/2,TileSizeY/2,TileSizeY/2),FColor::Cyan,true);
-	// }
 	
 	//Enter exclusions
 	FIntPoint EnterExclusionOffset = Room->EnterExclusionOffset;  // Get the offset from the Room

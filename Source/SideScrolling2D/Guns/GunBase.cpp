@@ -94,6 +94,7 @@ void AGunBase::Shoot()
 			Projectile->SetOwner(this);
 			Projectile->MaxProjectileRange = MaxProjectileRange;
 
+			
 			//Set the velocity assign velocity to projectile movement comp and then set the rotation of the projectile same as the gun rotation. 
 			const FVector ProjectileVelocity = FVector(ArrowComponent->GetForwardVector().X * Velocity, ArrowComponent->GetForwardVector().Y * Velocity, 0);
 
@@ -132,10 +133,13 @@ void AGunBase::Shoot(const FVector& ProjectileVelocity)
 	{
 		if (LineTrace() && bShouldCheckLineTrace) return;
 		AProjectileBase* Projectile = GetWorld()->SpawnActor<AProjectileBase>(ProjectileType, Location, FRotator(0,0,0));
+		if (!Projectile) return;
 		Projectile->Tags.Add("EnemyProjectile");
 		Projectile->ProjectileType = EprojectileType::ENEMY_PROJECTILE;
 		Projectile->SetOwner(this);
 		Projectile->MaxProjectileRange = MaxProjectileRange;
+		Projectile->BoxComponent->IgnoreActorWhenMoving(this->GetOwner(), true); //Consider to disable this or make overlap the visiblity channel for enemy projectile BP 
+
 
 		//Set the velocity assign velocity to projectile movement comp and then set the rotation of the projectile same as the gun rotation. 
 

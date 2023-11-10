@@ -100,7 +100,6 @@ void ARubberBullet::OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedCo
 
 	}
 	bIsAttacking = false;
-	bShouldKnockBack = true;
 }
 
 

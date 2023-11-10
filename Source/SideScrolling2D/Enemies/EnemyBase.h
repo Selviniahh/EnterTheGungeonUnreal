@@ -3,7 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Containers/UnrealString.h" // For GetTypeHash
+#include "Containers/ContainerAllocationPolicies.h" // For HashCombine
+#include "Misc/Crc.h"
 #include "EnemyBase.generated.h"
+
 
 class AGunBase;
 
@@ -16,6 +20,40 @@ struct FRanges
 
 	FRanges() : Min(0), Max(0)  {} // default constructor
 	FRanges(const float MinVal, const float MaxVal) : Min(MinVal), Max(MaxVal) {} // custom constructor that takes two arguments
+};
+
+USTRUCT()
+struct FMovementNode
+{
+	GENERATED_BODY();
+	float X;
+	float Y;
+	TSharedPtr<FMovementNode> Parent;
+
+	//A* implementation
+	int Hcost;
+	int GCost;
+	int FCost() { return Hcost + GCost; }
+	int TileSize; 
+	FVector Location;
+
+	static float GetHCost(float x1, float y1, float x2, float y2)
+	{
+		return FMath::Sqrt(FMath::Square((float)(x1 - x2)) + FMath::Square((float)(y1 - y2)));
+	}
+	
+	FMovementNode(int X, int Y): Parent(nullptr), Hcost(0), GCost(0), TileSize(16)
+	{
+		this->X = X;
+		this->Y = Y;
+		Location = FVector(X * TileSize, Y * TileSize,0); 
+	}
+
+	//Default constructor
+	FMovementNode() : X(0), Y(0), Parent(nullptr), Hcost(0), GCost(0), TileSize(16)
+	{
+		Location = FVector(X * TileSize, Y * TileSize,0); 
+	}
 };
 
 UENUM()
@@ -43,7 +81,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MovementDir")
 	class UHealthComponent* HealthComponent;
-
+	float Timer;
+	float SecTimer;
 
 protected:
 	virtual void BeginPlay() override;
@@ -98,6 +137,17 @@ protected:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Default Values", meta=(DisplayPriority = 6))
 	float CooldownTimer;
 
+	UPROPERTY(BlueprintReadWrite)
+	FVector MovementDir;
+
+	//Follow the player until there's a this distance between player and enemy
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Default Values", meta=(DisplayPriority = 2))
+	float MoveRange;
+
+	UPROPERTY()
+	AGunBase* Gun;
+
+
 	UPROPERTY()
 	class AHero* Hero;
 	
@@ -137,15 +187,66 @@ protected:
 	FVector2D EnemyDirectionVector;
 	
 	float CooldownTime;
+	
+	TArray<FVector> CurrentPath;
+	int CurrentTargetIndex;
+	float PathUpdateTimer;
+	FVector TargetLoc;
 
+	
+	static TArray<FMovementNode> NodeMap;
+	// inline static TArray<int> Row = { -1, 1, 0, 0 };  // Up, Down, Left, Right
+	// inline static TArray<int> Col = { 0, 0, -1, 1 };  // Up, Down, Left, Right
+
+	// 8 directions: Up, Down, Left, Right, Up-Left, Up-Right, Down-Left, Down-Right
+	inline static TArray<int> Row = { -1, 1, 0, 0, -1, -1, 1, 1 };
+	inline static TArray<int> Col = { 0, 0, -1, 1, -1, 1, -1, 1 };
+
+	
+	int TileSizeX = 16;
+	int TileSizeY = 16;
+	
+	bool TestOnce = true;
+	FVector MovDirection;
+	FVector FirstLoc;
+
+	TArray<FVector> FoundPath;
+	int32 CurrentPathIndex;
+	FVector BoxExtend;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "PathFinding")
+	int MaxIterationAmount =  100;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "PathFinding")
+	int PathTileBuffer = 3;
+
+
+	
+	inline FVector2D WorldToIndex(FVector WorldLocation)
+	{
+		int TileX = FMath::RoundToInt(WorldLocation.X / TileSizeX);
+		int TileY = FMath::RoundToInt(WorldLocation.Y / TileSizeY);
+		
+		return FVector2D(TileX,TileY);
+	}
+
+	/*Convert given world position to relative index points */
+	inline FVector IndexToWorld(int X, int Y)
+	{
+		return FVector(X * TileSizeX, Y * TileSizeY, 0);
+	}
+
+	bool IsWalkable(int X, int Y);
+	
 	UFUNCTION()
 	virtual void OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	void SetEnemyDirectionEnum();
 	virtual void Death();
 	virtual void JustPlayShootAnimation();
+	TArray<FVector> PathFinding();
 	virtual void Move();
-
+	bool Contains(TArray<TSharedPtr<FMovementNode>> VisitedNodes, TSharedPtr<FMovementNode> Neighbour);
+	void MoveAlongPath(float DeltaTime);
 
 
 private:
