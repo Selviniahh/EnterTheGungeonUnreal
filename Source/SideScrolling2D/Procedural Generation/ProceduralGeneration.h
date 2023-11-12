@@ -277,7 +277,7 @@ public:
 	/*Number of how many checks it should make for different kind of rooms. If the given amount is exceed, IsColliding function will abort */
 	int DetermineSafeCheckAmount(ARoomActor* NextRoom) const;
 
-	/*Similar how SpawnRoom works but meant to spawn a room for eventually making a connection from one LargeRoom's scene comp to closest LargeRoom's scene comp*/
+	/*Similar how RoomSpawning works but meant to spawn a room for eventually making a connection from one LargeRoom's scene comp to closest LargeRoom's scene comp*/
 	ARoomActor* SpawnFirstBranchRoom(FName Tag, FVector SpawnLoc, USceneComponent& SceneComponent, ARoomActor* LargeRoom, TArray<ARoomActor*>& RoomsToBeAdded);
 
 	bool ContainsManualInstruction(TArray<FName> Names);

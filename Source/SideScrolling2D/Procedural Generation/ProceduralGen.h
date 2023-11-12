@@ -24,8 +24,12 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	/*Add all the rooms to be randomly select and spawned.*/
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 1))
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 2))
 	TArray<TSubclassOf<ARoomActor>> RoomDesigns;
+
+	UPROPERTY()
+	TArray<ARoomActor*> CastedRooms;
+	
 	TArray<TArray<FTileStruct>> Tiles;
 
 	Direction NextRoomExitTag;
@@ -66,10 +70,10 @@ public:
 	TArray<FIntPoint> BlockedTileHolder;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TSubclassOf<ARoomActor> StraightCorr;
+	TSubclassOf<ARoomActor> StraightCorrClass;
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TSubclassOf<ARoomActor> TurnCorridor;
-
+	TSubclassOf<ARoomActor> TurnCorridorClass;
+	
 	/*Which room set as blocked*/
 	TMap<TWeakObjectPtr<ARoomActor>, TArray<FIntPoint>> RoomExclusions;
 
@@ -78,6 +82,9 @@ public:
 	/*for IsEndSocketOverlapping*/
 	UPROPERTY()
 	ARoomActor* LastCheckedRoom = nullptr;
+
+	UPROPERTY()
+    	TArray<ARoomActor*> LargeRooms;
 	
 	/*All excluded tiles are purple*/
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 8))
@@ -129,20 +136,31 @@ public:
 	/*Begin and End socket visualization color is Cyan*/
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 6))
 	bool VisualizeBeginAndEndTiles = true;
-	
-	int FoundPathCost;
+	int NumOfSideBranchRoom;
 
+	int FoundPathCost;
+	int MaxSideBranchRoom = 50;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 3))
+	int MaxLargeRoomCount = 5;
+	int BranchLength = 4;
+
+	ARoomActor* SpawnFirstBranchRoom(Direction Direction, FVector SpawnLoc, USceneComponent& SceneComponent, ARoomActor* LargeRoom, TArray<ARoomActor*>& RoomsToBeAdded);
+	void MakeSideBranchFromLargeRoom();
 	void GenerateMap();
 	void InitWorldTiles();
 	void SetTilesBlocked(ARoomActor* Room, const FVector& SpawnLoc);
-	bool IsColliding(const ARoomActor* Room, const FVector& SpawnLoc);
+	bool IsColliding(ARoomActor* Room, const FVector& SpawnLoc);
 	static FVector CalculateTopLeftCorner(const FVector& WorldLoc, const FVector& BoxExtends);
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	bool MoveOverlappedRoom(ARoomActor* NextRoom, FVector& NextRoomLocation);
 	void ConnectRoomsWithCorridors();
+	void SocketExclusionForLargeRoom(ARoomActor* Room);
+
+
 	
 	/*After pathfinding is finished, it will spawn the corridors on the found path*/
-	void SpawnCorridors(int goalX, int goalY);
+	void SpawnCorridors(int GoalX, int goalY);
 
 	/**Checks if the buffer zone around a given room collides in the world. //Same as IsColliding. Just setting given indexes to be blocked.*/
 	bool IsBufferZoneColliding(ARoomActor* Room, FVector SpawnLoc);
@@ -151,8 +169,9 @@ public:
 	bool FindCorridorPath(int StartX, int StartY, int GoalX, int GoalY, FIntPoint StartOffset, FIntPoint EndOffset, bool SpawnCorr, int MaxIterationAmount, FString RoomName, int* PathCost = nullptr);
 
 	void VisualizeBeginEndTiles(ARoomActor* NextRoom, const FRoomConnection& Connection);
-	void SpawnRoom(Direction EndSocketDirection);
-	
+	void RoomSpawning(Direction EndSocketDirection);
+	void InitializeAndSpawnRoom(ARoomActor*& NextRoom, const FVector& NextRoomLocation, const FRotator& Rotation, const bool IsOverlapped);
+
 	/**For Socket enter and exit, given amounts will be discarded from tiles and unmark as blocked.*/
 	void SetSocketExclusion(ARoomActor* Room);
 	void ResetAllVisited();
@@ -166,7 +185,7 @@ public:
 	/*Room actors are 90 degree rotated to be top down in BP. Therefore swapping is required*/
 	static void SwapZYaxis(FVector& VectorToSwap);
 
-	ARoomActor* SelectRoomWithDirection(Direction EndSocketDirection);
+	ARoomActor* SelectRoomWithDirection(Direction EndSocketDirection, bool CanSpawnLargeRoom, bool OnlySpawnNoExit, TArray<ARoomActor*>* CustomArray = nullptr);
 	
 	void VisualizeTiles();
 
@@ -198,12 +217,21 @@ public:
 		return X >= 0 && X < MapSizeX && Y >= 0 && Y < MapSizeY;
 	}
 
-	static inline Direction ExpectedTag(const Direction Tag)
+	static inline Direction ExpectedDirection(const Direction Tag)
 	{
 		if (Tag == HorizontalRight) return HorizontalLeft;
 		if (Tag == HorizontalLeft) return HorizontalRight;
 		if (Tag == VerticalUp) return VerticalDown;
 		if (Tag == VerticalDown) return VerticalUp;
+		return {};
+	}
+
+	static inline Direction TagToDirection(const FName Tag)
+	{
+		if (Tag == "HorizontalRight" || Tag == "SideRight") return HorizontalRight;
+		if (Tag == "HorizontalLeft" || Tag == "SideLeft") return HorizontalLeft;
+		if (Tag == "VerticalUp" || Tag == "StraightUp") return VerticalUp;
+		if (Tag == "VerticalDown" || Tag == "StraightDown") return VerticalDown;
 		return {};
 	}
 
@@ -334,17 +362,14 @@ public:
 		return "Null";
 	}
 
-	//Pathfinding
-	bool SetupPathFinding(int& StartX, int& StartY, int& GoalX, int& GoalY, const FIntPoint& StartOffset, const FIntPoint& EndOffset, const FString& RoomName);
-
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	void SpawnFirstRoom();
 	void CalculatePathInfo(ARoomActor* NextRoom);
 	void SpawnNonOverlappedRoom(const FRotator& Rotation, const FVector& NextRoomLocation, ARoomActor*& NextRoom);
-	void SpawnDoors(const FRotator& Rotation, const FVector& NextRoomLocation, ARoomActor*& NextRoom);
+	void SpawnDoors(const FRotator& Rotation, const FVector& NextRoomLocation, ARoomActor*& NextRoom, bool OnlySpawnEnterDoor);
+	void SpawnNoExitDoor(const FName& SceneTag, const FVector& SocketLocation);
 	void SpawnOverlappedRoom(const FRotator& Rotation, FVector NextRoomLocation, ARoomActor*& NextRoom);
 	void SpawnTestCollisionObjects();
 

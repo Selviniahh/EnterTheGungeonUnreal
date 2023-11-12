@@ -33,18 +33,40 @@ public:
 
 	UPROPERTY()
 	int PathCost = 0;
-	
+
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool LargeRoom;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool NoExit;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Door", meta=(DisplayPriority = 1))
 	TSubclassOf<ADoorActor> EnterDoor;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Door", meta=(DisplayPriority = 2))
 	TSubclassOf<ADoorActor> ExitDoor;
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Door", meta=(DisplayPriority = 3))
+	TSubclassOf<ADoorActor> NoExitVerticalUp;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Door", meta=(DisplayPriority = 4))
+	TSubclassOf<ADoorActor> NoExitVerticalDown;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Door", meta=(DisplayPriority = 5))
+	TSubclassOf<ADoorActor> NoExitHorizontalRight;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Door", meta=(DisplayPriority = 5))
+	TSubclassOf<ADoorActor> NoExitHorizontalLeft;
+	
+	
+	//Soon will be depricated
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<ADoorActor> NoExitDoorSide;
 
+	//Soon will be depricated
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<ADoorActor> NoExitDoorStraight;
+
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	USceneComponent* RootScene;
@@ -124,12 +146,7 @@ public:
 	TArray<AEnemyBase*> SpawnedEnemies;
 
 	void SetEnterDoorActor(ADoorActor* DoorActor);
-
-	
-	
-	// virtual bool CanEditChange(const FEditPropertyChain& PropertyChain) const override;
-	// virtual bool CanEditChange(const FProperty* InProperty) const override;
-	// virtual bool CanEditChangeComponent(const UActorComponent* Component, const FProperty* InProperty) const override;
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 private:
 

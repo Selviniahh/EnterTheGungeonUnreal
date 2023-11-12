@@ -55,6 +55,8 @@ void ARoomActor::BeginPlay()
 {
 	Super::BeginPlay();
 	Tags.Add("RoomActor");
+	DoorSocketEnter->ComponentTags.Add("Enter");
+	DoorSocketExit->ComponentTags.Add("Exit");
 	
 }
 
@@ -133,26 +135,24 @@ bool ARoomActor::CheckFirstTagValid(USceneComponent* SceneComp) const
 	return false;
 }
 
-// bool ARoomActor::CanEditChangeComponent(const UActorComponent* Component, const FProperty* InProperty) const
-// {
-// 	if (IsValid(Component) && Component->IsA<USceneComponent>() && InProperty)
-// 	{
-// 		if (InProperty->GetFName() == GET_MEMBER_NAME_CHECKED(USceneComponent,ComponentTags))
-// 		{
-//  			if (LastWarnedComponent != Component)
-// 			{
-// 				UE_LOG(LogTemp, Display, TEXT("Component is: %s"), *Component->GetName());
-// 				UE_LOG(LogTemp, Display, TEXT("Property is: %s"), *InProperty->GetFName().ToString());
-// 	
-// 				if (!CheckFirstTagValid(DoorSocketEnter) || !CheckFirstTagValid(DoorSocketExit))
-// 				{
-// 					// FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("Invalid component tag detected.{0} The first component tag must be one of the following: 'SideRight', 'SideLeft', 'StraightUp', 'StraightDown'.")));
-// 					FMessageDialog::Open(EAppMsgType::Ok,FText::Format(FTextFormat::FromString(TEXT("Invalid component tag detected. The {0} component's first tag must be one of the following: 'SideRight', 'SideLeft', 'StraightUp', 'StraightDown'.")), FText::FromString(Component->GetName())));
-// 					LastWarnedComponent = const_cast<UActorComponent*>(Component);
-// 				}	
-// 			}	
-// 		}
-// 	}
-// 	return Super::CanEditChangeComponent(Component, InProperty);
-// }
+void ARoomActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	FName PropertyName = (PropertyChangedEvent.Property != nullptr) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(ARoomActor, LargeRoom))
+	{
+		if (LargeRoom)
+		{
+			NoExit = false;
+		}
+	}
+	else if (PropertyName == GET_MEMBER_NAME_CHECKED(ARoomActor, NoExit))
+	{
+		if (NoExit)
+		{
+			LargeRoom = false;
+		}
+	}
+}
 
