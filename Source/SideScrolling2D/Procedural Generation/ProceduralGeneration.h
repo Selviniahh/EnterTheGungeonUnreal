@@ -22,6 +22,8 @@ struct FRoomConnection
 	FIntPoint PathEndOffset;
 	int MaxCheckAmount;
 
+	UPROPERTY()
+	ARoomActor* OverlappedRoom;
 	FString RoomName;
 };
 

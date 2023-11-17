@@ -22,6 +22,7 @@ public:
 	// Sets default values for this actor's properties
 	AProceduralGen();
 	virtual void Tick(float DeltaTime) override;
+	ARoomActor* SpawnBranchRoom(Direction Direction,  FVector SpawnLocation, const int& SpawnCounter, bool& EndBranch, TArray<FName>& SocketComps);
 
 	/*Add all the rooms to be randomly select and spawned.*/
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 2))
@@ -42,6 +43,7 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 5))
 	int MapSizeY = 1000;
 	/*The tile size for entire map. It's important to give precise small amount otherwise there will be tile offset issues when a path trying to be found for connecting two rooms with corridors.*/
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 6))
 	int TileSizeX = 16;
 	/*The tile size for entire map. It's important to give precise small amount otherwise there will be tile offset issues when a path trying to be found for connecting two rooms with corridors.*/
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 7))
@@ -53,6 +55,9 @@ public:
 	/*Total number of rooms to be spawned*/
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 2))
 	int NumberOfRooms = 10;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	int MaxSideBranchRoom = 50;
 
 
 	/*For debug purposes the location for each given BlockRoom's location. Block room will be spawned at given location*/
@@ -106,9 +111,6 @@ public:
 	/* Stored to make calculations for Last Spawned Room. (Connect LastSpawnedRoom's exit socket with new room)*/
 	UPROPERTY()
 	ARoomActor* LastSpawnedRoom;
-	
-	TArray<FRoomConnection> RoomConnections;
-
 
 	/*Room spawn counter. It will increment as new rooms are spawned*/
 	int SpawnedRoomCount;
@@ -139,13 +141,18 @@ public:
 	int NumOfSideBranchRoom;
 
 	int FoundPathCost;
-	int MaxSideBranchRoom = 50;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 3))
 	int MaxLargeRoomCount = 5;
 	int BranchLength = 4;
 
-	ARoomActor* SpawnFirstBranchRoom(Direction Direction, FVector SpawnLoc, USceneComponent& SceneComponent, ARoomActor* LargeRoom, TArray<ARoomActor*>& RoomsToBeAdded);
+	UPROPERTY()
+	TArray<ARoomActor*> LargeRoomsToBeAdded;
+	UPROPERTY()
+	TArray<ARoomActor*> RoomsToBeRemoved;
+	
+
+	ARoomActor* SpawnFirstBranchRoom(Direction Direction, FVector SpawnLoc, int& SpawnCounter);
 	void MakeSideBranchFromLargeRoom();
 	void GenerateMap();
 	void InitWorldTiles();
@@ -154,7 +161,7 @@ public:
 	static FVector CalculateTopLeftCorner(const FVector& WorldLoc, const FVector& BoxExtends);
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	bool MoveOverlappedRoom(ARoomActor* NextRoom, FVector& NextRoomLocation);
-	void ConnectRoomsWithCorridors();
+	void ConnectRoomsWithCorridors(ARoomActor*& Room);
 	void SocketExclusionForLargeRoom(ARoomActor* Room);
 
 
@@ -164,13 +171,14 @@ public:
 
 	/**Checks if the buffer zone around a given room collides in the world. //Same as IsColliding. Just setting given indexes to be blocked.*/
 	bool IsBufferZoneColliding(ARoomActor* Room, FVector SpawnLoc);
+	int MakeCorridorPathVisualization(ARoomActor* OverlappedRoom, FTileStruct* Current);
 
 	/*After a room is overlapped and it moved to another position where it doesn't overlap anymore, a path will be try to be found from previous room's door socket exit to new room's door socket enter with using a* pathfinding. */
-	bool FindCorridorPath(int StartX, int StartY, int GoalX, int GoalY, FIntPoint StartOffset, FIntPoint EndOffset, bool SpawnCorr, int MaxIterationAmount, FString RoomName, int* PathCost = nullptr);
+	bool FindCorridorPath(int StartX, int StartY, int GoalX, int GoalY, FIntPoint StartOffset, FIntPoint EndOffset, bool SpawnCorr, int MaxIterationAmount, ARoomActor* OverlappedRoom);
 
 	void VisualizeBeginEndTiles(ARoomActor* NextRoom, const FRoomConnection& Connection);
 	void RoomSpawning(Direction EndSocketDirection);
-	void InitializeAndSpawnRoom(ARoomActor*& NextRoom, const FVector& NextRoomLocation, const FRotator& Rotation, const bool IsOverlapped);
+	void InitAndSpawnRoom(ARoomActor*& NextRoom, const FVector& NextRoomLocation, const FRotator& Rotation, const bool IsOverlapped, bool AddLargeRoomTempArray = false);
 
 	/**For Socket enter and exit, given amounts will be discarded from tiles and unmark as blocked.*/
 	void SetSocketExclusion(ARoomActor* Room);
@@ -366,10 +374,10 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	void SpawnFirstRoom();
-	void CalculatePathInfo(ARoomActor* NextRoom);
+	FRoomConnection CalculatePathInfo(ARoomActor* NextRoom);
 	void SpawnNonOverlappedRoom(const FRotator& Rotation, const FVector& NextRoomLocation, ARoomActor*& NextRoom);
 	void SpawnDoors(const FRotator& Rotation, const FVector& NextRoomLocation, ARoomActor*& NextRoom, bool OnlySpawnEnterDoor);
-	void SpawnNoExitDoor(const FName& SceneTag, const FVector& SocketLocation);
+	void SpawnNoExitDoor(ARoomActor* LargeRoom, const FName& SceneTag, const FVector& SocketLocation);
 	void SpawnOverlappedRoom(const FRotator& Rotation, FVector NextRoomLocation, ARoomActor*& NextRoom);
 	void SpawnTestCollisionObjects();
 

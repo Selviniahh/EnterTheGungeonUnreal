@@ -58,16 +58,6 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Door", meta=(DisplayPriority = 5))
 	TSubclassOf<ADoorActor> NoExitHorizontalLeft;
 	
-	
-	//Soon will be depricated
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TSubclassOf<ADoorActor> NoExitDoorSide;
-
-	//Soon will be depricated
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TSubclassOf<ADoorActor> NoExitDoorStraight;
-
-	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	USceneComponent* RootScene;
 	

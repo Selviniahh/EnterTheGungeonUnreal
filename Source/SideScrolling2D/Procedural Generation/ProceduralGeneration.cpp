@@ -218,7 +218,7 @@ void AProceduralGeneration::SpawnRoom(FName Tag)
 		Connection.PathEndOffset = NextRoom->PathEndOffset;
 		Connection.PathStartOffset = LastSpawnedRoom->PathStartOffset;
 		Connection.MaxCheckAmount = DetermineSafeCheckAmount(NextRoom);
-		Connection.RoomName = NextRoom->GetName();
+		// Connection.RoomName = NextRoom->GetName();
 		RoomConnections.Add(Connection);
 		ConnectRoomsWithCorridors();
 		
@@ -531,7 +531,7 @@ void AProceduralGeneration::ConnectRoomsWithCorridors()
 		// 	DrawDebugBox(GetWorld(),Tiles[EndIndex.X + Connection.PathEndOffset.X][EndIndex.Y + Connection.PathEndOffset.Y].Location + FVector(TileSizeX/2,TileSizeY/2,0),FVector(TileSizeX/2,TileSizeY/2,TileSizeY/2),FColor::Cyan,true);
 		// }
 		// Find a path from StartIndex to EndIndex:
- 		if (!FindCorridorPath(StartIndex.X, StartIndex.Y, EndIndex.X, EndIndex.Y,Connection.PathStartOffset,Connection.PathEndOffset,SpawnCorridor, Connection.MaxCheckAmount, Connection.RoomName))
+ 		// if (!FindCorridorPath(StartIndex.X, StartIndex.Y, EndIndex.X, EndIndex.Y,Connection.PathStartOffset,Connection.PathEndOffset,SpawnCorridor, Connection.MaxCheckAmount, Connection.RoomName))
 		{
 			for (int x = 0; x < MapSizeX; ++x)
 			{
@@ -540,7 +540,7 @@ void AProceduralGeneration::ConnectRoomsWithCorridors()
 					Tiles[x][y].Visited = false; 
 				}
 			}
-			FindCorridorPath(StartIndex.X, StartIndex.Y, EndIndex.X, EndIndex.Y,Connection.PathStartOffset,Connection.PathEndOffset,SpawnCorridor, Connection.MaxCheckAmount, Connection.RoomName);
+			// FindCorridorPath(StartIndex.X, StartIndex.Y, EndIndex.X, EndIndex.Y,Connection.PathStartOffset,Connection.PathEndOffset,SpawnCorridor, Connection.MaxCheckAmount, Connection.RoomName);
 		}
 	}
 	RoomConnections.Empty();
@@ -869,9 +869,9 @@ void AProceduralGeneration::MakeSideBranchFromLargeRoom()
 					{
 						UClass* DoorClass;
 						if (SceneTag == "StraightDown" || SceneTag == "StraightUp")
-							DoorClass = LargeRoom->NoExitDoorStraight;
+							DoorClass = LargeRoom->NoExitVerticalUp; //Deprecated.
 						else
-							DoorClass = LargeRoom->NoExitDoorStraight;
+							DoorClass = LargeRoom->NoExitHorizontalRight; //Deprecated
 					
 						ADoorActor* Door = GetWorld()->SpawnActor<ADoorActor>(DoorClass,Socket->GetComponentLocation() + FVector(0,0,3), Socket->GetComponentRotation());
 						SpawnedFirstRoom->SetEnterDoorActor(Door);
@@ -1083,10 +1083,10 @@ ARoomActor* AProceduralGeneration::SpawnBranchRoom(FName Tag, int& SpawnCounter,
 		//If it cannot find a valid path or path cost is too high
 		if (!LastSpawnedRoom->ActorHasTag("LargeRoom"))
 		{
-			if (!FindCorridorPath(StartIndex.X, StartIndex.Y, EndIndex.X, EndIndex.Y,InitialConnection.PathStartOffset,InitialConnection.PathEndOffset,false, 50000, InitialConnection.RoomName, &PathCost)
-				|| PathCost > 150) 
+			// if (!FindCorridorPath(StartIndex.X, StartIndex.Y, EndIndex.X, EndIndex.Y,InitialConnection.PathStartOffset,InitialConnection.PathEndOffset,false, 50000, InitialConnection.RoomName, &PathCost)
+				// || PathCost > 150) 
 			{
-				UE_LOG(LogTemp, Display, TEXT("Promising: %i"), PathCost);
+				// UE_LOG(LogTemp, Display, TEXT("Promising: %i"), PathCost);
 				//Successfully caught that that we need to stop spawning branch.
 
 				//UnBlock the tiles
@@ -1136,7 +1136,7 @@ ARoomActor* AProceduralGeneration::SpawnBranchRoom(FName Tag, int& SpawnCounter,
 					Connection.PathEndOffset = NextRoom->PathEndOffset;
 					Connection.PathStartOffset = LastSpawnedRoom->PathStartOffset;
 					Connection.MaxCheckAmount = DetermineSafeCheckAmount(NextRoom);
-					Connection.RoomName = NextRoom->GetName();
+					// Connection.RoomName = NextRoom->GetName();
 					RoomConnections.Add(Connection);
 					SetSocketExclusion(NextRoom);
 					ConnectRoomsWithCorridors();

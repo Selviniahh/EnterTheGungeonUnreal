@@ -36,20 +36,20 @@ private:
 	void GoLeft(const TArray<FString>& Args);
 	void GoUp(const TArray<FString>& Args);
 	void GoDown(const TArray<FString>& Args);
-	
-	void CopyToClipboard(const FString& StringToCopy);
+
+	static void CopyToClipboard(const FString& StringToCopy);
 	void CopyGridWithArgs(const TArray< FString >& Args);
 	void GoDirectionWithArgs(const FString& Direction, const TArray<FString>& Args);
 
 
 	/*Check if InputString is valid IntPoint. If valid, define OutX and OutY with what clipboard has */
-	bool TryParseFIntPoint(const FString& InputString, int32& OutX, int32& OutY);
+	static bool TryParseFIntPoint(const FString& InputString, int32& OutX, int32& OutY);
 
 	/*Adjust values based on action*/
-	void ModifyFIntPointValues(int32& XValueInt, int32& YValueInt, EActionType Action, int Multiplyer);
+	static void ModifyFIntPointValues(int32& XValueInt, int32& YValueInt, EActionType Action, int Multiplyer);
 
 	/*Main function for copying clipboard for 4 direction */
-	void ModifyAndCopyFIntPointToClipboard(const FString& InputString, EActionType Action, int Multiplyer);
+	static void ModifyAndCopyFIntPointToClipboard(const FString& InputString, EActionType Action, int Multiplyer);
 
 	IConsoleCommand* MyCommand;
 };
