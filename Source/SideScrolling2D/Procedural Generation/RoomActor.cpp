@@ -5,6 +5,7 @@
 #include "Components/BoxComponent.h"
 
 #include "PaperTileMapComponent.h"
+#include "ProceduralGen.h"
 
 #include "ProceduralGeneration.h"
 
@@ -57,7 +58,6 @@ void ARoomActor::BeginPlay()
 	Tags.Add("RoomActor");
 	DoorSocketEnter->ComponentTags.Add("Enter");
 	DoorSocketExit->ComponentTags.Add("Exit");
-	
 }
 
 void ARoomActor::Tick(float DeltaTime)

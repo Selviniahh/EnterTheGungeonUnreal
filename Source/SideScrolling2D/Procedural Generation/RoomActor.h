@@ -7,6 +7,7 @@
 #include "RoomActor.generated.h"
 
 
+class AProceduralGen;
 class AEnemyBase;
 class ADoorActor;
 class UBoxComponent;
@@ -123,7 +124,11 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	int WaveAmount = 1;
 
+	TArray<FIntPoint> BlockedRoomTiles; 
+	TArray<FIntPoint> BlockedCorTiles;
+	
 	bool DoOnce = true;
+	bool IsHorizontalStraightCorr = false;
 
 	UPROPERTY()
 	ADoorActor* EnterDoorActor;
@@ -132,8 +137,18 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TArray<TSubclassOf<AEnemyBase>> EnemyClass;
+
+	// TMap<ARoomActor*, FVector >
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TArray<ARoomActor*> OwnerCorridors;
 	
-	TArray<AEnemyBase*> SpawnedEnemies;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	ARoomActor* IfCorridorOwnerRoom;
+
+	//Simulation
+	UPROPERTY(BlueprintReadWrite)
+	AProceduralGen* ProceduralGen;
+	
 
 	void SetEnterDoorActor(ADoorActor* DoorActor);
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
