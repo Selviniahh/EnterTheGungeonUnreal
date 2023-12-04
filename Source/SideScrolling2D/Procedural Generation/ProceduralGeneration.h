@@ -76,6 +76,8 @@ struct FTileStruct
 	FTileStruct* Parent;
 	EDirection2 Direction = EDirection2::Dir_None;
 	FRotator Rotation = FRotator(0,0,0);
+	bool IsTurnCorridor = false;
+
 	static int GetHCost(int StartX, int StartY, int GoalX, int GoalY)
 	{
 		return FMath::Abs(StartX - GoalX) + FMath::Abs(StartY - GoalY);

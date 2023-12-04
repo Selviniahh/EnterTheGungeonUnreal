@@ -105,7 +105,7 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TEnumAsByte<Direction> ExitSocketDirection;
-	
+
 	UFUNCTION(BlueprintCallable)
 	void VisualizeAllBlocked();
 
@@ -148,6 +148,10 @@ public:
 	//Simulation
 	UPROPERTY(BlueprintReadWrite)
 	AProceduralGen* ProceduralGen;
+
+	//Just to see in the debugger
+	UPROPERTY(EditAnywhere)
+	FVector Location; 
 	
 
 	void SetEnterDoorActor(ADoorActor* DoorActor);

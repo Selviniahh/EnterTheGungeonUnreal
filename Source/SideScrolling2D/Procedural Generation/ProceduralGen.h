@@ -9,6 +9,25 @@
 #include "Stats/Stats.h"
 #include "ProceduralGen.generated.h"
 
+//Todo: decide to delete this struct and their uses later. 
+struct FCorridorPathParams
+{
+	int StartX;
+	int StartY;
+	int GoalX;
+	int GoalY;
+	FIntPoint StartOffset;
+	FIntPoint EndOffset;
+	bool SpawnCorr;
+	int MaxIterationAmount;
+	ARoomActor* OverlappedRoom;
+
+	// Constructor to initialize with initial values
+	FCorridorPathParams(int startX, int startY, int goalX, int goalY, FIntPoint startOffset, FIntPoint endOffset, bool spawnCorr, int maxIterationAmount, ARoomActor* overlappedRoom)
+		: StartX(startX), StartY(startY), GoalX(goalX), GoalY(goalY), StartOffset(startOffset), EndOffset(endOffset), SpawnCorr(spawnCorr), MaxIterationAmount(maxIterationAmount), OverlappedRoom(overlappedRoom)
+	{}
+};
+
 struct FRoomConnection;
 enum Direction : int;
 struct FTileStruct;
@@ -38,7 +57,6 @@ class SIDESCROLLING2D_API AProceduralGen : public AActor
 	GENERATED_BODY()
 	
 public:
-
 	
 	UPROPERTY()
 	TArray<ARoomActor*> CastedRooms;
@@ -152,10 +170,6 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 10))
 	int FindCorridorPathLimit = 5000;
-
-	
-
-	
 	
 	int NumOfSideBranchRoom;
 
@@ -174,15 +188,52 @@ public:
 
 	UPROPERTY()
 	TArray<ARoomActor*> SpawnedRooms;
-
+	
 	UPROPERTY()
 	TArray<ARoomActor*> LargeRoomsToBeAdded;
 	UPROPERTY()
 	TArray<ARoomActor*> RoomsToBeRemoved;
 
 	TArray<FIntPoint> MoveOverlapRoomLocationTiles;
-	
+	UPROPERTY()
+	ARoomActor* CastedTurnCorridor;
 
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Corridor path finding", meta=(DisplayPriority = 1))
+	bool ApplyTurnPenalty = true;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Corridor path finding", meta=(DisplayPriority = 2))
+	int TurnPenaltyAmount = 5;
+
+	UPROPERTY(BlueprintReadWrite)
+	FVector FirstFuckingRoomLocation;
+	
+	UPROPERTY(EditAnywhere)
+	bool OnlyMakeCorridorCheck;
+
+
+	//Now I need to give custom pattern but I really not sure how to implement this
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Make custom path scenarios", meta=(DisplayPriority = 1))
+	bool DisplayCustomPathScenarios = false;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Make custom path scenarios", meta=(DisplayPriority = 2))
+	TArray<TSubclassOf<ARoomActor>> FixedTwoRoomActor;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Make custom path scenarios", meta=(EditCondition = "DisplayCustomPathScenarios", EditConditionHides, DisplayPriority = 3))
+	TArray<FIntPoint> VerticalUpToVerticalUp = {FIntPoint(0,-1),FIntPoint(0,-1), FIntPoint(0,-1), FIntPoint(0,-1),
+		FIntPoint(0,-1), FIntPoint(0,-1), FIntPoint(0,-1),FIntPoint(0,-1), FIntPoint(0,-1), FIntPoint(0,-1)};
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Make custom path scenarios", meta=(EditCondition = "DisplayCustomPathScenarios", EditConditionHides, DisplayPriority = 4))
+	TArray<FIntPoint> VerticalUpTurnRightToVerticalUp = {FIntPoint(0,-1),FIntPoint(0,-1), FIntPoint(1,-0), FIntPoint(1,0),
+		FIntPoint(1,0), FIntPoint(1,0), FIntPoint(1,0),FIntPoint(0,-1), FIntPoint(0,-1), FIntPoint(0,-1)};
+
+	
+	
+	
+	virtual bool CanEditChange(const FProperty* InProperty) const override;
+
+	TArray<FIntPoint> AddVisitedTiles;
+	TArray<FTileStruct*> Path;
 	AProceduralGen();
 	virtual void Tick(float DeltaTime) override;
 	ARoomActor* SpawnBranchRoom(Direction ExpDirection,  FVector SpawnLocation, int& SpawnCounter, bool& EndBranch, TArray<FName>& SocketComps, Direction LargeRoomSceneComp, TSharedPtr<TArray<ARoomActor*>> ManualBranchRooms = nullptr);
@@ -200,7 +251,7 @@ public:
 	void SocketExclusionForLargeRoom(ARoomActor* Room);
 	
 	/*After pathfinding is finished, it will spawn the corridors on the found path*/
-	void SpawnCorridors(int GoalX, int GoalY, ARoomActor* OverlappedRoom);
+	bool SpawnCorridors(int GoalX, int GoalY, ARoomActor* OverlappedRoom, const bool& CheckZigZag);
 
 	/**Checks if the buffer zone around a given room collides in the world. //Same as IsColliding. Just setting given indexes to be blocked.*/
 	bool IsBufferZoneColliding(ARoomActor* Room, FVector SpawnLoc);
@@ -227,22 +278,27 @@ public:
 
 	void SpawnTestCollisionObjects();
 	void SpawnFirstRoom();
-
-
+	void DestroyLastRoomSpawnNoExit(FVector& SpawnLocation, int& SpawnCounter, bool CanSpawnLargeRoom, TArray<ARoomActor*>& CustomRoomDesigns, bool& OnlySpawnNoExit, ARoomActor*& NextRoom);
+	virtual void BeginPlay() override;
+	FRoomConnection CalculatePathInfo(ARoomActor* NextRoom);
+	void SpawnNonOverlappedRoom(const FRotator& Rotation, const FVector& NextRoomLocation, ARoomActor*& NextRoom);
+	void SpawnDoors(const FRotator& Rotation, const FVector& NextRoomLocation, ARoomActor*& NextRoom, bool OnlySpawnEnterDoor);
+	void SpawnNoExitDoor(ARoomActor* LargeRoom, const FName& SceneTag, const FVector& SocketLocation);
+	void SpawnOverlappedRoom(const FRotator& Rotation, FVector NextRoomLocation, ARoomActor*& NextRoom);
+	
 	/*Room actors are 90 degree rotated to be top down in BP. Therefore swapping is required*/
 	static void SwapInvZYaxis(FVector& VectorToSwap);
-	static void SwapZYaxis(FVector& VectorToSwap, const FVector& SpawnLoc)
+	static FVector SwapZYaxis(FVector VectorToSwap, const FVector& SpawnLoc)
 	{
 		float X = SpawnLoc.X + VectorToSwap.X;
 		float Y = SpawnLoc.Y - VectorToSwap.Z;
-		float Z = VectorToSwap.Z;
-		VectorToSwap = FVector(X,Y,SpawnLoc.Z);
+		return VectorToSwap = FVector(X,Y,SpawnLoc.Z);
 	};
 
 	ARoomActor* SelectRoomWithDirection(Direction EndSocketDirection, bool CanSpawnLargeRoom, bool OnlySpawnNoExit, TArray<ARoomActor*>* CustomArray = nullptr, TSharedPtr<TArray<ARoomActor*>> ManualBranchRooms = nullptr);
 	
 	void VisualizeTiles();
-
+	
 	void UnBlockTiles(TArray<FIntPoint> BlockedTiles)
 	{
 		for (auto BlockedTile : BlockedTiles)
@@ -290,37 +346,37 @@ public:
 	}
 
 	//These all for spawning corridors for found path. 
-	inline void DeterminePathDirection(FTileStruct* Current, int X, int Y, FTileStruct* Node)
+	inline void DeterminePathDirection(FTileStruct* Current, int X, int Y, FTileStruct* NewNode)
 	{
 		if (X > Current->X)
 		{
-			Node->Direction = EDirection2::Dir_Right;
-			Node->Rotation = FRotator(0, 0.0f, -90.0f);
+			NewNode->Direction = EDirection2::Dir_Right;
+			NewNode->Rotation = FRotator(0, 0.0f, -90.0f);
 			return;
 		}
 
 		else if (X < Current->X)
 		{
-			Node->Direction = EDirection2::Dir_Left;
-			Node->Rotation = FRotator(0, 0.0f, -90.0f);
+			NewNode->Direction = EDirection2::Dir_Left;
+			NewNode->Rotation = FRotator(0, 0.0f, -90.0f);
 			return;
 		}
 
 		// Moving vertically
-		if (Y > Current->Y)
+		else if (Y > Current->Y)
 		{
-			Node->Direction = EDirection2::Dir_Down;
-			Node->Rotation = FRotator(0, -90.0f, -90.0f);
+			NewNode->Direction = EDirection2::Dir_Down;
+			NewNode->Rotation = FRotator(0, -90.0f, -90.0f);
 			return;
 		}
 		else if (Y < Current->Y)
 		{
-			Node->Direction = EDirection2::Dir_Up;
-			Node->Rotation = FRotator(0, -90.0f, -90.0f);
+			NewNode->Direction = EDirection2::Dir_Up;
+			NewNode->Rotation = FRotator(0, 90.0f, -90.0f); 
 			return;
 		}
-
-		Node->Rotation = FRotator(50,50,50);
+		
+		NewNode->Rotation = FRotator(50,50,50);
 	}
 	inline FRotator DetermineFirstTurnRotation(EDirection2 NextDir)
 	{
@@ -358,6 +414,7 @@ public:
 		}
 		return Dir_None;
 	}
+	
 	inline FRotator DetermineMiddleTurnRotation(EDirection2 CurrDir, EDirection2 NextDir)
 	{
 		if (CurrDir == Dir_Up && NextDir == Dir_Left)		return FRotator(0,270,-90);
@@ -422,14 +479,21 @@ public:
 		return "Null";
 	}
 
+	static inline EDirection2 DetermineFirstDirection(Direction ExitSocDir)
+	{
+		switch (ExitSocDir)
+		{
+			case HorizontalLeft : return Dir_Left;
+			case HorizontalRight : return Dir_Right;
+			case VerticalUp : return Dir_Up;
+			case VerticalDown : return Dir_Down;
+		}
+		return {};
+	}
+
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-	FRoomConnection CalculatePathInfo(ARoomActor* NextRoom);
-	void SpawnNonOverlappedRoom(const FRotator& Rotation, const FVector& NextRoomLocation, ARoomActor*& NextRoom);
-	void SpawnDoors(const FRotator& Rotation, const FVector& NextRoomLocation, ARoomActor*& NextRoom, bool OnlySpawnEnterDoor);
-	void SpawnNoExitDoor(ARoomActor* LargeRoom, const FName& SceneTag, const FVector& SocketLocation);
-	void SpawnOverlappedRoom(const FRotator& Rotation, FVector NextRoomLocation, ARoomActor*& NextRoom);
+	
 
 private:
 	void ForEachTileInRoom(const ARoomActor* Room, const FVector& SpawnLoc, const TFunction<void(int X, int Z)>& TileAction);

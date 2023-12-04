@@ -3,14 +3,21 @@
 //TODO: WHat's the reason RoomConnections must be array rather than a variable. As soon as the room is overlapped.First I need to spawn that room and make a corridor. ASAP. Otherwise, it could make lots and lots of complications
 #include "ProceduralGen.h"
 
+#include "MakeAllCorridorScenarioTest.h"
 #include "Components/BoxComponent.h"
-
 #include "ProceduralGeneration.h"
-
 #include "Door/DoorActor.h"
 
+//if ApplyTurnPenalty is not true disable TurnPenaltyAmount textbox
+bool AProceduralGen::CanEditChange(const FProperty* InProperty) const
+{
+	if (InProperty->GetFName() == GET_MEMBER_NAME_CHECKED(AProceduralGen, TurnPenaltyAmount))
+	{
+		return ApplyTurnPenalty ? true : false;
+	}
 
-// Sets default values
+	return Super::CanEditChange(InProperty);
+}
 
 AProceduralGen::AProceduralGen()
 {
@@ -24,16 +31,34 @@ void AProceduralGen::BeginPlay()
 
 	//Assign TileBoxExtends of the assigned tiles
 	TileBoxExtends = FVector(TileSizeX / 2, TileSizeY / 2, TileSizeY / 2);
-	
+
 	//Cast all room designs.
 	for (auto RoomDesign : RoomDesigns)
 	{
 		ARoomActor* CastedRoom = Cast<ARoomActor>(RoomDesign->GetDefaultObject());
 		CastedRooms.Add(CastedRoom);
 	}
+	CastedTurnCorridor = Cast<ARoomActor>(TurnCorridorClass->GetDefaultObject());
+
+
+	if (OnlyMakeCorridorCheck)
+	{
+		//Body
+		InitWorldTiles();
+		UMakeAllCorridorScenarioTest* Test = NewObject<UMakeAllCorridorScenarioTest>(this, UMakeAllCorridorScenarioTest::StaticClass());
+		Test->Initialize(this, FixedTwoRoomActor);
+		Test->Start();
+
+		if (VisualizeOverlaps || VisualizeVisited || VisualizeOverlappedRoomTiles)
+		{
+			VisualizeTiles();
+		}
+		
+		return;
+	}
 	
 	GenerateMap();
-	
+
 	if (VisualizeOverlaps || VisualizeVisited || VisualizeOverlappedRoomTiles)
 	{
 		VisualizeTiles();
@@ -135,7 +160,7 @@ TSharedPtr<TArray<ARoomActor*>> AProceduralGen::GetBPSpecificBranchRooms(ARoomAc
 		{
 			FProperty* InnerProp = ArrayProp->Inner;
 			UE_LOG(LogTemp, Warning, TEXT("Inner Property Class: %s"), *InnerProp->GetClass()->GetName());
-				
+
 			// Cast the Inner of the ArrayProp to FObjectProperty
 			FClassProperty* ClassInnerProp = CastField<FClassProperty>(ArrayProp->Inner);
 
@@ -152,7 +177,7 @@ TSharedPtr<TArray<ARoomActor*>> AProceduralGen::GetBPSpecificBranchRooms(ARoomAc
 					UClass* RoomActorClass = Cast<UClass>(ClassInnerProp->GetObjectPropertyValue(ArrayHelper.GetRawPtr(i)));
 					if (RoomActorClass && RoomActorClass->IsChildOf(ARoomActor::StaticClass()))
 					{
-						if (ARoomActor* RoomActor = NewObject<ARoomActor>(NextRoom,RoomActorClass))
+						if (ARoomActor* RoomActor = NewObject<ARoomActor>(NextRoom, RoomActorClass))
 						{
 							RoomActors->Add(RoomActor);
 						}
@@ -209,7 +234,7 @@ void AProceduralGen::MakeSideBranchFromLargeRoom()
 		for (auto Socket : Sockets) //Each large room's each socket
 		{
 			if (IsSocketAvailable(Socket)) //After here only available sockets will be selected to make side branch
-			{ 
+			{
 				ManualBranchRooms = GetBPSpecificBranchRooms(LargeRoom, Socket->GetName());
 				if (ARoomActor* FirstSpawnedBranchRoom = SpawnFirstBranchRoom(TagToDirection(Socket->ComponentTags[0]), Socket->GetComponentLocation(), SpawnCounter, ManualBranchRooms))
 				{
@@ -244,6 +269,11 @@ void AProceduralGen::UnBlockLastRoomItsCorridorAndDestroy()
 
 	for (auto Corridor : SpawnedRooms.Last()->OwnerCorridors)
 	{
+		if (!Corridor)
+		{
+			UE_LOG(LogTemp, Display, TEXT("Unblock tile annoying me"));
+			return;
+		}
 		for (auto BlockedCorr : Corridor->BlockedCorTiles)
 		{
 			Tiles[BlockedCorr.X][BlockedCorr.Y].Blocked = false;
@@ -259,6 +289,38 @@ void AProceduralGen::UnBlockLastRoomItsCorridorAndDestroy()
 		LastSpawnedRoom = SpawnedRooms.Last();
 }
 
+void AProceduralGen::DestroyLastRoomSpawnNoExit(FVector& SpawnLocation, int& SpawnCounter, bool CanSpawnLargeRoom, TArray<ARoomActor*>& CustomRoomDesigns, bool& OnlySpawnNoExit, ARoomActor*& NextRoom)
+{
+	CustomRoomDesigns = CastedRooms; //Refill the array again
+	//Before destroying select the NoExit room of last spawned room's enter direction. 
+	NextRoom = SelectRoomWithDirection(SpawnedRooms.Last()->EnterSocketDirection, CanSpawnLargeRoom, true, &CustomRoomDesigns);
+	SpawnLocation = SpawnedRooms.Last()->DoorSocketEnter->GetComponentLocation();
+	SpawnCounter = BranchLength;
+	OnlySpawnNoExit = true;
+	UnBlockLastRoomItsCorridorAndDestroy();
+
+	for (auto& CustomRoomDesign : CustomRoomDesigns)
+	{
+		NextRoom = CustomRoomDesign;
+
+		if (!IsColliding(NextRoom, SpawnLocation))
+		{
+			break;
+		}
+		else
+		{
+			if (MoveOverlappedRoom(NextRoom, SpawnLocation))
+				break;
+		}
+		//we unblocked and destroyed last spawned room, then we tried to spawn no exit room but it's failed, it's colliding and moveOverlappedRoom also returned false. So we need to
+		// Destroy again and repeat the process
+		if (&CustomRoomDesign == &CustomRoomDesigns.Last())
+		{
+			DestroyLastRoomSpawnNoExit(SpawnLocation, SpawnCounter, CanSpawnLargeRoom, CustomRoomDesigns, OnlySpawnNoExit, NextRoom);
+		}
+	}
+}
+
 ARoomActor* AProceduralGen::SpawnBranchRoom(Direction ExpDirection, FVector SpawnLocation, int& SpawnCounter, bool& EndBranch, TArray<FName>& SocketComps, Direction LargeRoomSceneComp, TSharedPtr<TArray<ARoomActor*>> ManualBranchRooms)
 {
 	SCOPE_CYCLE_COUNTER(STAT_SpawnBranchRoom);
@@ -267,9 +329,9 @@ ARoomActor* AProceduralGen::SpawnBranchRoom(Direction ExpDirection, FVector Spaw
 	TArray<ARoomActor*> CustomRoomDesigns = CastedRooms;
 	bool OnlySpawnNoExit = false;
 	bool IsManualBranchGiven = false;
-	
+
 	//Now in here check that there's a manual room given for that comp or not.
-	
+
 
 	ARoomActor* NextRoom = nullptr; //TODO: Pass custom array here. I don't know how but in here try to select and spawn all the rooms that not overlapping and can make corridor path  
 	if (SpawnCounter + 1 != BranchLength || !ManualBranchRooms->IsEmpty())
@@ -291,7 +353,7 @@ ARoomActor* AProceduralGen::SpawnBranchRoom(Direction ExpDirection, FVector Spaw
 	{
 		UE_LOG(LogTemp, Error, TEXT("Nextroom is null for some reason"));
 		return nullptr;
-	} 
+	}
 	//Try to select all the available rooms if it colliding, if the chosen room is not colliding we don't need to move overlapped room anyway. 
 
 	while (!NextRoom || IsColliding(NextRoom, SpawnLocation))
@@ -304,34 +366,16 @@ ARoomActor* AProceduralGen::SpawnBranchRoom(Direction ExpDirection, FVector Spaw
 		}
 
 		//Room selecting
+		UE_LOG(LogTemp, Warning, TEXT("Selected Room: %s overlapped and couldn't find an available position. Other rooms will be tried to selected "), *NextRoom->GetName());
+
 		bool ShouldSpawnNoExit = NextRoom->NoExit || SpawnCounter + 1 == BranchLength;
-		NextRoom = SelectRoomWithDirection(ExpectedDirection(ExpDirection), CanSpawnLargeRoom, ShouldSpawnNoExit,&CustomRoomDesigns);
+		NextRoom = SelectRoomWithDirection(ExpectedDirection(ExpDirection), CanSpawnLargeRoom, ShouldSpawnNoExit, &CustomRoomDesigns);
 		CustomRoomDesigns.Remove(NextRoom);
 
 		//If couldn't find a valid room and array got emptied try to spawn no exit room destroying last spawned room 
 		if (CustomRoomDesigns.IsEmpty() && IsColliding(NextRoom, SpawnLocation))
 		{
-			CustomRoomDesigns = CastedRooms; //Refill the array again
-			NextRoom = SelectRoomWithDirection(SpawnedRooms.Last()->EnterSocketDirection, CanSpawnLargeRoom, true,&CustomRoomDesigns);
-			SpawnLocation = SpawnedRooms.Last()->DoorSocketEnter->GetComponentLocation();
-			SpawnCounter = BranchLength;
-			OnlySpawnNoExit = true;
-			UnBlockLastRoomItsCorridorAndDestroy();
-			
-			for (auto CustomRoomDesign : CustomRoomDesigns)
-			{
-				NextRoom = CustomRoomDesign;
-
-				if (!IsColliding(NextRoom, SpawnLocation))
-				{
-					break;
-				}
-				else
-				{
-					if (MoveOverlappedRoom(NextRoom, SpawnLocation))
-						break;
-				}
-			}
+			DestroyLastRoomSpawnNoExit(SpawnLocation, SpawnCounter, CanSpawnLargeRoom, CustomRoomDesigns, OnlySpawnNoExit, NextRoom);
 
 			//First time destroying last room and trying to spawn no exit room has been failed. Now repeat the process again. 
 			while (!NextRoom || IsColliding(NextRoom, SpawnLocation))
@@ -341,7 +385,7 @@ ARoomActor* AProceduralGen::SpawnBranchRoom(Direction ExpDirection, FVector Spaw
 					SpawnCounter = BranchLength;
 					return nullptr;
 				}
-				NextRoom = SelectRoomWithDirection(SpawnedRooms.Last()->EnterSocketDirection, false, true,&CustomRoomDesigns);
+				NextRoom = SelectRoomWithDirection(SpawnedRooms.Last()->EnterSocketDirection, false, true, &CustomRoomDesigns);
 				CustomRoomDesigns.Remove(NextRoom);
 
 				if (NextRoom && MoveOverlappedRoom(NextRoom, SpawnLocation))
@@ -361,11 +405,11 @@ ARoomActor* AProceduralGen::SpawnBranchRoom(Direction ExpDirection, FVector Spaw
 
 					if (SpawnedRooms.IsEmpty()) //LargeRoomSceneComp
 					{
-						NextRoom = SelectRoomWithDirection(LargeRoomSceneComp, false, true,&CustomRoomDesigns);
+						NextRoom = SelectRoomWithDirection(LargeRoomSceneComp, false, true, &CustomRoomDesigns);
 					}
 					else
 					{
-						NextRoom = SelectRoomWithDirection(SpawnedRooms.Last()->EnterSocketDirection, false, true,&CustomRoomDesigns);
+						NextRoom = SelectRoomWithDirection(SpawnedRooms.Last()->EnterSocketDirection, false, true, &CustomRoomDesigns);
 						SpawnedRooms.Pop()->Destroy();
 					}
 
@@ -382,7 +426,6 @@ ARoomActor* AProceduralGen::SpawnBranchRoom(Direction ExpDirection, FVector Spaw
 					}
 					if (SpawnedRooms.IsEmpty())
 					{
-						
 					}
 				}
 			}
@@ -397,7 +440,7 @@ ARoomActor* AProceduralGen::SpawnBranchRoom(Direction ExpDirection, FVector Spaw
 ARoomActor* AProceduralGen::SpawnFirstBranchRoom(Direction Direction, FVector SpawnLoc, int& SpawnCounter, TSharedPtr<TArray<ARoomActor*>> ManualBranchRooms)
 {
 	SpawnCounter = 0;
- 	TArray<ARoomActor*> CustomRoomDesigns = CastedRooms;
+	TArray<ARoomActor*> CustomRoomDesigns = CastedRooms;
 	bool CanSpawnLargeRoom = LargeRoomCounter < MaxLargeRoomCount ? true : false;
 	const FRotator Rotation(0.0f, 0.0f, -90.0f);
 	FVector NextRoomLocation = SpawnLoc;
@@ -406,7 +449,7 @@ ARoomActor* AProceduralGen::SpawnFirstBranchRoom(Direction Direction, FVector Sp
 	//Try to select all the available rooms
 	while (!NextRoom || IsColliding(NextRoom, NextRoomLocation))
 	{
-		NextRoom = SelectRoomWithDirection(ExpectedDirection(Direction), CanSpawnLargeRoom, false,&CustomRoomDesigns, ManualBranchRooms);
+		NextRoom = SelectRoomWithDirection(ExpectedDirection(Direction), CanSpawnLargeRoom, false, &CustomRoomDesigns, ManualBranchRooms);
 		CustomRoomDesigns.Remove(NextRoom);
 
 		if (CustomRoomDesigns.IsEmpty() && IsColliding(NextRoom, NextRoomLocation))
@@ -469,6 +512,10 @@ void AProceduralGen::SpawnFirstRoom()
 		NextRoom = Cast<ARoomActor>(DebugRoomSequence[0]->GetDefaultObject());
 		CurrentIndex++;
 	}
+
+	//TODO: You know this 2 line has to gone. 
+	NextRoomExitTag = NextRoom->ExitSocketDirection;
+	NextRoomEnterTag = NextRoom->EnterSocketDirection; //Just useful to spawning corridors. Nothing to do with rooms
 
 	FVector FirstRoomStartLoc = Tiles[MapSizeX / 2][MapSizeY / 2].Location + ZOffset;
 	ARoomActor* FirstRoom = GetWorld()->SpawnActor<ARoomActor>(NextRoom->GetClass(), FirstRoomStartLoc, Rotation);
@@ -576,7 +623,7 @@ bool AProceduralGen::IsEndSocketOverlapping(ARoomActor* NextRoom, const FVector&
 
 		if (IsValid(CurrentX, CurrentY) && Tiles[CurrentX][CurrentY].Blocked)
 		{
-			// UE_LOG(LogTemp, Warning, TEXT("%s EndSocketOverlap ovelaps. It will act as if overlapped:"), *NextRoom->GetName());
+			UE_LOG(LogTemp, Warning, TEXT("%s EndSocketOverlap ovelaps. It will act as if overlapped:"), *NextRoom->GetName());
 			return true;
 		}
 	}
@@ -633,8 +680,8 @@ void AProceduralGen::SetSocketExclusion(ARoomActor* Room, FVector SpawnLoc)
 	SetExclusion(Room, StartIndex, Room->EnterExclusionOffset, Room->EnterExclusions);
 	// SwapZYaxis(Test);
 
-	FVector Test = Room->DoorSocketExit->GetRelativeLocation();
-	SwapZYaxis(Test, SpawnLoc);
+	FVector Test = SwapZYaxis(Room->DoorSocketExit->GetRelativeLocation(), SpawnLoc);
+	// SwapZYaxis(Test, SpawnLoc); //TODO: TEst thoruguhly 
 	//Exit Exclusions
 	FIntPoint EndIndex = WorldToIndex(Test);
 	SetExclusion(Room, EndIndex, Room->ExitExclusionOffset, Room->ExitExclusions);
@@ -777,10 +824,9 @@ bool AProceduralGen::ConnectRoomsWithCorridors(ARoomActor*& Room)
 	FIntPoint EndIndex = WorldToIndex(Connection.EndPoint);
 
 	// Find a path from StartIndex to EndIndex:
-	if (!FindCorridorPath(StartIndex.X, StartIndex.Y, EndIndex.X, EndIndex.Y, Connection.PathStartOffset, Connection.PathEndOffset, SpawnCorridor, Connection.MaxCheckAmount, Room))
 	{
 		ResetAllVisited();
-		return FindCorridorPath(StartIndex.X, StartIndex.Y, EndIndex.X, EndIndex.Y, Connection.PathStartOffset, Connection.PathEndOffset, SpawnCorridor, Connection.MaxCheckAmount, Room);
+		return FindCorridorPath(StartIndex.X, StartIndex.Y, EndIndex.X, EndIndex.Y, Connection.PathStartOffset, Connection.PathEndOffset, true, Connection.MaxCheckAmount, Room);
 	}
 	return true;
 }
@@ -828,9 +874,10 @@ ARoomActor* AProceduralGen::SelectRoomWithDirection(const Direction EndSocketDir
 		{
 			*CustomArray = *ManualBranchRooms.Get(); //Custom Array suppossed to be assigned by ref but not working. 
 		}
+
 		return FirstRoom;
 	}
-	
+
 	//If DebugRoomSequence is given the sequence has to be selected in order. 
 	if (!DebugRoomSequence.IsEmpty() && CurrentIndex < DebugRoomSequence.Num())
 	{
@@ -863,6 +910,8 @@ ARoomActor* AProceduralGen::SelectRoomWithDirection(const Direction EndSocketDir
 	if (ValidRooms.Num() > 0)
 	{
 		int32 RoomIndex = FMath::RandRange(0, ValidRooms.Num() - 1);
+
+		UE_LOG(LogTemp, Display, TEXT("Selected Room: %s"), *ValidRooms[RoomIndex]->GetName());
 		return ValidRooms[RoomIndex];
 	}
 
@@ -918,20 +967,30 @@ void AProceduralGen::ForEachTileInRoom(const ARoomActor* Room, const FVector& Sp
 	}
 }
 
-void AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor* OverlappedRoom)
+bool AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor* OverlappedRoom, const bool& CheckZigZag)
 {
 	TArray<FVector> LocStack;
 	TArray<FRotator> RotStack;
 	TArray<EDirection2> DirStack;
 	FTileStruct* Current = &Tiles[GoalX][GoalY];
-	TArray<FTileStruct*> CurrentTracker;
-	CurrentTracker.Add(Current);
 	TSet<FTileStruct*> VisitedNodes;
 
 	TArray<FVector> SpawnLocations;
 	TArray<FRotator> SpawnRotations;
 	TArray<ARoomActor*> TurnCorridors;
 
+	struct FTurnCorridorProps
+	{
+		FVector Location;
+		FRotator Rotation;
+
+		FTurnCorridorProps(const FVector& Location, const FRotator& Rotation): Location(Location), Rotation(Rotation)
+		{
+		}
+	};
+
+	TArray<FTurnCorridorProps> TurnCorridorStruct;
+	TPair<FVector, ARoomActor*> NormalSpawnedCorr;
 
 	while (Current != nullptr)
 	{
@@ -948,19 +1007,29 @@ void AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor
 		DirStack.Push(Tiles[Current->X][Current->Y].Direction);
 		RotStack.Push(Tiles[Current->X][Current->Y].Rotation);
 		Current = Current->Parent;
-		CurrentTracker.Add(Current);
 	}
+
 	//First assign CurrDir and pop it from DirStack
 	EDirection2 CurrDir = DirStack.Top();
 	DirStack.Pop();
 
 	//Secondly peek next dir after popping CurrDir previously
+	if (DirStack.IsEmpty())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Dirstack empty"));
+		return false;
+	}
 	EDirection2 NextDir = DirStack.Top();
 	CurrDir = DetermineFirstDirection(NextDir);
+
+	if (CurrDir == Dir_None)
+		CurrDir = DetermineFirstDirection(LastSpawnedRoom->ExitSocketDirection);
+	
 	// First corridor logic
 	if (!LocStack.IsEmpty())
 	{
 		//Check first current and next corr dir and spawn straight if not spawn turned in else 
+		// FVector SpawnLoc = LocStack[LocStack.Num()-1];
 		FVector SpawnLoc = LocStack.Top();
 		if (CurrDir == NextDir)
 		{
@@ -976,18 +1045,16 @@ void AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor
 			//Assigning rot is done. Now spawn turned corr
 			if (FirstCorrRot != FRotator(31, 31, 31))
 			{
-				ARoomActor* Corridor;
 				if (FirstCorrRot == FRotator(0, 0, -90) || FirstCorrRot == FRotator(0, 90, -90))
 				{
-					Corridor = GetWorld()->SpawnActor<ARoomActor>(StraightCorrClass, SpawnLoc, FirstCorrRot);
+					SpawnLocations.Add(SpawnLoc);
+					SpawnRotations.Add(FirstCorrRot);
 				}
 				else
 				{
-					Corridor = GetWorld()->SpawnActor<ARoomActor>(TurnCorridorClass, SpawnLoc, FirstCorrRot);
-					TurnCorridors.Add(Corridor);
+					TurnCorridorStruct.Add(FTurnCorridorProps(SpawnLoc,FirstCorrRot));
 				}
-				SetTilesBlocked(Corridor, SpawnLoc);
-				OverlappedRoom->OwnerCorridors.Add(Corridor);
+				
 			}
 		}
 
@@ -1024,11 +1091,7 @@ void AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor
 			SpawnLoc.Z += 1;
 			if (TurnCorrRot != FRotator(31, 31, 31))
 			{
-				ARoomActor* Corridor = GetWorld()->SpawnActor<ARoomActor>(TurnCorridorClass, SpawnLoc, TurnCorrRot);
-				TurnCorridors.Add(Corridor);
-				SetTilesBlocked(Corridor, SpawnLoc);
-				OverlappedRoom->OwnerCorridors.Add(Corridor);
-				Corridor->IfCorridorOwnerRoom = OverlappedRoom;
+				TurnCorridorStruct.Add(FTurnCorridorProps(SpawnLoc,TurnCorrRot));
 			}
 		}
 		LocStack.Pop();
@@ -1052,34 +1115,75 @@ void AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor
 		SpawnLoc.Z += 1;
 		if (LastCorrRot != FRotator(31, 31, 31))
 		{
-			ARoomActor* Corridor = GetWorld()->SpawnActor<ARoomActor>(TurnCorridorClass, SpawnLoc, LastCorrRot);
-			TurnCorridors.Add(Corridor);
-			SetTilesBlocked(Corridor, SpawnLoc);
-			OverlappedRoom->OwnerCorridors.Add(Corridor);
-			Corridor->IfCorridorOwnerRoom = OverlappedRoom;
-
+			TurnCorridorStruct.Add(FTurnCorridorProps(SpawnLoc,LastCorrRot));
 		}
 	}
+	
 	LocStack.Pop();
 	RotStack.Pop();
 	CurrDir = NextDir;
 
+	//First check if two turn corridor overlapping with each other
+	if (CheckZigZag)
+	{
+		TArray<ARoomActor*> SpawnedTurnedCorr; 
+		for (auto TurnCorr : TurnCorridorStruct)
+		{
+			ARoomActor* TurnCorridor = GetWorld()->SpawnActor<ARoomActor>(TurnCorridorClass, TurnCorr.Location, TurnCorr.Rotation);
+			SpawnedTurnedCorr.Add(TurnCorridor);
+		}
+		for (auto TurnCorr : SpawnedTurnedCorr)
+		{
+			TArray<AActor*> OverlappingActors;
+			TurnCorr->GetOverlappingActors(OverlappingActors);
+			for (auto OverlappingActor : OverlappingActors)
+			{
+				if (OverlappingActor->IsA(TurnCorridorClass))
+				{
+					for (auto TurnCorridor : SpawnedTurnedCorr)
+					{
+						TurnCorridor->Destroy();
+					}
+					return false; 
+				}
+			}
+		}
+
+		//If true, this function call is only meant to be check whether there's zigzag. There should not be corridor spawning
+		for (auto TurnedCorr : SpawnedTurnedCorr)
+		{
+			TurnedCorr->Destroy();
+		}
+		return true;
+	}
+	
+
+	
+	for (auto TurnCorr : TurnCorridorStruct)
+	{
+		ARoomActor* TurnCorridor = GetWorld()->SpawnActor<ARoomActor>(TurnCorridorClass, TurnCorr.Location, TurnCorr.Rotation);
+		TurnCorridors.Add(TurnCorridor);
+		SetTilesBlocked(TurnCorridor, SpawnLoc);
+		OverlappedRoom->OwnerCorridors.Add(TurnCorridor);
+		TurnCorridor->IfCorridorOwnerRoom = OverlappedRoom;
+	}
+
+	//Spawn straight corridors at the end
 	for (int i = 0; i < SpawnLocations.Num(); ++i)
 	{
-		// if (!IsColliding(StraightCorrClass->GetDefaultObject<ARoomActor>(),SpawnLocations[i]))
-		{
 			ARoomActor* NormalCorr = GetWorld()->SpawnActor<ARoomActor>(StraightCorrClass, SpawnLocations[i], SpawnRotations[i]);
+		FirstFuckingRoomLocation = SpawnLocations[1]; //TODO: I don't know why. I will never know why. I don't want to know why. THis 2. element won't spawn for no fucking reason. So in BP I manually spawning this shit. 
 			NormalCorr->IfCorridorOwnerRoom = OverlappedRoom;
 			if (SpawnRotations[i] == FRotator(0, -90, -90))
 			{
 				NormalCorr->IsHorizontalStraightCorr = true;
 			}
-
+		NormalCorr->Location = SpawnLocations[i];
 			SetTilesBlocked(NormalCorr, SpawnLocations[i]);
 			OverlappedRoom->OwnerCorridors.Add(NormalCorr);
-
 		}
-	}
+
+	//Destroy overlapped ones
 	for (auto TurnCorridor : TurnCorridors)
 	{
 		TArray<AActor*> OverlappingActors;
@@ -1092,6 +1196,7 @@ void AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor
 			}
 		}
 	}
+	return true;
 }
 
 void AProceduralGen::VisualizeTiles()
@@ -1111,12 +1216,12 @@ void AProceduralGen::VisualizeTiles()
 
 	//For MoveOverlapRoomLocationTiles visualization
 	if (VisualizeOverlappedRoomTiles)
-	{ 
+	{
 		for (int i = 0; i < MoveOverlapRoomLocationTiles.Num(); ++i)
 		{
 			FColor Color = (i == MoveOverlapRoomLocationTiles.Num() - 1) ? FColor::Red : FColor::White;
 			const FIntPoint& Tile = MoveOverlapRoomLocationTiles[i];
-			DrawDebugBox(GetWorld(), Tiles[Tile.X][Tile.Y].Location + TileBoxExtends, TileBoxExtends, Color,true);
+			DrawDebugBox(GetWorld(), Tiles[Tile.X][Tile.Y].Location + TileBoxExtends, TileBoxExtends, Color, true);
 		}
 	}
 }
@@ -1135,6 +1240,7 @@ void AProceduralGen::PostEditChangeProperty(FPropertyChangedEvent& PropertyChang
 		{
 			VisualizeVisited = false;
 		}
+		return;
 	}
 	//Check if the property changed is VisualizeOverlaps
 	else if (PropertyName == GET_MEMBER_NAME_CHECKED(AProceduralGen, VisualizeVisited))
@@ -1142,6 +1248,17 @@ void AProceduralGen::PostEditChangeProperty(FPropertyChangedEvent& PropertyChang
 		if (VisualizeVisited)
 		{
 			VisualizeOverlaps = false;
+		}
+		return;
+	}
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(AProceduralGen, FixedTwoRoomActor))
+	{
+		if (FixedTwoRoomActor.Num() > 2)
+		{
+			while (FixedTwoRoomActor.Num() > 2)
+			{
+				FixedTwoRoomActor.RemoveAt(FixedTwoRoomActor.Num() -1);
+			}
 		}
 	}
 }
@@ -1178,7 +1295,7 @@ bool AProceduralGen::MoveOverlappedRoom(ARoomActor* NextRoom, FVector& NextRoomL
 				}
 				++Attempts;
 				VisitedTiles.Add(FIntPoint(x, y));
-				MoveOverlapRoomLocationTiles.Add(FIntPoint(x,y));
+				MoveOverlapRoomLocationTiles.Add(FIntPoint(x, y));
 
 				if (Attempts >= MaxMoveOverlappedRoomIterate)
 				{
@@ -1250,6 +1367,10 @@ int AProceduralGen::MakeCorridorPathVisualization(ARoomActor* OverlappedRoom, FT
 	}
 	return PathCost;
 }
+
+EDirection2 LastDirection = EDirection2::Dir_None;
+int DirectionCounter = 0;
+TArray<FTileStruct*> Path;
 
 bool AProceduralGen::FindCorridorPath(int StartX, int StartY, int GoalX, int GoalY, FIntPoint StartOffset, FIntPoint EndOffset, bool SpawnCorr, int MaxIterationAmount, ARoomActor* OverlappedRoom)
 {
@@ -1333,7 +1454,15 @@ bool AProceduralGen::FindCorridorPath(int StartX, int StartY, int GoalX, int Goa
 			if (IsValid(NewX, NewY) && !Tiles[NewX][NewY].Visited && !IsColliding(Corridor, TileWorldPos))
 			{
 				FTileStruct* Neighbour = &Tiles[NewX][NewY];
-				int NewMovementCostToNeighbour = Current->GCost + 1; // assuming each move costs 1
+				int TurnPenalty = 0;
+
+				//If next considered Neighbour is going to turn, add turn penalty
+				if (Current->Parent != nullptr && (Current->X - Current->Parent->X != Row[i] || Current->Y - Current->Parent->Y != Col[i]))
+				{
+					TurnPenalty = TurnPenaltyAmount;
+				}
+				
+				int NewMovementCostToNeighbour = Current->GCost + 1 + TurnPenalty; // assuming each move costs 1
 
 				if (NewMovementCostToNeighbour < Neighbour->GCost || !OpenList.Contains(Neighbour))
 				{
@@ -1350,7 +1479,7 @@ bool AProceduralGen::FindCorridorPath(int StartX, int StartY, int GoalX, int Goa
 
 
 	ApplyOffsets();
-	if (ShouldEarlyReturn()) return false;
+	// if (ShouldEarlyReturn()) return false;
 	InitializeStartNode();
 
 	while (OpenList.Num() > 0 && SafeCheck < MaxIterationAmount)
@@ -1361,11 +1490,12 @@ bool AProceduralGen::FindCorridorPath(int StartX, int StartY, int GoalX, int Goa
 		{
 			if (SpawnCorr)
 			{
-				SpawnCorridors(GoalX, GoalY, OverlappedRoom);
+				SpawnCorridors(GoalX, GoalY, OverlappedRoom, false);
 			}
 			else
 			{
 				ResetAllVisited();
+				if (!SpawnCorridors(GoalX, GoalY, OverlappedRoom, true)) return false;
 			}
 
 			OverlappedRoom->PathCost = MakeCorridorPathVisualization(OverlappedRoom, Current);

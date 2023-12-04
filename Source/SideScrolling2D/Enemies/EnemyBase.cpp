@@ -75,9 +75,6 @@ void AEnemyBase::BeginPlay()
 	Tags.Add("Enemy");
 	BoxCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemyBase::OnBoxComponentBeginOverlap);
 	BoxExtend = FVector(BoxCollision->GetScaledBoxExtent().X + PathTileBuffer,BoxCollision->GetScaledBoxExtent().Z + PathTileBuffer, BoxCollision->GetScaledBoxExtent().Y);
-	// FTimerHandle Timer;
-	// GetWorld()->GetTimerManager().SetTimer(Timer,this,&AEnemyBase::Move,1.0f,true);
-	
 }
 
 void AEnemyBase::Tick(float DeltaTime)
@@ -92,8 +89,6 @@ void AEnemyBase::Tick(float DeltaTime)
 	{
 		SetEnemyDirectionEnum();
 	}
-
-	
 	
 	//KnockBack
 	if (bShouldKnockBack || HealthComponent->IsDead)
