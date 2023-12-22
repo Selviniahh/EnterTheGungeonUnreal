@@ -6,7 +6,6 @@
 UCustomCommands::UCustomCommands()
 {
 	MyCommand = IConsoleManager::Get().RegisterConsoleCommand(TEXT("CopyGrid"),TEXT("Help Text"),FConsoleCommandWithArgsDelegate::CreateUObject(this,&UCustomCommands::CopyGridWithArgs));
-	
 	MyCommand = IConsoleManager::Get().RegisterConsoleCommand(TEXT("GoRight"),TEXT("GoRight"),FConsoleCommandWithArgsDelegate::CreateUObject(this,&UCustomCommands::GoRight));
 	MyCommand = IConsoleManager::Get().RegisterConsoleCommand(TEXT("GoLeft"),TEXT("GoLeft"),FConsoleCommandWithArgsDelegate::CreateUObject(this,&UCustomCommands::GoLeft));
 	MyCommand = IConsoleManager::Get().RegisterConsoleCommand(TEXT("GoUp"),TEXT("GoUp"),FConsoleCommandWithArgsDelegate::CreateUObject(this,&UCustomCommands::GoUp));

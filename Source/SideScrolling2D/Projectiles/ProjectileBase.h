@@ -55,7 +55,8 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	float LifeSpanDistance;
 
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UBoxComponent* BoxComponent;
 
 	
 
@@ -63,14 +64,14 @@ protected:
 	UFUNCTION()
 	virtual void OnFlipBookFinishedPlaying();
 	void StopAndHit(AActor* OtherActor);
+	void StopAndHit(FVector ImpactPoint);
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USceneComponent* SceneComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UBoxComponent* BoxComponent;
+	
 
 	UFUNCTION()
 	virtual void OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

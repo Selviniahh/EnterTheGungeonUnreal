@@ -22,6 +22,8 @@ struct FRoomConnection
 	FIntPoint PathEndOffset;
 	int MaxCheckAmount;
 
+	UPROPERTY()
+	ARoomActor* OverlappedRoom;
 	FString RoomName;
 };
 
@@ -74,6 +76,8 @@ struct FTileStruct
 	FTileStruct* Parent;
 	EDirection2 Direction = EDirection2::Dir_None;
 	FRotator Rotation = FRotator(0,0,0);
+	bool IsTurnCorridor = false;
+
 	static int GetHCost(int StartX, int StartY, int GoalX, int GoalY)
 	{
 		return FMath::Abs(StartX - GoalX) + FMath::Abs(StartY - GoalY);
@@ -92,7 +96,7 @@ class SIDESCROLLING2D_API AProceduralGeneration : public AActor
 public:
 	AProceduralGeneration();
 	
-	/* Meant to be changed later on*/
+	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<ARoomActor> StraightCorr;
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
@@ -154,7 +158,7 @@ public:
 
 	/*Make sure Room sequence length is equal to -1 Number of rooms. Secondly, give index numbers of Room designs. */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 1))
-	TArray<int32> RoomSequence;
+	TArray<int32> DebugRoomSequence;
 
 	/*For debug purposes the location for each given BlockRoom's location. Block room will be spawned at given location*/
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Debugging", meta=(DisplayPriority = 2))
@@ -241,7 +245,7 @@ public:
 	void GenerateMap();
 
 	/*Before spawning any room, Tiles array that will be used for entire checks will be initialized. */
-	void InitWorldTiles();
+	virtual void InitWorldTiles();
 
 	/*Place where most of the functions are used. It'll try to spawn if not collided. If collided, Make all the collision & tile checks and spawn corridor to connect them.*/
 	void SpawnRoom(FName Tag);
@@ -277,22 +281,19 @@ public:
 	/*Number of how many checks it should make for different kind of rooms. If the given amount is exceed, IsColliding function will abort */
 	int DetermineSafeCheckAmount(ARoomActor* NextRoom) const;
 
-	/*Similar how SpawnRoom works but meant to spawn a room for eventually making a connection from one LargeRoom's scene comp to closest LargeRoom's scene comp*/
-	ARoomActor* SpawnFirstBranchRoom(FName Tag, FVector SpawnLoc, USceneComponent* SceneComponent, ARoomActor* LargeRoom, TArray<ARoomActor*>& RoomsToBeAdded);
-	
-	ARoomActor* SpawnBranchRoom(FName Tag, int SpawnCounter, TArray<ARoomActor*>& RoomsToBeAdded, bool& EndBranch);
+	/*Similar how RoomSpawning works but meant to spawn a room for eventually making a connection from one LargeRoom's scene comp to closest LargeRoom's scene comp*/
+	ARoomActor* SpawnFirstBranchRoom(FName Tag, FVector SpawnLoc, USceneComponent& SceneComponent, ARoomActor* LargeRoom, TArray<ARoomActor*>& RoomsToBeAdded);
+
+	bool ContainsManualInstruction(TArray<FName> Names);
+	ARoomActor* SpawnBranchRoom(FName Tag, int& SpawnCounter, TArray<ARoomActor*>& RoomsToBeAdded, bool& EndBranch, TArray<FName>& SocketComps, TArray<ARoomActor*>& RoomsBeAdded);
 
 	/*For large rooms that has multiple exits, to make socket exclusion, in BP editor declare an IntPoint named "SceneComponentName_Exclude" and give exclusions.*/
 	void SocketExclusionForLargeRoom(ARoomActor* Room);
-	
+	FIntPoint GetOffsetFromGivenVarName(ARoomActor* Room);
+
 	void MakeSideBranchFromLargeRoom();
 
 	void MakeBranchConnection();
-
-
-	/*Not working correct. I'll take a look later on. */
-	void OffsetLargeRoomSceneComps(ARoomActor* Room, USceneComponent& SceneComp1,USceneComponent& SceneComp2, FIntPoint& Start, FIntPoint& End);
-
 
 	void SpawnRoomForBranchConnection(FName Tag, FIntPoint StartIndex, FIntPoint EndIndex);
 
@@ -306,7 +307,7 @@ public:
 	/*Bypass debug spawning NoExitRoom */
 	inline bool CanIgnoreExitRoomSpawning(ARoomActor* NextRoom)
 	{
-		if (RoomSequence.Num() > 0)
+		if (DebugRoomSequence.Num() > 0)
 		{
 			return true; 
 		}
@@ -341,9 +342,6 @@ public:
 	{
 		int TileX = FMath::RoundToInt(WorldLocation.X / TileSizeX);
 		int TileY = FMath::RoundToInt(WorldLocation.Y / TileSizeY);
-
-		// int TileX = FMath::CeilToInt(WorldLocation.X / TileSizeX);
-		// int TileY = FMath::CeilToInt(WorldLocation.Y / TileSizeY);
 		
 		return FIntPoint(TileX,TileY);
 	}
@@ -390,19 +388,20 @@ public:
 		}
 		else if (LastSpawnedRoom->DoorSocketExit->ComponentHasTag("SideLeft"))
 		{
-			if (NextDir == Dir_Down) return FRotator(0, 0, -90);
+			if (NextDir == Dir_Down) return FRotator(0, -180, -90);
 			if (NextDir == Dir_Up) return FRotator(0, -90, -90);
+			if (NextDir == Dir_Left) return FRotator(0, 0, -90); //(Pitch=0.000000,Yaw=0.000000,Roll=-90.000000)
 		}
 
 		else if (LastSpawnedRoom->DoorSocketExit->ComponentHasTag("StraightUp"))
 		{
 			if (NextDir == Dir_Right) return FRotator(0, 0, -90);
-			if (NextDir == Dir_Left) 	return FRotator(0, -270, -90);
+			if (NextDir == Dir_Left) 	return FRotator(0, -90, -90);
 		}
 
 		else if (LastSpawnedRoom->DoorSocketExit->ComponentHasTag("StraightDown"))
 		{
-			if (NextDir == Dir_Right)	return  FRotator(0, -90, -90);
+			if (NextDir == Dir_Right)	return  FRotator(0, -270, -90);
 			if (NextDir == Dir_Left) 	return FRotator(0, 0, -90);
 		}
 		return FRotator(31,31,31);
@@ -455,7 +454,7 @@ public:
 	inline FRotator DetermineLastCorrRotation(EDirection2 LastDir)
 	{
 		if (LastDir == EDirection2::Dir_Up && NextRoomEnterTag == "SideLeft") return FRotator(0, 180, -90); 
-		if (LastDir == EDirection2::Dir_Down && NextRoomEnterTag == "SideRight") return FRotator(0, 90, -90);
+		if (LastDir == EDirection2::Dir_Down && NextRoomEnterTag == "SideRight") return FRotator(0, 0, -90);
 		if (LastDir == EDirection2::Dir_Left && NextRoomEnterTag == "StraightUp") return FRotator(0, -180, -90);
 		if (LastDir == EDirection2::Dir_Up && NextRoomEnterTag == "SideRight") return FRotator(0, -90, -90); //This has been changed
 		if (LastDir == EDirection2::Dir_Right && NextRoomEnterTag == "StraightUp") return FRotator(0, -180, -90);
@@ -518,7 +517,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	void VisualizeOverlaps();
+	virtual void VisualizeOverlaps();
 	void VisualizeVisited();
 
 public:

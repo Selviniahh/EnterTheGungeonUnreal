@@ -7,9 +7,20 @@
 #include "RoomActor.generated.h"
 
 
+class AProceduralGen;
+class AEnemyBase;
 class ADoorActor;
 class UBoxComponent;
 class UPaperTileMap;
+
+UENUM()
+enum Direction
+{
+	HorizontalRight,
+	HorizontalLeft,
+	VerticalUp,
+	VerticalDown
+};
 
 UCLASS()
 class SIDESCROLLING2D_API ARoomActor : public AActor
@@ -23,18 +34,30 @@ public:
 
 	UPROPERTY()
 	int PathCost = 0;
-	
+
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool LargeRoom;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool NoExit;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Door", meta=(DisplayPriority = 1))
 	TSubclassOf<ADoorActor> EnterDoor;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Door", meta=(DisplayPriority = 2))
 	TSubclassOf<ADoorActor> ExitDoor;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TSubclassOf<ADoorActor> NoExitDoorSide;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Door", meta=(DisplayPriority = 3))
+	TSubclassOf<ADoorActor> NoExitVerticalUp;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TSubclassOf<ADoorActor> NoExitDoorStraight;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Door", meta=(DisplayPriority = 4))
+	TSubclassOf<ADoorActor> NoExitVerticalDown;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Door", meta=(DisplayPriority = 5))
+	TSubclassOf<ADoorActor> NoExitHorizontalRight;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category= "Door", meta=(DisplayPriority = 5))
+	TSubclassOf<ADoorActor> NoExitHorizontalLeft;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	USceneComponent* RootScene;
@@ -73,10 +96,15 @@ public:
 	FIntPoint ExitSocketCheckOffset;
 	
 	TArray<FString> ValidTags;
-	// mutable TWeakObjectPtr<UActorComponent> LastWarnedComponent;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	bool VisualizeBlocked = false;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TEnumAsByte<Direction> EnterSocketDirection;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TEnumAsByte<Direction> ExitSocketDirection;
 
 	UFUNCTION(BlueprintCallable)
 	void VisualizeAllBlocked();
@@ -86,13 +114,49 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void VisualizeBeginEndTiles();
+
+	UFUNCTION(Blueprintable)
+	void CategorizeAndSortSceneCompsByTag();
 	
 	//Just will be used with Branch Connection
 	bool IsOverlapped;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	int WaveAmount = 1;
+
+	TArray<FIntPoint> BlockedRoomTiles; 
+	TArray<FIntPoint> BlockedCorTiles;
 	
-	// virtual bool CanEditChange(const FEditPropertyChain& PropertyChain) const override;
-	// virtual bool CanEditChange(const FProperty* InProperty) const override;
-	// virtual bool CanEditChangeComponent(const UActorComponent* Component, const FProperty* InProperty) const override;
+	bool DoOnce = true;
+	bool IsHorizontalStraightCorr = false;
+
+	UPROPERTY()
+	ADoorActor* EnterDoorActor;
+
+	TMap<int32, TArray<USceneComponent*>> TaggedSceneComponents;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TArray<TSubclassOf<AEnemyBase>> EnemyClass;
+
+	// TMap<ARoomActor*, FVector >
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TArray<ARoomActor*> OwnerCorridors;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	ARoomActor* IfCorridorOwnerRoom;
+
+	//Simulation
+	UPROPERTY(BlueprintReadWrite)
+	AProceduralGen* ProceduralGen;
+
+	bool IsCorridor = false;
+
+	UPROPERTY(EditAnywhere)
+	FRotator Rotation; 
+	
+
+	void SetEnterDoorActor(ADoorActor* DoorActor);
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 private:
 

@@ -3,7 +3,10 @@
 
 #include "ProjectileBase.h"
 
+#include "PaperFlipbook.h"
 #include "PaperFlipbookComponent.h"
+#include "PaperSprite.h"
+#include "PaperTileMapComponent.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "GameFramework/DamageType.h"
@@ -43,6 +46,26 @@ void AProjectileBase::BeginPlay()
 	
 }
 
+void AProjectileBase::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	
+	TravelledProjectileRange = ProjectileMovement->Velocity.Length();
+	
+	if (TravelledProjectileRange > MaxProjectileRange)
+	{
+		// ProjectileMovement->SetVelocityInLocalSpace(FVector(0,0,0));
+		FlipBook->SetFlipbook(HitImpact);
+		FlipBook->SetLooping(false);
+		ProjectileMovement->SetVelocityInLocalSpace(FVector(0,0,0));
+	}
+	
+	if (FVector::Distance(InitialLoc, GetActorLocation()) > LifeSpanDistance)
+	{
+		Destroy();
+	}
+}
+
 void AProjectileBase::OnFlipBookFinishedPlaying()
 {
 	//Enemy projectiles doesn't have impact animations so they don't need to destroyed
@@ -54,7 +77,12 @@ void AProjectileBase::OnFlipBookFinishedPlaying()
 
 void AProjectileBase::OnBoxComponentBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-
+	
+	if (OtherComp->IsA(UPaperTileMapComponent::StaticClass()))
+	{
+		StopAndHit(SweepResult.ImpactPoint);
+	}
+	
 	//For Projectiles fired by enemies 
 	if (ProjectileType == EprojectileType::ENEMY_PROJECTILE)
 	{
@@ -71,8 +99,6 @@ void AProjectileBase::OnBoxComponentBeginOverlap(UPrimitiveComponent* Overlapped
 			// UE_LOG(LogTemp, Display, TEXT("This is Enemy projectile: "));
 			StopAndHit(OtherActor);
 		}
-
-		//if projectile fired by enemy hit himself
 	}
 
 	//This is projectile that player is shooting
@@ -87,7 +113,40 @@ void AProjectileBase::OnBoxComponentBeginOverlap(UPrimitiveComponent* Overlapped
 			StopAndHit(OtherActor);
 		}
 	}
+	
 }
+
+void AProjectileBase::StopAndHit(FVector ImpactPoint)
+{
+	// Capture the velocity before stopping the projectile
+	FVector Impact = ProjectileMovement->Velocity;
+	Impact.Normalize();
+
+	// Stop the projectile
+	ProjectileMovement->SetVelocityInLocalSpace(FVector(0, 0, 0));
+
+	// Log and use the normalized impact direction
+	UE_LOG(LogTemp, Display, TEXT("Impact: %s"), *Impact.ToString());
+
+	if (FMath::Abs(Impact.X) > FMath::Abs(Impact.Y)) // For horizontal
+		{
+		FlipBook->SetFlipbook(HorizontalImpactFB);
+		}
+	else if (FMath::Abs(Impact.Y) > FMath::Abs(Impact.X))
+		{
+		FlipBook->SetFlipbook(VerticalImpactFB);  // Assuming you have a Flipbook for vertical impacts
+		}
+
+	// Hit impact will finish and then it will destroy
+	FlipBook->SetLooping(false);
+
+	if (!FlipBook->GetFlipbook())
+	{
+		Destroy();
+	}
+
+}
+
 
 void AProjectileBase::StopAndHit(AActor* OtherActor)
 {
@@ -101,38 +160,19 @@ void AProjectileBase::StopAndHit(AActor* OtherActor)
 	auto MyOwner = GetOwner();
 	if (MyOwner == nullptr) return;
 
-	auto MyOvnerInstigator = MyOwner->GetInstigatorController();
+	auto EventInstigator = MyOwner->GetInstigatorController();
 	auto DamageTypeClass = UDamageType::StaticClass();
 
 	if (OtherActor && OtherActor != this && OtherActor != MyOwner)
 	{
-		UGameplayStatics::ApplyDamage(OtherActor, Damage, MyOvnerInstigator, this, DamageTypeClass);
+		UGameplayStatics::ApplyDamage(OtherActor, Damage, EventInstigator, this, DamageTypeClass);
 	}
-}
-
-// Called every frame
-void AProjectileBase::Tick(float DeltaTime)
-{
-	// UE_LOG(LogTemp, Display, TEXT("Owner: %s"), *Owner->Owner->GetName());
-
-
-	SetActorLocation(FVector(GetActorLocation().X, GetActorLocation().Y, -240));
-	TravelledProjectileRange = ProjectileMovement->Velocity.Length();
-
-
-	if (TravelledProjectileRange > MaxProjectileRange)
-	{
-		// ProjectileMovement->SetVelocityInLocalSpace(FVector(0,0,0));
-		FlipBook->SetFlipbook(HitImpact);
-		FlipBook->SetLooping(false);
-		ProjectileMovement->SetVelocityInLocalSpace(FVector(0,0,0));
-	}
-
-
-	if (FVector::Distance(InitialLoc, GetActorLocation()) > LifeSpanDistance)
+	
+	if (!FlipBook->GetFlipbook())
 	{
 		Destroy();
 	}
-	Super::Tick(DeltaTime);
+
 }
 
+// Called every frame

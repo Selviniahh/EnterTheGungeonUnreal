@@ -7,6 +7,7 @@
 #include "GameFramework/FloatingPawnMovement.h"
 #include "SideScrolling2D/Hero/Hero.h"
 #include "SideScrolling2D/Guns/Magnum.h"
+#include "SideScrolling2D/Actor Components/HealthComponent.h"
 
 ABulletMan::ABulletMan()
 {
@@ -33,10 +34,7 @@ ABulletMan::ABulletMan()
 	BoxTraceStartLength = 20;
 	BoxTraceLength = 30;
 	BoxHalfSizeStop = FVector(12,5,5);
-	
 }
-
-#include "SideScrolling2D/Actor Components/HealthComponent.h"
 
 void ABulletMan::BeginPlay()
 {
@@ -70,30 +68,31 @@ void ABulletMan::BeginPlay()
 void ABulletMan::Tick(float DelatTime)
 {
 	Super::Tick(DelatTime);
+
 	CooldownTime += DelatTime;
 
 	//New stuff study this too later
-	if (BoxTraceForStop())
-	{
-		MovementComponent->MaxSpeed = 0;
-		SlowedDownOnce = true;
-	}
-	else
-	{
-		// If the "Stop" condition is false, check the "SlowDown" condition.
-		if (BoxTraceForSlowDown())
-		{
-			MovementComponent->MaxSpeed = InitialMovSpeed / 2;
-			SlowedDownOnce = true;
-		}
-		else
-		{
-			if (SlowedDownOnce)
-			{
-				MovementComponent->MaxSpeed = InitialMovSpeed;
-			}
-		}
-	}
+	// if (BoxTraceForStop())
+	// {
+	// 	MovementComponent->MaxSpeed = 0;
+	// 	SlowedDownOnce = true;
+	// }
+	// else
+	// {
+	// 	// If the "Stop" condition is false, check the "SlowDown" condition.
+	// 	if (BoxTraceForSlowDown())
+	// 	{
+	// 		MovementComponent->MaxSpeed = InitialMovSpeed / 2;
+	// 		SlowedDownOnce = true;
+	// 	}
+	// 	else
+	// 	{
+	// 		if (SlowedDownOnce)
+	// 		{
+	// 			MovementComponent->MaxSpeed = InitialMovSpeed;
+	// 		}
+	// 	}
+	// }
 	
 
 
@@ -127,22 +126,24 @@ void ABulletMan::Tick(float DelatTime)
 			CanSetDirection = false; 
 		}
 	}
-	
+
 }
 
 void ABulletMan::Move()
 {
 	Super::Move();
-	if (Hero && !HealthComponent->IsDead && !bShouldKnockBack && !Spawning)
-	{
-		MovementDir = Hero->GetActorLocation() - GetActorLocation();
-		MovementDir.Normalize();
+	// if (Hero && !HealthComponent->IsDead && !bShouldKnockBack && !Spawning)
+	// {
+	// 	MovementDir = Hero->GetActorLocation() - GetActorLocation();
+	// 	MovementDir.Normalize();
+	//
+	// 	if (DistanceBetweenHero > MoveRange)
+	// 	{
+	// 		MovementComponent->AddInputVector(MovementDir);	
+	// 	}
+	// }
+	// MovementComponent->AddInputVector(MovDirection);
 
-		if (DistanceBetweenHero > MoveRange)
-		{
-			MovementComponent->AddInputVector(MovementDir);	
-		}
-	}
 }
 
 void ABulletMan::JustPlayShootAnimation()
@@ -150,8 +151,7 @@ void ABulletMan::JustPlayShootAnimation()
 	Super::JustPlayShootAnimation();
 	//Make sure that enemy can shoot in enough distance
 	if (DistanceCannotShoot < DistanceBetweenHero && HealthComponent->IsDead ) return;
-
-
+	
 	if (Gun && GetWorld())
 	{
 		//Set timer to shoot after gun shoot animation
@@ -195,56 +195,11 @@ bool ABulletMan::BoxTraceForSlowDown()
 		Params.bTraceComplex = true;
 		TArray<FHitResult> HitResults;
 
-		
+		if (!Gun) return false; 
 		FQuat RotationQuat = Gun->GetActorRotation().Quaternion();
 
 		
 		bool bHit = GetWorld()->SweepMultiByChannel(HitResults,StartLocation,EndLocation,RotationQuat, ECC_Visibility,FCollisionShape::MakeBox(BoxHalfSizeSlow), Params);
-		
-		for (auto Hit : HitResults)
-		{
-			AActor* ActorHit = Hit.GetActor();
-
-			if (ActorHit && ActorHit->ActorHasTag("Enemy"))
-			{
-				ABulletMan* BulletMan = Cast<ABulletMan>(ActorHit);
-				if (BulletMan->HealthComponent->IsDead)
-				{
-					UE_LOG(LogTemp, Display, TEXT("DEATH ENEMY HIT"));
-					return false;
-				}
-				UE_LOG(LogTemp, Display, TEXT("TRUE"));
-
-				return true;
-			}
-		}
-
-		if (ShouldDrawDebugBox)
-		{
-			DrawDebugBox(GetWorld(),StartLocation,BoxHalfSizeSlow,RotationQuat, Color, false, 0.1f, 0, 1.0f);
-		}
-	}
-
-	//If all the checks doesn't collide with any enemy return false
-	UE_LOG(LogTemp, Display, TEXT("FALSE"));
-	return false;
-}
-
-bool ABulletMan::BoxTraceForStop()
-{
-	if (GetWorld())
-	{
-		FVector StartLocation = GetActorLocation() + MovementDir * (BoxTraceStartLength + BoxTraceLength / 2);
-		FVector EndLocation = GetActorLocation() + MovementDir * BoxTraceLength;
-		FCollisionQueryParams Params;
-		Params.bTraceComplex = true;
-		TArray<FHitResult> HitResults;
-
-		
-		FQuat RotationQuat = Gun->GetActorRotation().Quaternion();
-
-		
-		bool bHit = GetWorld()->SweepMultiByChannel(HitResults,StartLocation,EndLocation,RotationQuat, ECC_Visibility,FCollisionShape::MakeBox(BoxHalfSizeStop), Params);
 		
 		for (auto Hit : HitResults)
 		{
@@ -264,10 +219,60 @@ bool ABulletMan::BoxTraceForStop()
 			}
 		}
 
+		if (ShouldDrawDebugBox)
+		{
+			DrawDebugBox(GetWorld(),StartLocation,BoxHalfSizeSlow,RotationQuat, Color, false, 0.1f, 0, 1.0f);
+		}
+	}
+
+	//If all the checks doesn't collide with any enemy return false
+	// UE_LOG(LogTemp, Display, TEXT("FALSE"));
+	return false;
+}
+
+bool ABulletMan::BoxTraceForStop()
+{
+	if (GetWorld())
+	{
+		FVector StartLocation = GetActorLocation() + MovementDir * (BoxTraceStartLength + BoxTraceLength / 2);
+		FVector EndLocation = GetActorLocation() + MovementDir * BoxTraceLength;
+		FCollisionQueryParams Params;
+		Params.bTraceComplex = true;
+		TArray<FHitResult> HitResults;
+
+		FQuat RotationQuat;
+		if (Gun)
+		{
+			 RotationQuat = Gun->GetActorRotation().Quaternion();
+		}
+
+		
+		bool bHit = GetWorld()->SweepMultiByChannel(HitResults,StartLocation,EndLocation,RotationQuat, ECC_Visibility,FCollisionShape::MakeBox(BoxHalfSizeStop), Params);
+
 		if (ShouldDrawDebugBoxStop)
 		{
 			DrawDebugBox(GetWorld(),StartLocation,BoxHalfSizeStop,RotationQuat, Color, false, 0.1f, 0, 1.0f);
 		}
+		
+		for (auto Hit : HitResults)
+		{
+			AActor* ActorHit = Hit.GetActor();
+
+			if (ActorHit && ActorHit->ActorHasTag("Enemy"))
+			{
+				ABulletMan* BulletMan = Cast<ABulletMan>(ActorHit);
+				if (BulletMan->HealthComponent->IsDead || ActorHit == this)
+				{
+					// UE_LOG(LogTemp, Display, TEXT("DEATH ENEMY HIT"));
+					return false;
+				}
+				// UE_LOG(LogTemp, Display, TEXT("TRUE"));
+
+				return true;
+			}
+		}
+
+		
 	}
 
 	//If all the checks doesn't collide with any enemy return false
