@@ -204,9 +204,6 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Corridor path finding", meta=(DisplayPriority = 2))
 	int TurnPenaltyAmount = 5;
-
-	UPROPERTY(BlueprintReadWrite)
-	FVector FirstFuckingRoomLocation;
 	
 	UPROPERTY(EditAnywhere)
 	bool OnlyMakeCorridorCheck;
@@ -224,8 +221,13 @@ public:
 		FIntPoint(0,-1), FIntPoint(0,-1), FIntPoint(0,-1),FIntPoint(0,-1), FIntPoint(0,-1), FIntPoint(0,-1)};
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Make custom path scenarios", meta=(EditCondition = "DisplayCustomPathScenarios", EditConditionHides, DisplayPriority = 4))
-	TArray<FIntPoint> VerticalUpTurnRightToVerticalUp = {FIntPoint(0,-1),FIntPoint(0,-1), FIntPoint(1,-0), FIntPoint(1,0),
-		FIntPoint(1,0), FIntPoint(1,0), FIntPoint(1,0),FIntPoint(0,-1), FIntPoint(0,-1), FIntPoint(0,-1)};
+	TArray<FIntPoint> VerticalUpTurnRightToVerticalUp = {FIntPoint(0,-1),FIntPoint(1,0),FIntPoint(1,0),FIntPoint(1,0)
+	,FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(1,0),FIntPoint(1,0),FIntPoint(1,0),FIntPoint(1,0),FIntPoint(0,-1),
+		FIntPoint(0,-1),FIntPoint(0,-1)};
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Make custom path scenarios", meta=(EditCondition = "DisplayCustomPathScenarios", EditConditionHides, DisplayPriority = 5))
+	TArray<FIntPoint> VerticalUpTurnLeftToVerticalUp = {FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(-1,0),FIntPoint(-1,0),FIntPoint(-1,0),FIntPoint(0,-1),
+	FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(-1,0),FIntPoint(-1,0),FIntPoint(-1,0),FIntPoint(-1,0),FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(0,-1)};
 
 	
 	
@@ -242,9 +244,9 @@ public:
 	void UnBlockLastRoomItsCorridorAndDestroy();
 	void GenerateMap();
 	void InitWorldTiles();
-	TArray<FIntPoint> SetTilesBlocked(ARoomActor* Room, const FVector& SpawnLoc);
-	bool IsColliding(ARoomActor* Room, const FVector& SpawnLoc);
-	static FVector CalculateTopLeftCorner(const FVector& WorldLoc, const FVector& BoxExtends);
+	TArray<FIntPoint> SetTilesBlocked(ARoomActor* Room, const FVector& SpawnLoc, const FRotator& SpawnRot);
+	bool IsColliding(ARoomActor* Room, const FVector& SpawnLoc, const FRotator& SpawnRot);
+	static FVector CalculateTopLeftCorner(const ARoomActor* Room, const FVector& WorldLoc, const FRotator& Rotation, FVector& BoxExtends);
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	bool MoveOverlappedRoom(ARoomActor* NextRoom, FVector& NextRoomLocation);
 	bool ConnectRoomsWithCorridors(ARoomActor*& Room);
@@ -278,7 +280,7 @@ public:
 
 	void SpawnTestCollisionObjects();
 	void SpawnFirstRoom();
-	void DestroyLastRoomSpawnNoExit(FVector& SpawnLocation, int& SpawnCounter, bool CanSpawnLargeRoom, TArray<ARoomActor*>& CustomRoomDesigns, bool& OnlySpawnNoExit, ARoomActor*& NextRoom);
+	void DestroyLastRoomSpawnNoExit(FVector& SpawnLocation,const FRotator& Rotation, int& SpawnCounter, bool CanSpawnLargeRoom, TArray<ARoomActor*>& CustomRoomDesigns, bool& OnlySpawnNoExit, ARoomActor*& NextRoom);
 	virtual void BeginPlay() override;
 	FRoomConnection CalculatePathInfo(ARoomActor* NextRoom);
 	void SpawnNonOverlappedRoom(const FRotator& Rotation, const FVector& NextRoomLocation, ARoomActor*& NextRoom);
@@ -496,5 +498,5 @@ protected:
 	
 
 private:
-	void ForEachTileInRoom(const ARoomActor* Room, const FVector& SpawnLoc, const TFunction<void(int X, int Z)>& TileAction);
+	void ForEachTileInRoom(const ARoomActor* Room, const FVector& SpawnLoc,const FRotator& Rotation, const TFunction<void(int X, int Z)>& TileAction);
 };

@@ -26,13 +26,20 @@ public:
 	FTileStruct* FillGivenCorrPattern(TArray<FTileStruct*>& RoomList, TArray<FIntPoint>& CurrentPattern);
 	void MakePathScenario(const FVector& FirstRoomLoc, const FVector& NextRoomLocation, TArray<FIntPoint>& CurrentPattern);
 	bool MakeGivenPathFinding(TArray<FIntPoint>& CurrentPattern, ARoomActor* NextRoom);
-
-	FVector RoundVectorToTilePos(const FIntPoint& BoxExtent)
+	void InitWorldChunks(TArray<TArray<FIntPoint>>& AllScenarios);
+	
+	FVector RoundBoxExtentToNearestTileSize(const FIntPoint& BoxExtent)
 	{
-		
 		int X = FMath::RoundToInt(static_cast<float>(BoxExtent.X * 2) / ProGen->TileSizeX) * ProGen->TileSizeX;
 		int Y = FMath::RoundToInt(static_cast<float>(BoxExtent.Y * 2) / ProGen->TileSizeY) * ProGen->TileSizeY;
 		return FVector(X, Y, 0);
+	}
+
+	void RoundNearestTilePos(FVector& VectorToRound)
+	{
+		int X = FMath::RoundToInt(static_cast<float>(VectorToRound.X) / ProGen->TileSizeX) * ProGen->TileSizeX;
+		int Y = FMath::RoundToInt(static_cast<float>(VectorToRound.Y) / ProGen->TileSizeY) * ProGen->TileSizeY;
+		VectorToRound = FVector(X, Y, 0);
 	}
 
 	UPROPERTY()
@@ -41,7 +48,8 @@ public:
 	UPROPERTY()
 	TArray<ARoomActor*> FixedRoomActor;
 
-	FIntPoint LargestExtends = FIntPoint(0,0); 
+	FIntPoint LargestExtends = FIntPoint(0,0);
+	TArray<FVector> CenterOfEachChunk;
 };
 
 

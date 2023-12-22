@@ -8,7 +8,7 @@ public class SideScrolling2D : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "PaperZD", "PaperZDEditor", "Paper2D", "EnhancedInput", "UMG"});
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "PaperZD", "PaperZDEditor", "Paper2D", "EnhancedInput", "UMG", "Blutility"});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {"UnrealEd"});
 

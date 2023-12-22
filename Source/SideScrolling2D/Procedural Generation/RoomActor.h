@@ -149,9 +149,10 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	AProceduralGen* ProceduralGen;
 
-	//Just to see in the debugger
+	bool IsCorridor = false;
+
 	UPROPERTY(EditAnywhere)
-	FVector Location; 
+	FRotator Rotation; 
 	
 
 	void SetEnterDoorActor(ADoorActor* DoorActor);
