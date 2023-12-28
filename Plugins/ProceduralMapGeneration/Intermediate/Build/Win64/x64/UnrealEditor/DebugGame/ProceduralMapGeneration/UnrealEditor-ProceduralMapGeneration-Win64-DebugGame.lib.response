@@ -1,0 +1,16 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/DEF
+/NAME:"UnrealEditor-ProceduralMapGeneration-Win64-DebugGame.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"C:\Users\xqwys\Documents\Unreal Projects\SideScrolling2D-master\Intermediate\Build\Win64\x64\SideScrolling2DEditor\DebugGame\UnrealEd\SharedPCH.UnrealEd.NonOptimized.ShadowErrors.InclOrderUnreal5_0.h.obj"
+"C:\Users\xqwys\Documents\Unreal Projects\SideScrolling2D-master\Plugins\ProceduralMapGeneration\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\ProceduralMapGeneration\Module.ProceduralMapGeneration.cpp.obj"
+"C:\Users\xqwys\Documents\Unreal Projects\SideScrolling2D-master\Plugins\ProceduralMapGeneration\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\ProceduralMapGeneration\ProceduralMapGeneration.cpp.obj"
+"C:\Users\xqwys\Documents\Unreal Projects\SideScrolling2D-master\Plugins\ProceduralMapGeneration\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\ProceduralMapGeneration\RenderTarget.cpp.obj"
+"C:\Users\xqwys\Documents\Unreal Projects\SideScrolling2D-master\Plugins\ProceduralMapGeneration\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\ProceduralMapGeneration\ProceduralMapGeneration.init.gen.cpp.obj"
+"C:\Users\xqwys\Documents\Unreal Projects\SideScrolling2D-master\Plugins\ProceduralMapGeneration\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\ProceduralMapGeneration\RenderTarget.gen.cpp.obj"
+"C:\Users\xqwys\Documents\Unreal Projects\SideScrolling2D-master\Plugins\ProceduralMapGeneration\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\ProceduralMapGeneration\Default.rc2.res"
+/OUT:"C:\Users\xqwys\Documents\Unreal Projects\SideScrolling2D-master\Plugins\ProceduralMapGeneration\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\ProceduralMapGeneration\UnrealEditor-ProceduralMapGeneration-Win64-DebugGame.lib"
