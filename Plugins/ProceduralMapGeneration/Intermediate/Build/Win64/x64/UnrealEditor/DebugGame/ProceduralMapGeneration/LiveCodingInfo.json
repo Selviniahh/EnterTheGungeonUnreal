@@ -1,0 +1,13 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.ProceduralMapGeneration.cpp.obj": [
+			"GlobalInputListener.cpp.obj",
+			"ProGenWidget.cpp.obj",
+			"ProceduralMapGeneration.init.gen.cpp.obj",
+			"RenderTarget.gen.cpp.obj",
+			"ProceduralMapGeneration.cpp.obj",
+			"RenderTarget.cpp.obj"
+		]
+	}
+}

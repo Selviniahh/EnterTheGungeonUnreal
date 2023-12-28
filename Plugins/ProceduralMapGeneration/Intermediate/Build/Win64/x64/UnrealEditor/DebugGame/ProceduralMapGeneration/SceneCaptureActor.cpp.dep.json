@@ -1,0 +1,19 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "c:\\users\\xqwys\\documents\\unreal projects\\sidescrolling2d-master\\plugins\\proceduralmapgeneration\\source\\proceduralmapgeneration\\private\\scenecaptureactor.cpp",
+        "ProvidedModule": "",
+        "PCH": "c:\\users\\xqwys\\documents\\unreal projects\\sidescrolling2d-master\\intermediate\\build\\win64\\x64\\sidescrolling2deditor\\debuggame\\unrealed\\sharedpch.unrealed.nonoptimized.shadowerrors.inclorderunreal5_0.h.pch",
+        "Includes": [
+            "c:\\users\\xqwys\\documents\\unreal projects\\sidescrolling2d-master\\plugins\\proceduralmapgeneration\\intermediate\\build\\win64\\x64\\unrealeditor\\debuggame\\proceduralmapgeneration\\definitions.proceduralmapgeneration.h",
+            "c:\\users\\xqwys\\documents\\unreal projects\\sidescrolling2d-master\\plugins\\proceduralmapgeneration\\source\\proceduralmapgeneration\\public\\scenecaptureactor.h",
+            "c:\\users\\xqwys\\documents\\unreal projects\\sidescrolling2d-master\\plugins\\proceduralmapgeneration\\intermediate\\build\\win64\\unrealeditor\\inc\\proceduralmapgeneration\\uht\\scenecaptureactor.generated.h",
+            "c:\\program files\\epic games\\ue_5.2\\engine\\source\\runtime\\engine\\classes\\components\\scenecapturecomponent2d.h",
+            "c:\\program files\\epic games\\ue_5.2\\engine\\source\\runtime\\engine\\classes\\components\\scenecapturecomponent.h",
+            "c:\\program files\\epic games\\ue_5.2\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\scenecapturecomponent.generated.h",
+            "c:\\program files\\epic games\\ue_5.2\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\scenecapturecomponent2d.generated.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}
