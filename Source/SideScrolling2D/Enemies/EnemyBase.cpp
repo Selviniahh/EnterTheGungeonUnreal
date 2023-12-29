@@ -10,7 +10,7 @@
 #include "Components/BoxComponent.h"
 #include "SideScrolling2D/Actor Components/HealthComponent.h"
 #include "SideScrolling2D/Hero/Hero.h"
-#include "SideScrolling2D/Procedural Generation/RoomActor.h"
+#include "ProceduralMapGeneration/Procedural Generation/RoomActor.h"
 #include "SideScrolling2D/Guns/GunBase.h"
 
 

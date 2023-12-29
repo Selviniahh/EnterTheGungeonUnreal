@@ -4,7 +4,6 @@
 #include "ProGenWidget.h"
 #include "GlobalInputListener.h"
 #include "SlateOptMacros.h"
-#include ""
 #include "Materials/MaterialInterface.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
@@ -27,12 +26,6 @@ void SProGenWidget::Construct(const FArguments& InArgs)
 	FSlateFontInfo PropertyTextFont = FCoreStyle::Get().GetFontStyle(FName("EmbossedText"));
 	TitleTextFont.Size = 12;
 
-	UWorld* EditorWorld = GEditor->GetEditorWorldContext().World();
-	for (int i = TActorIterator<>; i < MAX; ++i)
-	{
-		
-	}
-	
 	ChildSlot
 [
 	// Top-Level Vertical Box

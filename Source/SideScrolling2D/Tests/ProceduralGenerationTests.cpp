@@ -2,7 +2,7 @@
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "Tests/AutomationEditorCommon.h"
-#include "SideScrolling2D/Procedural Generation/ProceduralGeneration.h"
+#include "ProceduralMapGeneration/Procedural Generation/ProceduralGeneration.h"
 #include "Tests/AutomationCommon.h"
 
 namespace ProceduralGenTestUtils
