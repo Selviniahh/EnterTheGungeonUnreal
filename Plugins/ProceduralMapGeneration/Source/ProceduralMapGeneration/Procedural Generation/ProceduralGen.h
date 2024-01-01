@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ProceduralGeneration.h"
 #include "RoomActor.h"
 #include "GameFramework/Actor.h"
 #include "Stats/Stats.h"
@@ -26,6 +25,83 @@ struct FCorridorPathParams
 	FCorridorPathParams(int startX, int startY, int goalX, int goalY, FIntPoint startOffset, FIntPoint endOffset, bool spawnCorr, int maxIterationAmount, ARoomActor* overlappedRoom)
 		: StartX(startX), StartY(startY), GoalX(goalX), GoalY(goalY), StartOffset(startOffset), EndOffset(endOffset), SpawnCorr(spawnCorr), MaxIterationAmount(maxIterationAmount), OverlappedRoom(overlappedRoom)
 	{}
+};
+
+USTRUCT()
+struct FRoomConnection
+{
+	GENERATED_BODY()
+
+	FVector StartPoint;  // The exit point of a room
+	FVector EndPoint;    // The entry point of the next room
+	FIntPoint PathStartOffset; 
+	FIntPoint PathEndOffset;
+	int MaxCheckAmount;
+
+	UPROPERTY()
+	ARoomActor* OverlappedRoom;
+	FString RoomName;
+};
+
+UENUM()
+enum EDirection2 : uint8
+{
+	Dir_Left,
+	Dir_Right,
+	Dir_Up,
+	Dir_Down,
+	Dir_None
+};
+
+USTRUCT()
+struct FPathNode
+{
+	GENERATED_BODY()
+	bool Visited = false;
+	int X = 0;
+	int Y = 0;
+	int HCost = 0;
+	int GCost = 0;
+	FPathNode* Parent = nullptr;
+	EDirection2 Direction = EDirection2::Dir_None;
+	FRotator Rotation = FRotator(0,0,0);
+	static int GetHCost(int StartX, int StartY, int GoalX, int GoalY)
+	{
+		return FMath::Abs(StartX - GoalX) + FMath::Abs(StartY - GoalY);
+	}
+	int FCost()
+	{
+		return GCost + HCost;
+	}
+};
+
+//Merged Path Into Tile
+USTRUCT()
+struct FTileStruct
+{
+	GENERATED_BODY()
+	bool Blocked = false;
+	bool Path = false;
+	FVector Location = FVector(0,0,0); //Rest is for pathfinding
+	
+	bool Visited = false;
+	int X = 0;
+	int Y = 0;
+	int HCost = 0;
+	int GCost = 0;
+	FTileStruct* Parent;
+	EDirection2 Direction = EDirection2::Dir_None;
+	FRotator Rotation = FRotator(0,0,0);
+	bool IsTurnCorridor = false;
+
+	static int GetHCost(int StartX, int StartY, int GoalX, int GoalY)
+	{
+		return FMath::Abs(StartX - GoalX) + FMath::Abs(StartY - GoalY);
+	}
+	int FCost()
+	{
+		return GCost + HCost;
+	}
 };
 
 struct FRoomConnection;
@@ -59,7 +135,7 @@ class PROCEDURALMAPGENERATION_API AProceduralGen : public AActor
 public:
 	
 	UPROPERTY()
-	TArray<ARoomActor*> CastedRooms;
+	TArray<ARoomActor*> CastedRoomDesigns;
 
 	TArray<TArray<FTileStruct>> Tiles;
 

@@ -16,8 +16,239 @@ void EmptyLinkFunctionForGeneratedCodeProceduralGen() {}
 	PROCEDURALMAPGENERATION_API UClass* Z_Construct_UClass_AProceduralGen();
 	PROCEDURALMAPGENERATION_API UClass* Z_Construct_UClass_AProceduralGen_NoRegister();
 	PROCEDURALMAPGENERATION_API UClass* Z_Construct_UClass_ARoomActor_NoRegister();
+	PROCEDURALMAPGENERATION_API UEnum* Z_Construct_UEnum_ProceduralMapGeneration_EDirection2();
+	PROCEDURALMAPGENERATION_API UScriptStruct* Z_Construct_UScriptStruct_FPathNode();
+	PROCEDURALMAPGENERATION_API UScriptStruct* Z_Construct_UScriptStruct_FRoomConnection();
+	PROCEDURALMAPGENERATION_API UScriptStruct* Z_Construct_UScriptStruct_FTileStruct();
 	UPackage* Z_Construct_UPackage__Script_ProceduralMapGeneration();
 // End Cross Module References
+	static FStructRegistrationInfo Z_Registration_Info_UScriptStruct_RoomConnection;
+class UScriptStruct* FRoomConnection::StaticStruct()
+{
+	if (!Z_Registration_Info_UScriptStruct_RoomConnection.OuterSingleton)
+	{
+		Z_Registration_Info_UScriptStruct_RoomConnection.OuterSingleton = GetStaticStruct(Z_Construct_UScriptStruct_FRoomConnection, (UObject*)Z_Construct_UPackage__Script_ProceduralMapGeneration(), TEXT("RoomConnection"));
+	}
+	return Z_Registration_Info_UScriptStruct_RoomConnection.OuterSingleton;
+}
+template<> PROCEDURALMAPGENERATION_API UScriptStruct* StaticStruct<FRoomConnection>()
+{
+	return FRoomConnection::StaticStruct();
+}
+	struct Z_Construct_UScriptStruct_FRoomConnection_Statics
+	{
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam Struct_MetaDataParams[];
+#endif
+		static void* NewStructOps();
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_OverlappedRoom_MetaData[];
+#endif
+		static const UECodeGen_Private::FObjectPropertyParams NewProp_OverlappedRoom;
+		static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+		static const UECodeGen_Private::FStructParams ReturnStructParams;
+	};
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FRoomConnection_Statics::Struct_MetaDataParams[] = {
+		{ "ModuleRelativePath", "Procedural Generation/ProceduralGen.h" },
+	};
+#endif
+	void* Z_Construct_UScriptStruct_FRoomConnection_Statics::NewStructOps()
+	{
+		return (UScriptStruct::ICppStructOps*)new UScriptStruct::TCppStructOps<FRoomConnection>();
+	}
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FRoomConnection_Statics::NewProp_OverlappedRoom_MetaData[] = {
+		{ "ModuleRelativePath", "Procedural Generation/ProceduralGen.h" },
+	};
+#endif
+	const UECodeGen_Private::FObjectPropertyParams Z_Construct_UScriptStruct_FRoomConnection_Statics::NewProp_OverlappedRoom = { "OverlappedRoom", nullptr, (EPropertyFlags)0x0010000000000000, UECodeGen_Private::EPropertyGenFlags::Object, RF_Public|RF_Transient|RF_MarkAsNative, 1, nullptr, nullptr, STRUCT_OFFSET(FRoomConnection, OverlappedRoom), Z_Construct_UClass_ARoomActor_NoRegister, METADATA_PARAMS(Z_Construct_UScriptStruct_FRoomConnection_Statics::NewProp_OverlappedRoom_MetaData, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FRoomConnection_Statics::NewProp_OverlappedRoom_MetaData)) };
+	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UScriptStruct_FRoomConnection_Statics::PropPointers[] = {
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FRoomConnection_Statics::NewProp_OverlappedRoom,
+	};
+	const UECodeGen_Private::FStructParams Z_Construct_UScriptStruct_FRoomConnection_Statics::ReturnStructParams = {
+		(UObject* (*)())Z_Construct_UPackage__Script_ProceduralMapGeneration,
+		nullptr,
+		&NewStructOps,
+		"RoomConnection",
+		sizeof(FRoomConnection),
+		alignof(FRoomConnection),
+		Z_Construct_UScriptStruct_FRoomConnection_Statics::PropPointers,
+		UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FRoomConnection_Statics::PropPointers),
+		RF_Public|RF_Transient|RF_MarkAsNative,
+		EStructFlags(0x00000001),
+		METADATA_PARAMS(Z_Construct_UScriptStruct_FRoomConnection_Statics::Struct_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FRoomConnection_Statics::Struct_MetaDataParams))
+	};
+	UScriptStruct* Z_Construct_UScriptStruct_FRoomConnection()
+	{
+		if (!Z_Registration_Info_UScriptStruct_RoomConnection.InnerSingleton)
+		{
+			UECodeGen_Private::ConstructUScriptStruct(Z_Registration_Info_UScriptStruct_RoomConnection.InnerSingleton, Z_Construct_UScriptStruct_FRoomConnection_Statics::ReturnStructParams);
+		}
+		return Z_Registration_Info_UScriptStruct_RoomConnection.InnerSingleton;
+	}
+	static FEnumRegistrationInfo Z_Registration_Info_UEnum_EDirection2;
+	static UEnum* EDirection2_StaticEnum()
+	{
+		if (!Z_Registration_Info_UEnum_EDirection2.OuterSingleton)
+		{
+			Z_Registration_Info_UEnum_EDirection2.OuterSingleton = GetStaticEnum(Z_Construct_UEnum_ProceduralMapGeneration_EDirection2, (UObject*)Z_Construct_UPackage__Script_ProceduralMapGeneration(), TEXT("EDirection2"));
+		}
+		return Z_Registration_Info_UEnum_EDirection2.OuterSingleton;
+	}
+	template<> PROCEDURALMAPGENERATION_API UEnum* StaticEnum<EDirection2>()
+	{
+		return EDirection2_StaticEnum();
+	}
+	struct Z_Construct_UEnum_ProceduralMapGeneration_EDirection2_Statics
+	{
+		static const UECodeGen_Private::FEnumeratorParam Enumerators[];
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam Enum_MetaDataParams[];
+#endif
+		static const UECodeGen_Private::FEnumParams EnumParams;
+	};
+	const UECodeGen_Private::FEnumeratorParam Z_Construct_UEnum_ProceduralMapGeneration_EDirection2_Statics::Enumerators[] = {
+		{ "Dir_Left", (int64)Dir_Left },
+		{ "Dir_Right", (int64)Dir_Right },
+		{ "Dir_Up", (int64)Dir_Up },
+		{ "Dir_Down", (int64)Dir_Down },
+		{ "Dir_None", (int64)Dir_None },
+	};
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UEnum_ProceduralMapGeneration_EDirection2_Statics::Enum_MetaDataParams[] = {
+		{ "Dir_Down.Name", "Dir_Down" },
+		{ "Dir_Left.Name", "Dir_Left" },
+		{ "Dir_None.Name", "Dir_None" },
+		{ "Dir_Right.Name", "Dir_Right" },
+		{ "Dir_Up.Name", "Dir_Up" },
+		{ "ModuleRelativePath", "Procedural Generation/ProceduralGen.h" },
+	};
+#endif
+	const UECodeGen_Private::FEnumParams Z_Construct_UEnum_ProceduralMapGeneration_EDirection2_Statics::EnumParams = {
+		(UObject*(*)())Z_Construct_UPackage__Script_ProceduralMapGeneration,
+		nullptr,
+		"EDirection2",
+		"EDirection2",
+		Z_Construct_UEnum_ProceduralMapGeneration_EDirection2_Statics::Enumerators,
+		UE_ARRAY_COUNT(Z_Construct_UEnum_ProceduralMapGeneration_EDirection2_Statics::Enumerators),
+		RF_Public|RF_Transient|RF_MarkAsNative,
+		EEnumFlags::None,
+		(uint8)UEnum::ECppForm::Regular,
+		METADATA_PARAMS(Z_Construct_UEnum_ProceduralMapGeneration_EDirection2_Statics::Enum_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UEnum_ProceduralMapGeneration_EDirection2_Statics::Enum_MetaDataParams))
+	};
+	UEnum* Z_Construct_UEnum_ProceduralMapGeneration_EDirection2()
+	{
+		if (!Z_Registration_Info_UEnum_EDirection2.InnerSingleton)
+		{
+			UECodeGen_Private::ConstructUEnum(Z_Registration_Info_UEnum_EDirection2.InnerSingleton, Z_Construct_UEnum_ProceduralMapGeneration_EDirection2_Statics::EnumParams);
+		}
+		return Z_Registration_Info_UEnum_EDirection2.InnerSingleton;
+	}
+	static FStructRegistrationInfo Z_Registration_Info_UScriptStruct_PathNode;
+class UScriptStruct* FPathNode::StaticStruct()
+{
+	if (!Z_Registration_Info_UScriptStruct_PathNode.OuterSingleton)
+	{
+		Z_Registration_Info_UScriptStruct_PathNode.OuterSingleton = GetStaticStruct(Z_Construct_UScriptStruct_FPathNode, (UObject*)Z_Construct_UPackage__Script_ProceduralMapGeneration(), TEXT("PathNode"));
+	}
+	return Z_Registration_Info_UScriptStruct_PathNode.OuterSingleton;
+}
+template<> PROCEDURALMAPGENERATION_API UScriptStruct* StaticStruct<FPathNode>()
+{
+	return FPathNode::StaticStruct();
+}
+	struct Z_Construct_UScriptStruct_FPathNode_Statics
+	{
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam Struct_MetaDataParams[];
+#endif
+		static void* NewStructOps();
+		static const UECodeGen_Private::FStructParams ReturnStructParams;
+	};
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FPathNode_Statics::Struct_MetaDataParams[] = {
+		{ "ModuleRelativePath", "Procedural Generation/ProceduralGen.h" },
+	};
+#endif
+	void* Z_Construct_UScriptStruct_FPathNode_Statics::NewStructOps()
+	{
+		return (UScriptStruct::ICppStructOps*)new UScriptStruct::TCppStructOps<FPathNode>();
+	}
+	const UECodeGen_Private::FStructParams Z_Construct_UScriptStruct_FPathNode_Statics::ReturnStructParams = {
+		(UObject* (*)())Z_Construct_UPackage__Script_ProceduralMapGeneration,
+		nullptr,
+		&NewStructOps,
+		"PathNode",
+		sizeof(FPathNode),
+		alignof(FPathNode),
+		nullptr,
+		0,
+		RF_Public|RF_Transient|RF_MarkAsNative,
+		EStructFlags(0x00000001),
+		METADATA_PARAMS(Z_Construct_UScriptStruct_FPathNode_Statics::Struct_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FPathNode_Statics::Struct_MetaDataParams))
+	};
+	UScriptStruct* Z_Construct_UScriptStruct_FPathNode()
+	{
+		if (!Z_Registration_Info_UScriptStruct_PathNode.InnerSingleton)
+		{
+			UECodeGen_Private::ConstructUScriptStruct(Z_Registration_Info_UScriptStruct_PathNode.InnerSingleton, Z_Construct_UScriptStruct_FPathNode_Statics::ReturnStructParams);
+		}
+		return Z_Registration_Info_UScriptStruct_PathNode.InnerSingleton;
+	}
+	static FStructRegistrationInfo Z_Registration_Info_UScriptStruct_TileStruct;
+class UScriptStruct* FTileStruct::StaticStruct()
+{
+	if (!Z_Registration_Info_UScriptStruct_TileStruct.OuterSingleton)
+	{
+		Z_Registration_Info_UScriptStruct_TileStruct.OuterSingleton = GetStaticStruct(Z_Construct_UScriptStruct_FTileStruct, (UObject*)Z_Construct_UPackage__Script_ProceduralMapGeneration(), TEXT("TileStruct"));
+	}
+	return Z_Registration_Info_UScriptStruct_TileStruct.OuterSingleton;
+}
+template<> PROCEDURALMAPGENERATION_API UScriptStruct* StaticStruct<FTileStruct>()
+{
+	return FTileStruct::StaticStruct();
+}
+	struct Z_Construct_UScriptStruct_FTileStruct_Statics
+	{
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam Struct_MetaDataParams[];
+#endif
+		static void* NewStructOps();
+		static const UECodeGen_Private::FStructParams ReturnStructParams;
+	};
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FTileStruct_Statics::Struct_MetaDataParams[] = {
+		{ "Comment", "//Merged Path Into Tile\n" },
+		{ "ModuleRelativePath", "Procedural Generation/ProceduralGen.h" },
+		{ "ToolTip", "Merged Path Into Tile" },
+	};
+#endif
+	void* Z_Construct_UScriptStruct_FTileStruct_Statics::NewStructOps()
+	{
+		return (UScriptStruct::ICppStructOps*)new UScriptStruct::TCppStructOps<FTileStruct>();
+	}
+	const UECodeGen_Private::FStructParams Z_Construct_UScriptStruct_FTileStruct_Statics::ReturnStructParams = {
+		(UObject* (*)())Z_Construct_UPackage__Script_ProceduralMapGeneration,
+		nullptr,
+		&NewStructOps,
+		"TileStruct",
+		sizeof(FTileStruct),
+		alignof(FTileStruct),
+		nullptr,
+		0,
+		RF_Public|RF_Transient|RF_MarkAsNative,
+		EStructFlags(0x00000001),
+		METADATA_PARAMS(Z_Construct_UScriptStruct_FTileStruct_Statics::Struct_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UScriptStruct_FTileStruct_Statics::Struct_MetaDataParams))
+	};
+	UScriptStruct* Z_Construct_UScriptStruct_FTileStruct()
+	{
+		if (!Z_Registration_Info_UScriptStruct_TileStruct.InnerSingleton)
+		{
+			UECodeGen_Private::ConstructUScriptStruct(Z_Registration_Info_UScriptStruct_TileStruct.InnerSingleton, Z_Construct_UScriptStruct_FTileStruct_Statics::ReturnStructParams);
+		}
+		return Z_Registration_Info_UScriptStruct_TileStruct.InnerSingleton;
+	}
 	void AProceduralGen::StaticRegisterNativesAProceduralGen()
 	{
 	}
@@ -32,11 +263,11 @@ void EmptyLinkFunctionForGeneratedCodeProceduralGen() {}
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam Class_MetaDataParams[];
 #endif
-		static const UECodeGen_Private::FObjectPropertyParams NewProp_CastedRooms_Inner;
+		static const UECodeGen_Private::FObjectPropertyParams NewProp_CastedRoomDesigns_Inner;
 #if WITH_METADATA
-		static const UECodeGen_Private::FMetaDataPairParam NewProp_CastedRooms_MetaData[];
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_CastedRoomDesigns_MetaData[];
 #endif
-		static const UECodeGen_Private::FArrayPropertyParams NewProp_CastedRooms;
+		static const UECodeGen_Private::FArrayPropertyParams NewProp_CastedRoomDesigns;
 		static const UECodeGen_Private::FClassPropertyParams NewProp_RoomDesigns_Inner;
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_RoomDesigns_MetaData[];
@@ -237,13 +468,13 @@ void EmptyLinkFunctionForGeneratedCodeProceduralGen() {}
 		{ "ModuleRelativePath", "Procedural Generation/ProceduralGen.h" },
 	};
 #endif
-	const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AProceduralGen_Statics::NewProp_CastedRooms_Inner = { "CastedRooms", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Object, RF_Public|RF_Transient|RF_MarkAsNative, 1, nullptr, nullptr, 0, Z_Construct_UClass_ARoomActor_NoRegister, METADATA_PARAMS(nullptr, 0) };
+	const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AProceduralGen_Statics::NewProp_CastedRoomDesigns_Inner = { "CastedRoomDesigns", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Object, RF_Public|RF_Transient|RF_MarkAsNative, 1, nullptr, nullptr, 0, Z_Construct_UClass_ARoomActor_NoRegister, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_AProceduralGen_Statics::NewProp_CastedRooms_MetaData[] = {
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_AProceduralGen_Statics::NewProp_CastedRoomDesigns_MetaData[] = {
 		{ "ModuleRelativePath", "Procedural Generation/ProceduralGen.h" },
 	};
 #endif
-	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UClass_AProceduralGen_Statics::NewProp_CastedRooms = { "CastedRooms", nullptr, (EPropertyFlags)0x0010000000000000, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, nullptr, nullptr, STRUCT_OFFSET(AProceduralGen, CastedRooms), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UClass_AProceduralGen_Statics::NewProp_CastedRooms_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_AProceduralGen_Statics::NewProp_CastedRooms_MetaData)) };
+	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UClass_AProceduralGen_Statics::NewProp_CastedRoomDesigns = { "CastedRoomDesigns", nullptr, (EPropertyFlags)0x0010000000000000, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, nullptr, nullptr, STRUCT_OFFSET(AProceduralGen, CastedRoomDesigns), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UClass_AProceduralGen_Statics::NewProp_CastedRoomDesigns_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_AProceduralGen_Statics::NewProp_CastedRoomDesigns_MetaData)) };
 	const UECodeGen_Private::FClassPropertyParams Z_Construct_UClass_AProceduralGen_Statics::NewProp_RoomDesigns_Inner = { "RoomDesigns", nullptr, (EPropertyFlags)0x0004000000000000, UECodeGen_Private::EPropertyGenFlags::Class, RF_Public|RF_Transient|RF_MarkAsNative, 1, nullptr, nullptr, 0, Z_Construct_UClass_UClass, Z_Construct_UClass_ARoomActor_NoRegister, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_AProceduralGen_Statics::NewProp_RoomDesigns_MetaData[] = {
@@ -645,8 +876,8 @@ void EmptyLinkFunctionForGeneratedCodeProceduralGen() {}
 #endif
 	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UClass_AProceduralGen_Statics::NewProp_VerticalUpTurnLeftToVerticalUp = { "VerticalUpTurnLeftToVerticalUp", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, nullptr, nullptr, STRUCT_OFFSET(AProceduralGen, VerticalUpTurnLeftToVerticalUp), EArrayPropertyFlags::None, METADATA_PARAMS(Z_Construct_UClass_AProceduralGen_Statics::NewProp_VerticalUpTurnLeftToVerticalUp_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_AProceduralGen_Statics::NewProp_VerticalUpTurnLeftToVerticalUp_MetaData)) };
 	const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_AProceduralGen_Statics::PropPointers[] = {
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AProceduralGen_Statics::NewProp_CastedRooms_Inner,
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AProceduralGen_Statics::NewProp_CastedRooms,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AProceduralGen_Statics::NewProp_CastedRoomDesigns_Inner,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AProceduralGen_Statics::NewProp_CastedRoomDesigns,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AProceduralGen_Statics::NewProp_RoomDesigns_Inner,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AProceduralGen_Statics::NewProp_RoomDesigns,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AProceduralGen_Statics::NewProp_NumberOfRooms,
@@ -734,13 +965,23 @@ void EmptyLinkFunctionForGeneratedCodeProceduralGen() {}
 	AProceduralGen::~AProceduralGen() {}
 	struct Z_CompiledInDeferFile_FID_Users_xqwys_RiderProjects_RealUnreal_Plugins_ProceduralMapGeneration_Source_ProceduralMapGeneration_Procedural_Generation_ProceduralGen_h_Statics
 	{
+		static const FEnumRegisterCompiledInInfo EnumInfo[];
+		static const FStructRegisterCompiledInInfo ScriptStructInfo[];
 		static const FClassRegisterCompiledInInfo ClassInfo[];
 	};
-	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_xqwys_RiderProjects_RealUnreal_Plugins_ProceduralMapGeneration_Source_ProceduralMapGeneration_Procedural_Generation_ProceduralGen_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_AProceduralGen, AProceduralGen::StaticClass, TEXT("AProceduralGen"), &Z_Registration_Info_UClass_AProceduralGen, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AProceduralGen), 2178490161U) },
+	const FEnumRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_xqwys_RiderProjects_RealUnreal_Plugins_ProceduralMapGeneration_Source_ProceduralMapGeneration_Procedural_Generation_ProceduralGen_h_Statics::EnumInfo[] = {
+		{ EDirection2_StaticEnum, TEXT("EDirection2"), &Z_Registration_Info_UEnum_EDirection2, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 3097676441U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_xqwys_RiderProjects_RealUnreal_Plugins_ProceduralMapGeneration_Source_ProceduralMapGeneration_Procedural_Generation_ProceduralGen_h_1990288539(TEXT("/Script/ProceduralMapGeneration"),
+	const FStructRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_xqwys_RiderProjects_RealUnreal_Plugins_ProceduralMapGeneration_Source_ProceduralMapGeneration_Procedural_Generation_ProceduralGen_h_Statics::ScriptStructInfo[] = {
+		{ FRoomConnection::StaticStruct, Z_Construct_UScriptStruct_FRoomConnection_Statics::NewStructOps, TEXT("RoomConnection"), &Z_Registration_Info_UScriptStruct_RoomConnection, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FRoomConnection), 1100347170U) },
+		{ FPathNode::StaticStruct, Z_Construct_UScriptStruct_FPathNode_Statics::NewStructOps, TEXT("PathNode"), &Z_Registration_Info_UScriptStruct_PathNode, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FPathNode), 195156686U) },
+		{ FTileStruct::StaticStruct, Z_Construct_UScriptStruct_FTileStruct_Statics::NewStructOps, TEXT("TileStruct"), &Z_Registration_Info_UScriptStruct_TileStruct, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FTileStruct), 3240958174U) },
+	};
+	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_xqwys_RiderProjects_RealUnreal_Plugins_ProceduralMapGeneration_Source_ProceduralMapGeneration_Procedural_Generation_ProceduralGen_h_Statics::ClassInfo[] = {
+		{ Z_Construct_UClass_AProceduralGen, AProceduralGen::StaticClass, TEXT("AProceduralGen"), &Z_Registration_Info_UClass_AProceduralGen, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AProceduralGen), 3305577712U) },
+	};
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_xqwys_RiderProjects_RealUnreal_Plugins_ProceduralMapGeneration_Source_ProceduralMapGeneration_Procedural_Generation_ProceduralGen_h_1727281529(TEXT("/Script/ProceduralMapGeneration"),
 		Z_CompiledInDeferFile_FID_Users_xqwys_RiderProjects_RealUnreal_Plugins_ProceduralMapGeneration_Source_ProceduralMapGeneration_Procedural_Generation_ProceduralGen_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_Users_xqwys_RiderProjects_RealUnreal_Plugins_ProceduralMapGeneration_Source_ProceduralMapGeneration_Procedural_Generation_ProceduralGen_h_Statics::ClassInfo),
-		nullptr, 0,
-		nullptr, 0);
+		Z_CompiledInDeferFile_FID_Users_xqwys_RiderProjects_RealUnreal_Plugins_ProceduralMapGeneration_Source_ProceduralMapGeneration_Procedural_Generation_ProceduralGen_h_Statics::ScriptStructInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_Users_xqwys_RiderProjects_RealUnreal_Plugins_ProceduralMapGeneration_Source_ProceduralMapGeneration_Procedural_Generation_ProceduralGen_h_Statics::ScriptStructInfo),
+		Z_CompiledInDeferFile_FID_Users_xqwys_RiderProjects_RealUnreal_Plugins_ProceduralMapGeneration_Source_ProceduralMapGeneration_Procedural_Generation_ProceduralGen_h_Statics::EnumInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_Users_xqwys_RiderProjects_RealUnreal_Plugins_ProceduralMapGeneration_Source_ProceduralMapGeneration_Procedural_Generation_ProceduralGen_h_Statics::EnumInfo));
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

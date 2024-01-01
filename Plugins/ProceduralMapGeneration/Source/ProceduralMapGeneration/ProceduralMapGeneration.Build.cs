@@ -25,7 +25,7 @@ public class ProceduralMapGeneration : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", "UnrealEd", "InputCore", "SideScrolling2D", "Paper2D"
+				"Core", "UnrealEd", "InputCore", "SideScrolling2D", "Paper2D", "DeveloperSettings"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -37,7 +37,7 @@ public class ProceduralMapGeneration : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore",
+				"SlateCore"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

@@ -2,7 +2,7 @@
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "Tests/AutomationEditorCommon.h"
-#include "ProceduralMapGeneration/Procedural Generation/ProceduralGeneration.h"
+#include "ProceduralMapGeneration/Procedural Generation/ProceduralGen.h"
 #include "Tests/AutomationCommon.h"
 
 namespace ProceduralGenTestUtils
@@ -10,7 +10,7 @@ namespace ProceduralGenTestUtils
 	
 
 	UWorld* TestWorld = nullptr;
-	AProceduralGeneration* FindProceduralGen()
+	AProceduralGen* FindProceduralGen()
 	{
 		if (!TestWorld && GEngine)
 		{
@@ -26,7 +26,7 @@ namespace ProceduralGenTestUtils
 
 		if (TestWorld)
 		{
-			for (TActorIterator<AProceduralGeneration> It(TestWorld); It; ++It)
+			for (TActorIterator<AProceduralGen> It(TestWorld); It; ++It)
 			{
 				return *It;
 			}
@@ -65,7 +65,7 @@ namespace ProceduralGenTestUtils
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(ProceduralGenerationTests, "ProceduralGenerationTests.IsEverythingValid", EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 bool ProceduralGenerationTests::RunTest(const FString& Parameters)
 {
-	AProceduralGeneration* ProceduralGeneration = ProceduralGenTestUtils::FindProceduralGen();
+	AProceduralGen* ProceduralGeneration = ProceduralGenTestUtils::FindProceduralGen();
 	if (!ProceduralGeneration)
 	{
 		AddError(TEXT("Procedural generation is not found. Is it spawned in run time?"));

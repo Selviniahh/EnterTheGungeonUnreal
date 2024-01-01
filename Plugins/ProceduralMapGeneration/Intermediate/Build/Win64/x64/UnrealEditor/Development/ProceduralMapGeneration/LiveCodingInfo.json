@@ -2,22 +2,23 @@
 	"RemapUnityFiles": 
 	{
 		"Module.ProceduralMapGeneration.cpp.obj": [
-			"ProceduralMapGeneration.cpp.obj",
+			"DoorActor.gen.cpp.obj",
+			"MakeAllCorridorScenarioTest.gen.cpp.obj",
+			"RenderTarget.gen.cpp.obj",
+			"RoomActor.gen.cpp.obj",
+			"GlobalInputListener.cpp.obj",
+			"PopUpButton.cpp.obj",
+			"ProGenWidget.cpp.obj",
+			"RoomManager.cpp.obj",
 			"DoorActor.cpp.obj",
 			"MakeAllCorridorScenarioTest.cpp.obj",
 			"ProceduralGen.cpp.obj",
-			"ProceduralGeneration.cpp.obj",
 			"RoomActor.cpp.obj",
-			"GlobalInputListener.cpp.obj",
-			"ProGenWidget.cpp.obj",
 			"RenderTarget.cpp.obj",
-			"DoorActor.gen.cpp.obj",
-			"MakeAllCorridorScenarioTest.gen.cpp.obj",
+			"PluginSettings.gen.cpp.obj",
 			"ProceduralGen.gen.cpp.obj",
-			"ProceduralGeneration.gen.cpp.obj",
 			"ProceduralMapGeneration.init.gen.cpp.obj",
-			"RenderTarget.gen.cpp.obj",
-			"RoomActor.gen.cpp.obj"
+			"ProceduralMapGeneration.cpp.obj"
 		]
 	}
 }

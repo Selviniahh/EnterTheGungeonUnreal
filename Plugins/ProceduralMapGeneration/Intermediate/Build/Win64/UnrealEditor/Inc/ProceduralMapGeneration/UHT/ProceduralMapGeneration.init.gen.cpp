@@ -21,13 +21,13 @@ void EmptyLinkFunctionForGeneratedCodeProceduralMapGeneration_init() {}
 				SingletonFuncArray,
 				UE_ARRAY_COUNT(SingletonFuncArray),
 				PKG_CompiledIn | 0x00000040,
-				0x8BA42FC0,
-				0xCF94AEBD,
+				0xC60D37C2,
+				0x24134C8E,
 				METADATA_PARAMS(nullptr, 0)
 			};
 			UECodeGen_Private::ConstructUPackage(Z_Registration_Info_UPackage__Script_ProceduralMapGeneration.OuterSingleton, PackageParams);
 		}
 		return Z_Registration_Info_UPackage__Script_ProceduralMapGeneration.OuterSingleton;
 	}
-	static FRegisterCompiledInInfo Z_CompiledInDeferPackage_UPackage__Script_ProceduralMapGeneration(Z_Construct_UPackage__Script_ProceduralMapGeneration, TEXT("/Script/ProceduralMapGeneration"), Z_Registration_Info_UPackage__Script_ProceduralMapGeneration, CONSTRUCT_RELOAD_VERSION_INFO(FPackageReloadVersionInfo, 0x8BA42FC0, 0xCF94AEBD));
+	static FRegisterCompiledInInfo Z_CompiledInDeferPackage_UPackage__Script_ProceduralMapGeneration(Z_Construct_UPackage__Script_ProceduralMapGeneration, TEXT("/Script/ProceduralMapGeneration"), Z_Registration_Info_UPackage__Script_ProceduralMapGeneration, CONSTRUCT_RELOAD_VERSION_INFO(FPackageReloadVersionInfo, 0xC60D37C2, 0x24134C8E));
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

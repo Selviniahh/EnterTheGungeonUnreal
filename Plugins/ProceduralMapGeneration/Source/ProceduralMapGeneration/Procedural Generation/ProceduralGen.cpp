@@ -5,7 +5,6 @@
 
 #include "MakeAllCorridorScenarioTest.h"
 #include "Components/BoxComponent.h"
-#include "ProceduralGeneration.h"
 #include "Door/DoorActor.h"
 
 //if ApplyTurnPenalty is not true disable TurnPenaltyAmount textbox
@@ -36,7 +35,7 @@ void AProceduralGen::BeginPlay()
 	for (auto RoomDesign : RoomDesigns)
 	{
 		ARoomActor* CastedRoom = Cast<ARoomActor>(RoomDesign->GetDefaultObject());
-		CastedRooms.Add(CastedRoom);
+		CastedRoomDesigns.Add(CastedRoom);
 	}
 	CastedTurnCorridor = Cast<ARoomActor>(TurnCorridorClass->GetDefaultObject());
 
@@ -291,7 +290,7 @@ void AProceduralGen::UnBlockLastRoomItsCorridorAndDestroy()
 
 void AProceduralGen::DestroyLastRoomSpawnNoExit(FVector& SpawnLocation, const FRotator& Rotation, int& SpawnCounter, bool CanSpawnLargeRoom, TArray<ARoomActor*>& CustomRoomDesigns, bool& OnlySpawnNoExit, ARoomActor*& NextRoom)
 {
-	CustomRoomDesigns = CastedRooms; //Refill the array again
+	CustomRoomDesigns = CastedRoomDesigns; //Refill the array again
 	//Before destroying select the NoExit room of last spawned room's enter direction. 
 	NextRoom = SelectRoomWithDirection(SpawnedRooms.Last()->EnterSocketDirection, CanSpawnLargeRoom, true, &CustomRoomDesigns);
 	SpawnLocation = SpawnedRooms.Last()->DoorSocketEnter->GetComponentLocation();
@@ -326,7 +325,7 @@ ARoomActor* AProceduralGen::SpawnBranchRoom(Direction ExpDirection, FVector Spaw
 	SCOPE_CYCLE_COUNTER(STAT_SpawnBranchRoom);
 	const FRotator Rotation(0.0f, 0.0f, -90.0f);
 	bool CanSpawnLargeRoom = LargeRoomCounter < MaxLargeRoomCount ? true : false;
-	TArray<ARoomActor*> CustomRoomDesigns = CastedRooms;
+	TArray<ARoomActor*> CustomRoomDesigns = CastedRoomDesigns;
 	bool OnlySpawnNoExit = false;
 	bool IsManualBranchGiven = false;
 
@@ -398,7 +397,7 @@ ARoomActor* AProceduralGen::SpawnBranchRoom(Direction ExpDirection, FVector Spaw
 				if (CustomRoomDesigns.IsEmpty() || IsColliding(NextRoom, SpawnLocation, Rotation))
 				{
 					// return nullptr; //In while loop again select all again like in while loop above
-					CustomRoomDesigns = CastedRooms;
+					CustomRoomDesigns = CastedRoomDesigns;
 					SpawnLocation = SpawnedRooms.Last()->DoorSocketEnter->GetComponentLocation();
 
 					UnBlockLastRoomItsCorridorAndDestroy();
@@ -440,7 +439,7 @@ ARoomActor* AProceduralGen::SpawnBranchRoom(Direction ExpDirection, FVector Spaw
 ARoomActor* AProceduralGen::SpawnFirstBranchRoom(Direction Direction, FVector SpawnLoc, int& SpawnCounter, TSharedPtr<TArray<ARoomActor*>> ManualBranchRooms)
 {
 	SpawnCounter = 0;
-	TArray<ARoomActor*> CustomRoomDesigns = CastedRooms;
+	TArray<ARoomActor*> CustomRoomDesigns = CastedRoomDesigns;
 	bool CanSpawnLargeRoom = LargeRoomCounter < MaxLargeRoomCount ? true : false;
 	const FRotator Rotation(0.0f, 0.0f, -90.0f);
 	FVector NextRoomLocation = SpawnLoc;
@@ -506,7 +505,7 @@ void AProceduralGen::SpawnFirstRoom()
 	//TODO: Later for first room spawning make first room array will pick random index from 4 directions. There won't be enter only exit.  
 	if (DebugRoomSequence.IsEmpty())
 	{
-		NextRoom = Cast<ARoomActor>(CastedRooms[0]); //Later on we will make here completely random as well. Just for now spawn first index as first room as always.
+		NextRoom = Cast<ARoomActor>(CastedRoomDesigns[0]); //Later on we will make here completely random as well. Just for now spawn first index as first room as always.
 	}
 	else
 	{
@@ -863,7 +862,7 @@ ARoomActor* AProceduralGen::SelectRoomWithDirection(const Direction EndSocketDir
 	auto IsLargeRoomAllowed = [&](const ARoomActor* Room) { return CanSpawnLargeRoom || !Room->LargeRoom; };
 	auto IsNoExitStatusMatching = [&](const ARoomActor* Room) { return OnlySpawnNoExit == Room->NoExit; };
 
-	TArray<ARoomActor*> IterateRoomDesigns = (CustomArray != nullptr) ? *CustomArray : CastedRooms;
+	TArray<ARoomActor*> IterateRoomDesigns = (CustomArray != nullptr) ? *CustomArray : CastedRoomDesigns;
 
 	//Selection for side branch manual room selection
 	if (ManualBranchRooms && !ManualBranchRooms->IsEmpty())

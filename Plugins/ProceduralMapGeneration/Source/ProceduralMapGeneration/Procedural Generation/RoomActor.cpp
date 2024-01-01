@@ -3,12 +3,7 @@
 
 #include "RoomActor.h"
 #include "Components/BoxComponent.h"
-
 #include "PaperTileMapComponent.h"
-#include "ProceduralGen.h"
-
-#include "ProceduralGeneration.h"
-
 #include "Door/DoorActor.h"
 #include "SideScrolling2D/Enemies/EnemyBase.h"
 

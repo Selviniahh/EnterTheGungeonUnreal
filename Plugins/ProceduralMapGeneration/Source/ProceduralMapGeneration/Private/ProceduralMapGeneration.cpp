@@ -3,10 +3,9 @@
 #include "ProceduralMapGeneration.h"
 
 #include "ContentBrowserModule.h"
-#include "Components/SceneCaptureComponent2D.h"
 #include "Kismet/GameplayStatics.h"
-#include "ProceduralMapGeneration/Slate Widget/GlobalInputListener.h"
-#include "ProceduralMapGeneration/Slate Widget/ProGenWidget.h"
+#include "ProceduralMapGeneration/Public/Slate Widget/GlobalInputListener.h"
+#include "ProceduralMapGeneration/Public/Slate Widget/ProGenWidget.h"
 #include "Widgets/Docking/SDockTab.h"
 
 #define LOCTEXT_NAMESPACE "FProceduralMapGenerationModule"
@@ -71,8 +70,8 @@ void FProceduralMapGenerationModule::OnProGenButtonClicked()
 void FProceduralMapGenerationModule::RegisterWindow()
 {
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FName("ProGen"),
-	FOnSpawnTab::CreateRaw(this, &FProceduralMapGenerationModule::OnSpawnProGenTab)).
-	SetDisplayName(FText::FromString(TEXT("Procedural Map Generation")));
+	FOnSpawnTab::CreateRaw(this, &FProceduralMapGenerationModule::OnSpawnProGenTab))
+	.SetDisplayName(FText::FromString(TEXT("Procedural Map Generation")));
 }
 
 //Finally the actual slate. 
