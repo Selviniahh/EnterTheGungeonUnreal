@@ -12,3 +12,7 @@
 *.xcodeproj
 *.xcworkspace
 /Platforms/HoloLens/Config/
+/Plugins/Developer/
+/Plugins/ProceduralMapGeneration/Binaries/
+/Plugins/ProceduralMapGeneration/Intermediate/
+
