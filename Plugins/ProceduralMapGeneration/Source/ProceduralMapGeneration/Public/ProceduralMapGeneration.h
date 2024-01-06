@@ -4,6 +4,8 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
+class UPluginSettings;
+
 class FProceduralMapGenerationModule : public IModuleInterface
 {
 public:
@@ -18,11 +20,10 @@ public:
 	void AddCBMenuEntry(FMenuBuilder& MenuBuilder);
 	void OnProGenButtonClicked();
 	 void OnTabClosed(const TSharedRef<SDockTab> Tab);
-	UMaterial* LoadMaterialFromPath(const FName& Path);
 	/*If we don't have one spawn one and then return it's reference*/
-	static AActor* GetSceneCapActor(const FName& Path);
+	static AActor* GetSceneCapActor(UClass* ObjectClass);
+	UClass* SceneCapClass;
 
 	bool ShouldRemoveSceneCapActor = true;
-	AActor* as = nullptr;
 
 };

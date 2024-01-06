@@ -9,17 +9,18 @@
 #include "ProceduralMapGeneration/Public/Slate Widget/PopUpButton.h"
 #include "SlateOptMacros.h"
 #include "Brushes/SlateColorBrush.h"
+#include "Engine/AssetManager.h"
 #include "Materials/MaterialInterface.h"
 #include "ProceduralMapGeneration/Procedural Generation/ProceduralGen.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "ProceduralMapGeneration/Procedural Generation/RoomActor.h"
+#include "Widgets/Docking/SDockTab.h"
 #include "Slate Widget/RoomManager.h"
 #include "Widgets/Views/SListView.h"
 #include "Styling/SlateBrush.h"
 
+struct FStreamableManager;
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-
-/*Couldn't handle matrix*/
 
 
 void SProGenWidget::Construct(const FArguments& InArgs)
@@ -43,16 +44,9 @@ void SProGenWidget::Construct(const FArguments& InArgs)
 
 
 	//Access to the progen actor if progen instance is dragged to the scene
-	AProceduralGen* ProceduralGen = nullptr;
-	for (TActorIterator<AProceduralGen> Actor(GEditor->GetEditorWorldContext().World()); Actor; ++Actor)
-	{
-		ProceduralGen = *Actor;
-	}
-	for (auto RoomDesign : ProceduralGen->RoomDesigns)
-	{
-		ARoomActor* RoomActor = Cast<ARoomActor>(RoomDesign->GetDefaultObject());
-		ProGenRooms.Add(RoomActor);
-	}
+	PluginSetting = GetDefault<UPluginSettings>();
+	RetrieveProGenActor();
+	
 	
 	//Assign plugin settings
 	PluginSetting = GetDefault<UPluginSettings>();
@@ -129,21 +123,30 @@ void SProGenWidget::Construct(const FArguments& InArgs)
 	];
 }
 
+SProGenWidget::~SProGenWidget()
+{
+	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(RoomManagerTabName);
+}
+
 void SProGenWidget::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
+	
+
+	
 	Geometry = AllottedGeometry;
 	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
 	//Set Scene Capture location
 	FKey MyKey = FMyInputProcessor::PressedKey;
 	FVector Direction = FVector::ZeroVector;
-	if (MyKey == EKeys::W) Direction = FVector(Multiplayer, 0, 0);
-	else if (MyKey == EKeys::S) Direction = FVector(-Multiplayer, 0, 0);
-	else if (MyKey == EKeys::A) Direction = FVector(0, -Multiplayer, 0);
-	else if (MyKey == EKeys::D) Direction = FVector(0, Multiplayer, 0);
+	if (MyKey == EKeys::A) Direction = FVector(-Multiplayer, 0, 0); //a-> w
+	else if (MyKey == EKeys::D) Direction = FVector(Multiplayer, 0, 0); 
+	else if (MyKey == EKeys::W) Direction = FVector(0, -Multiplayer, 0);
+	else if (MyKey == EKeys::S) Direction = FVector(0, Multiplayer, 0);
 	else if (MyKey == EKeys::Q) Direction = FVector(0, 0, -Multiplayer);
 	else if (MyKey == EKeys::E) Direction = FVector(0, 0, Multiplayer);
 
+	//NOT WORKING NOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKING 
 	if (MyKey == EKeys::F)
 	{
 		MenuAnchor->SetIsOpen(true);
@@ -155,6 +158,8 @@ void SProGenWidget::Tick(const FGeometry& AllottedGeometry, const double InCurre
 		FVector TargetLocation = CurrentLocation + Direction;
 		FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, InDeltaTime, 99); // InterpSpeed is a float determining how fast to move
 		SceneCapActor->SetActorLocation(NewLocation, true);
+		UE_LOG(LogTemp, Display, TEXT("sa: %s"), *SceneCapActor->GetActorLocation().ToString());
+
 	}
 	
 	//Reset the key at the end so I can make actions per press 
@@ -260,14 +265,14 @@ TSharedRef<ITableRow> SProGenWidget::OnGenerateListViewRow(TWeakObjectPtr<ARoomA
 			  .VAlign(VAlign_Fill)
 			[
 				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				  .AutoWidth()
-				  .VAlign(VAlign_Center)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					 .VAlign(VAlign_Center)
 				[
-					SNew(SButton)
-				.OnClicked(this, &SProGenWidget::OnButtonClicked)
-				.Text(FText::FromString(TEXT("Make Test")))
-				.Visibility(this,&SProGenWidget::MakeTestButtonVisibility,RoomActor)
+				SNew(SButton)
+					.OnClicked(this, &SProGenWidget::OnButtonClicked)
+					.Text(FText::FromString(TEXT("Make Test")))
+					.Visibility(this,&SProGenWidget::MakeTestButtonVisibility,RoomActor)
 				]
 			]
 		];
@@ -301,13 +306,22 @@ void SProGenWidget::HighlightAvailableRoomRows(TWeakObjectPtr<ARoomActor> RoomAc
 	}
 }
 
-/*if first selected element changed, undo all highlights*/
 void SProGenWidget::OnSelectionChanged(TWeakObjectPtr<ARoomActor> RoomActor, ESelectInfo::Type SelectedType)
 {
+	/*Track the num of selection and empty selection order if selection has changed. This is important to make selection not exceed over 2 elements*/
+	int CurrentSelection = ConstructedAssetListView.Get()->GetNumItemsSelected();
+	if (PrevNumOfSelection != CurrentSelection)
+	{
+		SelectionOrder.Empty();
+		PrevNumOfSelection = CurrentSelection;
+	}
+	
+	/*if first selected element changed, undo all highlights*/
 	TSharedPtr<FTableRowStyle> NewStyle = MakeShared<FTableRowStyle>(FCoreStyle::Get().GetWidgetStyle<FTableRowStyle>("TableView.Row"));
 	TWeakObjectPtr<ARoomActor> CurrentFirstSelectedItem = ConstructedAssetListView.Get()->GetSelectedItems().Num() > 0 ? ConstructedAssetListView.Get()->GetSelectedItems()[0] : nullptr;
 	if (PreviousFirstSelectedItem != CurrentFirstSelectedItem)
 	{
+		SelectionOrder.Empty();
 		for (auto& StyleEntry : RowStyle)
 		{
 			 StyleEntry.Value = MakeShared<FTableRowStyle>(FCoreStyle::Get().GetWidgetStyle<FTableRowStyle>("TableView.Row"));
@@ -316,6 +330,20 @@ void SProGenWidget::OnSelectionChanged(TWeakObjectPtr<ARoomActor> RoomActor, ESe
 		//Assign Previous selected one
 		PreviousFirstSelectedItem = CurrentFirstSelectedItem;
 	}
+
+	/*Selection multiple rows with Ctrl cannot capture the most recent selection*/
+	TArray<TWeakObjectPtr<ARoomActor>> CurrentSelectedRooms = ConstructedAssetListView.Get()->GetSelectedItems();
+	if (CurrentSelectedRooms.Contains(RoomActor))
+	{
+		CurrentSelectedRooms.Remove(RoomActor);
+
+		if (!CurrentSelectedRooms.IsEmpty() && ConstructedAssetListView.Get()->GetNumItemsSelected() == 2)
+		{
+			SelectionOrder.Add(RoomActor);
+			SelectionOrder.Add(CurrentSelectedRooms[0]);
+		}
+	}
+	
 	ConstructedAssetListView.Get()->RebuildList();
 }
 
@@ -358,12 +386,23 @@ EVisibility SProGenWidget::MakeTestButtonVisibility(TWeakObjectPtr<ARoomActor> S
 }
 
 //TODO: If the directions are incorrect, Pop up message box
+
 FReply SProGenWidget::OnButtonClicked()
 {
 	/*If selection is incorrect open msg dialog box*/
-	Direction FirstRoomExitSocDir = ConstructedAssetListView.Get()->GetSelectedItems()[0]->ExitSocketDirection;
-	Direction SecRoomEnterSocDir = ConstructedAssetListView.Get()->GetSelectedItems()[1]->EnterSocketDirection;
+	Direction FirstRoomExitSocDir = SelectionOrder[0]->ExitSocketDirection;
+	Direction SecRoomEnterSocDir = SelectionOrder[1]->EnterSocketDirection;
 	Direction ExpectedDirection = AProceduralGen::ExpectedDirection(FirstRoomExitSocDir);
+
+	//If first selection is NoExit room, abort
+	if (SelectionOrder[0]->NoExit)
+	{
+		FText Message = FText::FromString("Room " + SelectionOrder[0]->GetName() + " marked as NoExit room. No exit rooms cannot be selected as first room");
+		FMessageDialog::Open(EAppMsgType::Ok,Message);
+		return FReply::Handled();
+	}
+
+	//If selection is incorrect abort
 	if (SecRoomEnterSocDir != ExpectedDirection)
 	{
 		FString FirstRoomExitSocDirStr = UEnum::GetValueAsString(FirstRoomExitSocDir);
@@ -374,49 +413,29 @@ FReply SProGenWidget::OnButtonClicked()
 		"Second Selected room expected direction is: " + ExpectedDirectionStr);
 		FMessageDialog::Open(EAppMsgType::Ok,Message);
 	}
+	//Everything checks out create a new tab
 	else
 	{
-		const FName TabName = FName(TEXT("RoomManagerTab")); // Unique name for the tab identifier
+		const FName TabName = FName(RoomManagerTabName); // Unique name for the tab identifier
 		if (!FGlobalTabmanager::Get()->HasTabSpawner(TabName))
 			{
 				FGlobalTabmanager::Get()->RegisterNomadTabSpawner(TabName, FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& SpawnTabArgs)
 				{
-					return SNew(SDockTab)
-					.TabRole(NomadTab)
-					[
-						SNew(SRoomManager)
-					];
+					auto RoomManagerTab = SNew(SDockTab)
+						.TabRole(ETabRole::NomadTab)
+						[
+							SNew(SRoomManager) //pass the selected rooms
+						.RoomFirst(SelectionOrder[0].Get())
+						.RoomSecond(SelectionOrder[1].Get())
+						];
+					
+					return RoomManagerTab;
 				}))
-				.SetDisplayName(FText::FromString("RoomManagerTab"));
+				.SetDisplayName(FText::FromString(RoomManagerTabName.ToString()));
 			}
-
-		FGlobalTabmanager::Get()->TryInvokeTab(FName("RoomManagerTab"));
+		
+		FGlobalTabmanager::Get()->TryInvokeTab(RoomManagerTabName);
 	}
-
-	
-
-
-	
-	// TArray<TWeakObjectPtr<ARoomActor>> SelectedRooms = ConstructedAssetListView.Get()->GetSelectedItems();
-	// if (SelectedRooms.Num() < 2)
-	// {
-	// 	const FName TabName = FName(TEXT("RoomManagerTab")); // Unique name for the tab identifier
-	//
-	// 	if (!FGlobalTabmanager::Get()->HasTabSpawner(TabName))
-	// 	{
-	// 		FGlobalTabmanager::Get()->RegisterNomadTabSpawner(TabName, FOnSpawnTab::CreateLambda([SelectedRooms, this](const FSpawnTabArgs& SpawnTabArgs)
-	// 		{
-	// 			return SNew(SDockTab)
-	// 			.TabRole(NomadTab)
-	// 			[
-	// 				SNew(SRoomManager)
-	// 			];
-	// 		}))
-	// 		.SetDisplayName(FText::FromString("RoomManagerTab"));
-	// 	}
-	//
-	// 	FGlobalTabmanager::Get()->TryInvokeTab(FName("RoomManagerTab"));
-	// }
 	return FReply::Handled();
 }
 
@@ -467,6 +486,11 @@ void SProGenWidget::SetDirectionMaps(TWeakObjectPtr<ARoomActor> RoomActor)
 		break;
 	default: ;
 	}
+
+	//If room is no exit, assign no exit image
+	if (RoomActor->NoExit)
+		DirPathEnd = PluginSetting->NoExit;
+	
 	TSharedPtr<FSlateBrush> SlateBrushEnd = MakeShared<FSlateBrush>();
 	if (UTexture2D* TextureRaw = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), nullptr, *DirPathEnd.ToString())))
 	{
@@ -478,7 +502,48 @@ void SProGenWidget::SetDirectionMaps(TWeakObjectPtr<ARoomActor> RoomActor)
 	SlateExitBrushMap.Add(RoomActor.Get()->GetName(),SlateBrushEnd);
 }
 
+
+void SProGenWidget::RetrieveProGenActor()
+{
+	//try to load from world outliner
+	AProceduralGen* ProceduralGen = nullptr;
+	for (TActorIterator<AProceduralGen> Actor(GEditor->GetEditorWorldContext().World()); Actor; ++Actor)
+	{
+		ProceduralGen = *Actor;
+	}
+	if (ProceduralGen)
+	{
+		for (auto RoomDesign : ProceduralGen->RoomDesigns)
+		{
+			ARoomActor* RoomActor = Cast<ARoomActor>(RoomDesign->GetDefaultObject());
+			ProGenRooms.Add(RoomActor);
+		}
+	}
+	//If not found in world outliner, try to load from project settings async
+	else
+	{
+		FStreamableManager& StreamableManager = UAssetManager::GetStreamableManager();
+		StreamableManager.RequestAsyncLoad(PluginSetting->ProGenActor.ToSoftObjectPath(),[&]
+		{
+			if (PluginSetting->ProGenActor.Get())
+			{
+				ProceduralGen = Cast<AProceduralGen>(PluginSetting->ProGenActor.Get()->GetDefaultObject());
+				for (auto RoomDesign : ProceduralGen->RoomDesigns)
+				{
+					ARoomActor* RoomActor = Cast<ARoomActor>(RoomDesign->GetDefaultObject());
+					ProGenRooms.Add(RoomActor);
+				}	
+			}
+			else
+			{
+				FText ErrorMessage = FText::FromString("Procedural Generation actor couldn't found in world outliner or in ProjectSettings->ProceduralMapGeneration. Drag your Procedural Generation actor to the scene and try again");
+				FMessageDialog::Open(EAppMsgType::Ok,ErrorMessage);	
+			}
+		});
+	}
+}
 #pragma region unmanaged
+
 TSharedRef<SMenuAnchor> SProGenWidget::ConstructMenuAnchor(const TSharedRef<SPopUpButton>& PopUpButton)
 {
 	MenuAnchor = SNew(SMenuAnchor)

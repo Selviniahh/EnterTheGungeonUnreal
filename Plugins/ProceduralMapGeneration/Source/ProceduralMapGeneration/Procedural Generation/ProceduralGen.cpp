@@ -3,9 +3,11 @@
 //TODO: WHat's the reason RoomConnections must be array rather than a variable. As soon as the room is overlapped.First I need to spawn that room and make a corridor. ASAP. Otherwise, it could make lots and lots of complications
 #include "ProceduralGen.h"
 
-#include "MakeAllCorridorScenarioTest.h"
 #include "Components/BoxComponent.h"
 #include "Door/DoorActor.h"
+#include "Test/MakeAllCorridorScenarioTest.h"
+
+class UMakeAllCorridorScenarioTest;
 
 //if ApplyTurnPenalty is not true disable TurnPenaltyAmount textbox
 bool AProceduralGen::CanEditChange(const FProperty* InProperty) const
@@ -40,6 +42,7 @@ void AProceduralGen::BeginPlay()
 	CastedTurnCorridor = Cast<ARoomActor>(TurnCorridorClass->GetDefaultObject());
 
 
+	//All these tests in this class are so stupid. I will somehow remove all and make all tests in slate
 	if (OnlyMakeCorridorCheck)
 	{
 		//Body

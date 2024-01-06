@@ -3,12 +3,19 @@
 #include "ProceduralMapGeneration.h"
 
 #include "ContentBrowserModule.h"
+#include "Async/Async.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "ProceduralMapGeneration/Public/Slate Widget/GlobalInputListener.h"
 #include "ProceduralMapGeneration/Public/Slate Widget/ProGenWidget.h"
+#include "Slate Widget/PluginSettings.h"
 #include "Widgets/Docking/SDockTab.h"
+#include "Slate Widget/PluginSettings.h"
 
 #define LOCTEXT_NAMESPACE "FProceduralMapGenerationModule"
+
+struct FStreamableManager;
 
 void FProceduralMapGenerationModule::StartupModule()
 {
@@ -18,6 +25,8 @@ void FProceduralMapGenerationModule::StartupModule()
 	// FSlateApplication::Get().RegisterInputPreProcessor(TSharedPtr<IInputProcessor>(MakeShareable<new FMyInputProcessor()>));
 	TSharedPtr<IInputProcessor> InputProcessor = MakeShared<FMyInputProcessor>();
 	FSlateApplication::Get().RegisterInputPreProcessor(InputProcessor);
+
+	FMyInputProcessor::FillMap();
 }
 
 void FProceduralMapGenerationModule::ShutdownModule()
@@ -74,44 +83,52 @@ void FProceduralMapGenerationModule::RegisterWindow()
 	.SetDisplayName(FText::FromString(TEXT("Procedural Map Generation")));
 }
 
-//Finally the actual slate. 
-
 TSharedRef<SDockTab> FProceduralMapGenerationModule::OnSpawnProGenTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-	
-	TSharedRef<SProGenWidget> ProGenWidget = SNew(SProGenWidget)
-		.Material(LoadMaterialFromPath(TEXT("/ProceduralMapGeneration/RenderTarget/M_UIRender.M_UIRender")))
-		.SceneCapActor(GetSceneCapActor(TEXT("Blueprint'/ProceduralMapGeneration/RenderTarget/BP_RenderView.BP_RenderView_C'")));
-	
-	// Add the widget to the tab
-	TSharedRef<SDockTab> NewTab = SNew(SDockTab)
-		.TabRole(NomadTab)
-		.OnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &FProceduralMapGenerationModule::OnTabClosed))
-		.ContentPadding(30)
-		[
-			ProGenWidget
-		];
+	const UPluginSettings* PluginSettings = GetDefault<UPluginSettings>();
+	FStreamableManager& StreamableManager = UAssetManager::GetStreamableManager();
+	TArray<FSoftObjectPath> AssetsPathToLoad = {
+		PluginSettings->SceneCapActor.ToSoftObjectPath(),
+		PluginSettings->SceneCapMaterial.ToSoftObjectPath(),
+	};
 
-	// Delay setting focus
-		FSlateApplication::Get().SetUserFocus(0, ProGenWidget);
+	// Create an empty tab that will be populated later
+	TSharedRef<SDockTab> Tab = SNew(SDockTab)
+	.TabRole(ETabRole::NomadTab);
 
-	return NewTab;
+	//Set plugin settings properties
+	if (!PluginSettings) return Tab;
+	StreamableManager.RequestAsyncLoad(AssetsPathToLoad, [this, PluginSettings, Tab]()
+	{
+		if (UMaterialInterface* Material = Cast<UMaterialInterface>(PluginSettings->SceneCapMaterial.Get()))
+		{
+			// Asynchronously load the actor
+			if (UClass* SceneCapClass = Cast<UClass>(PluginSettings->SceneCapActor.Get()))
+			{
+				AActor* SceneCapActor = GetSceneCapActor(SceneCapClass);
+				
+				// Create the widget and set it as the content of the tab
+				TSharedRef<SProGenWidget> ProGenWidget = SNew(SProGenWidget)
+							.Material(Material)
+							.SceneCapActor(SceneCapActor);
+
+				// Make sure to run this on the game thread, as we are modifying the UI
+				Async(EAsyncExecution::TaskGraphMainThread, [Tab, ProGenWidget]()
+				{
+					Tab->SetContent(ProGenWidget);
+				});
+			}
+		}
+	});
+
+	return Tab;
 }
 
-UMaterial* FProceduralMapGenerationModule::LoadMaterialFromPath(const FName& Path)
+
+AActor* FProceduralMapGenerationModule::GetSceneCapActor(UClass* SceneCapClass)
 {
-	if (Path == NAME_None) return nullptr;
-
-	return Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, *Path.ToString()));
-}
-
-AActor* FProceduralMapGenerationModule::GetSceneCapActor(const FName& Path)
-{
-	if (Path == NAME_None) return nullptr;
-
-	// Load the object as a UClass, not a UBlueprint
-	UClass* ObjectClass = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), nullptr, *Path.ToString()));
-	if (!ObjectClass) return nullptr;
+	const UPluginSettings* PluginSettings = GetDefault<UPluginSettings>();
+	UClass* ObjectClass = PluginSettings->SceneCapActor.Get();
 
 	// Check if this class is a subclass of AActor
 	if (!ObjectClass->IsChildOf(AActor::StaticClass())) return nullptr;
@@ -121,22 +138,25 @@ AActor* FProceduralMapGenerationModule::GetSceneCapActor(const FName& Path)
 	if (!World) return nullptr;
 
 	TArray<AActor*> SceneCapActors;
-	UGameplayStatics::GetAllActorsOfClass(World,ObjectClass,SceneCapActors);
+	UGameplayStatics::GetAllActorsOfClass(World, ObjectClass, SceneCapActors);
 	if (SceneCapActors.IsEmpty())
 	{
-		return World->SpawnActor<AActor>(ObjectClass, FVector(0,0,1848), FRotator(-90,0,0));
+		AActor* SceneCapActorInst = World->SpawnActor<AActor>(ObjectClass, FVector(0, 0, 1848), FRotator(-90, 0, -90)); 
+		PluginSettings->SceneCapActorInst = SceneCapActorInst;
+		return SceneCapActorInst;
 	}
 	else
 	{
+		PluginSettings->SceneCapActorInst = SceneCapActors[0];
 		return SceneCapActors[0];
 	}
- }
+}
 
 void FProceduralMapGenerationModule::OnTabClosed(const TSharedRef<SDockTab> Tab)
 {
 	if (ShouldRemoveSceneCapActor)
 	{
-		GetSceneCapActor(TEXT("Blueprint'/ProceduralMapGeneration/RenderTarget/BP_RenderView.BP_RenderView_C'"))->Destroy();
+		// GetSceneCapActor()->Destroy();
 	}
 	UE_LOG(LogTemp, Display, TEXT("Tab closed"));
 }

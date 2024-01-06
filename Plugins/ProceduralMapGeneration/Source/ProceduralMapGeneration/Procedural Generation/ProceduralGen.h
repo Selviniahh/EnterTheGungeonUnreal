@@ -168,6 +168,9 @@ public:
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	int MaxSideBranchRoom = 50;
+
+	//I know this is so stupid. I first need to learn transformations and then apply those. Workarounds are just workarounds 
+	FRotator DefaultRotation = FRotator(0.0f, 0.0f, -90.0f);
 	
 	TArray<FIntPoint> BlockedTileHolder;
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)

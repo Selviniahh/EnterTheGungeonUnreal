@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
+#include "ProceduralMapGeneration/Procedural Generation/ProceduralGen.h"
+#include "UObject/SoftObjectPtr.h"
 #include "PluginSettings.generated.h"
 
 /**
@@ -26,5 +28,22 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category= "My Plugin")
 	FSoftObjectPath Left;
+
+	UPROPERTY(Config, EditAnywhere, Category= "My Plugin")
+	FSoftObjectPath NoExit;
+
+	UPROPERTY(Config, EditAnywhere, Category= "My Plugin")
+	TSoftObjectPtr<UMaterialInterface> SceneCapMaterial;
+
+	UPROPERTY(Config, EditAnywhere, Category= "My Plugin")
+	TSoftClassPtr<AActor> SceneCapActor;
+
+	UPROPERTY(Config, EditAnywhere, Category= "My Plugin")
+	TSoftClassPtr<AProceduralGen> ProGenActor;
+
+	UPROPERTY()
+	mutable TWeakObjectPtr<AActor> SceneCapActorInst;
+
+
 
 };

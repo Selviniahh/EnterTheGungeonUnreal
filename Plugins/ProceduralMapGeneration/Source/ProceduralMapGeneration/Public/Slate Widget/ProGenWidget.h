@@ -22,8 +22,10 @@ public:
 	SLATE_ARGUMENT(AActor*, SceneCapActor)
 	SLATE_END_ARGS()
 
+	void RetrieveProGenActor();
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
+	virtual ~SProGenWidget() override;
 	TSharedRef<SHorizontalBox> ConstructTextInput(const FText& Text, const FText& HintText, const FSlateFontInfo& PropertyTextFont, const FOnTextChanged& OnTextChangedDelegate);
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 	
@@ -34,18 +36,21 @@ public:
 	TSharedRef<SListView<TWeakObjectPtr<ARoomActor>>> ConstructListView();
 	void HighlightAvailableRoomRows(TWeakObjectPtr<ARoomActor> RoomActor);
 	void SetDirectionMaps(TWeakObjectPtr<ARoomActor> RoomActor);
-	TSharedPtr<SListView<TWeakObjectPtr<ARoomActor>>> ConstructedAssetListView;
 	TSharedRef<ITableRow> OnGenerateListViewRow(TWeakObjectPtr<ARoomActor> RoomActor, const TSharedRef<STableViewBase>& OwnerTable);
 	void OnSelectionChanged(TWeakObjectPtr<ARoomActor> RoomActor, ESelectInfo::Type SelectedType);
 	EVisibility MakeTestButtonVisibility(TWeakObjectPtr<ARoomActor> SelectedRoom) const;
 	FReply OnButtonClicked();
 
+	TSharedPtr<SListView<TWeakObjectPtr<ARoomActor>>> ConstructedAssetListView;
 	TMap<FString, TSharedPtr<FTableRowStyle>> RowStyle;
 	TMap<FString,TSharedPtr<FSlateBrush>> SlateEnterBrushMap;
 	TMap<FString,TSharedPtr<FSlateBrush>> SlateExitBrushMap;
 	TArray<TWeakObjectPtr<ARoomActor>> ProGenRooms;
 	TWeakObjectPtr<ARoomActor> PreviousFirstSelectedItem;
-
+	int PrevNumOfSelection;
+	TArray<TWeakObjectPtr<ARoomActor>> SelectionOrder;
+	FName RoomManagerTabName = TEXT("RoomManagerTab");
+	
 #pragma endregion ListView
 
 /*I couldn't handle matrix transformation and all those stuff so pop up is not working. */
