@@ -31,6 +31,9 @@ public:
 	
 	TSharedPtr<FSlateMaterialBrush> MaterialBrush; // Member variable
 	const UPluginSettings* PluginSetting;
+	AActor* SceneCapInst;
+	FVector CurrentVelocity; // Member variable to store current velocity
+
 
 #pragma region ListView
 	TSharedRef<SListView<TWeakObjectPtr<ARoomActor>>> ConstructListView();

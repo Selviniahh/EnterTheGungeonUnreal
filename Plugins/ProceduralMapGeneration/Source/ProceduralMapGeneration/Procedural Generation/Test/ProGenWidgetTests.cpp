@@ -23,8 +23,14 @@ void UProGenWidgetTests::MakeOverlapTest()
 	if (!World) return;
 
 	FirstRoom = World->SpawnActor<ARoomActor>(FirstRoom->GetClass(),FVector(0,0,0),ProGen->DefaultRotation);
-	SecondRoom = World->SpawnActor<ARoomActor>(SecondRoom->GetClass(),DetermineSecondRoomSpawnLocation(),ProGen->DefaultRotation);
-	PluginSettings->SceneCapActorInst->SetActorLocation(FirstRoom->GetActorLocation());
+
+	FVector BoxComp = FirstRoom->BoxComponent->GetScaledBoxExtent() * 2;
+	double MaxDouble = FMath::Max3(BoxComp.X, BoxComp.Y, BoxComp.Z);
+
+	//TODO: I need to set render target exactly center of the room not the one at room's specified origin. Calculate the box comp center and set it to render target's location
+	PluginSettings->SceneCapActorInst->SetActorLocation(FirstRoom->GetActorLocation() + FVector(0,0,MaxDouble));
+
+	//now it's time to make box overlap  
 }
 
 FVector UProGenWidgetTests::DetermineSecondRoomSpawnLocation()

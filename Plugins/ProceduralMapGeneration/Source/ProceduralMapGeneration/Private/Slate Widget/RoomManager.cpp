@@ -117,12 +117,6 @@ void SRoomManager::Tick(const FGeometry& AllottedGeometry, const double InCurren
 	TMap<FKey, bool> KeyMap = FMyInputProcessor::KeyPressedMap;
 	FKey MyKey = FMyInputProcessor::PressedKey;
 	FVector Direction = FVector::ZeroVector;
-
-	if (KeyMap[EKeys::A] && KeyMap[EKeys::D])
-	{
-		UE_LOG(LogTemp, Display, TEXT("A pressed"));
-
-	}
 	
 	//Simulate actual add input movement as much as possible
 	if (FMyInputProcessor::KeyPressedMap.Contains(MyKey))
@@ -139,14 +133,11 @@ void SRoomManager::Tick(const FGeometry& AllottedGeometry, const double InCurren
 		if (KeyMap[EKeys::W] && KeyMap[EKeys::D]) Direction = FVector(1, -1, 0).GetSafeNormal();
 		if (KeyMap[EKeys::A] && KeyMap[EKeys::S]) Direction = FVector(-1, 1, 0).GetSafeNormal();
 		if (KeyMap[EKeys::D] && KeyMap[EKeys::S]) Direction = FVector(1, 1, 0).GetSafeNormal();
-
-		
 	}
 
 	if (SceneCapInst)
 	{
-		float AccelerationSpeed = 2000.0f;
-		FVector TargetVelocity = Direction * AccelerationSpeed;
+		FVector TargetVelocity = Direction * FMyInputProcessor::MovementSpeed;
 		// Smoothly interpolate to the target velocity
 		CurrentVelocity = FMath::VInterpTo(CurrentVelocity, TargetVelocity, InDeltaTime, 10.0f);
 
