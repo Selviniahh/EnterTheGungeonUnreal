@@ -165,6 +165,9 @@ public:
 	/*The tile size for entire map. It's important to give precise small amount otherwise there will be tile offset issues when a path trying to be found for connecting two rooms with corridors.*/
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 7))
 	int TileSizeY = 16;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 7))
+	FVector MapCenter = FVector(0,0,0);
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	int MaxSideBranchRoom = 50;
@@ -173,8 +176,10 @@ public:
 	FRotator DefaultRotation = FRotator(0.0f, 0.0f, -90.0f);
 	
 	TArray<FIntPoint> BlockedTileHolder;
+	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<ARoomActor> StraightCorrClass;
+	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<ARoomActor> TurnCorridorClass;
 
@@ -377,7 +382,10 @@ public:
 	};
 
 	ARoomActor* SelectRoomWithDirection(Direction EndSocketDirection, bool CanSpawnLargeRoom, bool OnlySpawnNoExit, TArray<ARoomActor*>* CustomArray = nullptr, TSharedPtr<TArray<ARoomActor*>> ManualBranchRooms = nullptr);
-	
+
+	/*Iterate over all the tiles covered by the box component. Return all the relative tile indexes */
+	void ForEachTileInRoom(const ARoomActor* Room, const FVector& SpawnLoc,const FRotator& Rotation, const TFunction<void(int X, int Z)>& TileAction);
+
 	void VisualizeTiles();
 	
 	void UnBlockTiles(TArray<FIntPoint> BlockedTiles)
@@ -577,5 +585,4 @@ protected:
 	
 
 private:
-	void ForEachTileInRoom(const ARoomActor* Room, const FVector& SpawnLoc,const FRotator& Rotation, const TFunction<void(int X, int Z)>& TileAction);
 };

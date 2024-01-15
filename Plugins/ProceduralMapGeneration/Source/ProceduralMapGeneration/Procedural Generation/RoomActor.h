@@ -152,7 +152,10 @@ public:
 	bool IsCorridor = false;
 
 	UPROPERTY(EditAnywhere)
-	FRotator Rotation; 
+	FRotator Rotation;
+
+	/*For some reason GetActorLocation returns 0, so I need to pass Location explicitly*/
+	FVector Location;
 	
 
 	void SetEnterDoorActor(ADoorActor* DoorActor);

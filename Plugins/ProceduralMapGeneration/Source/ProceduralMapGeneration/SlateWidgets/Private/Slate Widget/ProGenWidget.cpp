@@ -1,24 +1,24 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ProceduralMapGeneration/Public/Slate Widget/ProGenWidget.h"
-
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/ProGenWidget.h"
 #include "EngineUtils.h"
-#include "ProceduralMapGeneration/Public/Slate Widget/GlobalInputListener.h"
-#include "ProceduralMapGeneration/Public/Slate Widget/PluginSettings.h"
-#include "ProceduralMapGeneration/Public/Slate Widget/PopUpButton.h"
 #include "SlateOptMacros.h"
 #include "Brushes/SlateColorBrush.h"
+#include "Components/SceneCaptureComponent2D.h"
 #include "Engine/AssetManager.h"
 #include "Materials/MaterialInterface.h"
 #include "ProceduralMapGeneration/Procedural Generation/ProceduralGen.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "ProceduralMapGeneration/Procedural Generation/RoomActor.h"
-#include "Widgets/Docking/SDockTab.h"
-#include "Slate Widget/RoomManager.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/GlobalInputListener.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/PluginSettings.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/PopUpButton.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/RoomManager.h"
 #include "Widgets/Views/SListView.h"
 #include "Styling/SlateBrush.h"
 
+class SRoomManager;
 struct FStreamableManager;
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -28,7 +28,7 @@ void SProGenWidget::Construct(const FArguments& InArgs)
 	bCanSupportFocus = true;
 
 	SceneCapActor = InArgs._SceneCapActor;
-
+	
 	//Set the slate window focus
 	FSlateApplication::Get().SetKeyboardFocus(SharedThis(this), EFocusCause::SetDirectly);
 
@@ -47,9 +47,8 @@ void SProGenWidget::Construct(const FArguments& InArgs)
 	PluginSetting = GetDefault<UPluginSettings>();
 	RetrieveProGenActor();
 	
-	
-	//Assign plugin settings
-	PluginSetting = GetDefault<UPluginSettings>();
+	AProceduralGen* ProceduralGen = Cast<AProceduralGen>(PluginSetting->ProGenActor.Get()->GetDefaultObject());
+	PluginSetting->ProGenInst = ProceduralGen;
 
 	//Init button slate
 	TSharedRef<SPopUpButton> PopUpButton = SNew(SPopUpButton);
@@ -60,6 +59,12 @@ void SProGenWidget::Construct(const FArguments& InArgs)
 	{
 		RowStyle.Add(RoomActor.Get()->GetName(),DefaultTableRowStyle);
 	}
+
+	//Access Scene capture component. THe reason not creating actor from C++, Scene capture component details are not exposed in BP editor
+	SceneCapInst = PluginSetting->SceneCapActorInst.Get();
+	TArray<USceneCaptureComponent2D*> SceneCapCompArray;
+	SceneCapInst->GetComponents(SceneCapCompArray);
+	SceneCapComp = SceneCapCompArray[0];
 	
 	ChildSlot
 	[
@@ -125,45 +130,59 @@ void SProGenWidget::Construct(const FArguments& InArgs)
 
 SProGenWidget::~SProGenWidget()
 {
-	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(RoomManagerTabName);
+	
+}
+
+void SProGenWidget::HandleRenderViewMovement(const float InDeltaTime, AActor* SceneCapActor, USceneCaptureComponent2D* SceneCapComponent, FVector& CurrentVelocity)
+{
+	TMap<FKey, bool> KeyMap = FMyInputProcessor::KeyPressedMap;
+	FKey MyKey = FMyInputProcessor::PressedKey;
+	FVector Direction = FVector::ZeroVector;
+	
+	//Simulate actual add input movement as much as possible
+	if (FMyInputProcessor::KeyPressedMap.Contains(MyKey))
+	{
+		if		(KeyMap[EKeys::A]) Direction = FVector(-1, 0, 0);
+		else if (KeyMap[EKeys::D]) Direction = FVector(1, 0, 0);
+		else if (KeyMap[EKeys::W]) Direction = FVector(0, -1, 0);
+		else if (KeyMap[EKeys::S]) Direction = FVector(0, 1, 0);
+		else if (KeyMap[EKeys::Q]) Direction = FVector(0, 0, -1);
+		else if (KeyMap[EKeys::E]) Direction = FVector(0, 0, 1);
+		
+		// Check for specific diagonal combinations
+		if (KeyMap[EKeys::A] && KeyMap[EKeys::W]) Direction = FVector(-1, -1, 0).GetSafeNormal();
+		if (KeyMap[EKeys::W] && KeyMap[EKeys::D]) Direction = FVector(1, -1, 0).GetSafeNormal();
+		if (KeyMap[EKeys::A] && KeyMap[EKeys::S]) Direction = FVector(-1, 1, 0).GetSafeNormal();
+		if (KeyMap[EKeys::D] && KeyMap[EKeys::S]) Direction = FVector(1, 1, 0).GetSafeNormal();
+	}
+
+	if (SceneCapActor)
+	{
+		FVector TargetVelocity = Direction * FMyInputProcessor::MovementSpeed;
+		// Smoothly interpolate to the target velocity
+		CurrentVelocity = FMath::VInterpTo(CurrentVelocity, TargetVelocity, InDeltaTime, 10.0f);
+
+		//Ortho camera movement
+		if (KeyMap[EKeys::Q] || KeyMap[EKeys::E])
+		{
+			SceneCapComponent->OrthoWidth =  SceneCapComponent->OrthoWidth + TargetVelocity.Z / 100;
+			UE_LOG(LogTemp, Display, TEXT("orto: %s"), *TargetVelocity.ToString());
+
+		}
+		//Location movement 
+		else
+		{
+			// Apply the current velocity to update position
+			FVector NewLocation = SceneCapActor->GetActorLocation() + CurrentVelocity * InDeltaTime;
+			NewLocation.Z = SceneCapActor->GetActorLocation().Z;
+			SceneCapActor->SetActorLocation(NewLocation);	
+		}
+	}
 }
 
 void SProGenWidget::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
-	
-
-	
-	Geometry = AllottedGeometry;
-	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
-
-	//Set Scene Capture location
-	FKey MyKey = FMyInputProcessor::PressedKey;
-	FVector Direction = FVector::ZeroVector;
-	if (MyKey == EKeys::A) Direction = FVector(-Multiplayer, 0, 0); //a-> w
-	else if (MyKey == EKeys::D) Direction = FVector(Multiplayer, 0, 0); 
-	else if (MyKey == EKeys::W) Direction = FVector(0, -Multiplayer, 0);
-	else if (MyKey == EKeys::S) Direction = FVector(0, Multiplayer, 0);
-	else if (MyKey == EKeys::Q) Direction = FVector(0, 0, -Multiplayer);
-	else if (MyKey == EKeys::E) Direction = FVector(0, 0, Multiplayer);
-
-	//NOT WORKING NOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKINGNOT WORKING 
-	if (MyKey == EKeys::F)
-	{
-		MenuAnchor->SetIsOpen(true);
-	}
-
-	if (SceneCapActor && Direction != FVector::ZeroVector)
-	{
-		FVector CurrentLocation = SceneCapActor->GetActorLocation();
-		FVector TargetLocation = CurrentLocation + Direction;
-		FVector NewLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, InDeltaTime, 99); // InterpSpeed is a float determining how fast to move
-		SceneCapActor->SetActorLocation(NewLocation, true);
-		UE_LOG(LogTemp, Display, TEXT("sa: %s"), *SceneCapActor->GetActorLocation().ToString());
-
-	}
-	
-	//Reset the key at the end so I can make actions per press 
-	FMyInputProcessor::PressedKey = FKey();
+	HandleRenderViewMovement(InDeltaTime,SceneCapActor,SceneCapComp,CurrentInputVelocity);
 }
 
 TSharedRef<SListView<TWeakObjectPtr<ARoomActor>>> SProGenWidget::ConstructListView()
@@ -416,25 +435,24 @@ FReply SProGenWidget::OnButtonClicked()
 	//Everything checks out create a new tab
 	else
 	{
-		const FName TabName = FName(RoomManagerTabName); // Unique name for the tab identifier
-		if (!FGlobalTabmanager::Get()->HasTabSpawner(TabName))
-			{
-				FGlobalTabmanager::Get()->RegisterNomadTabSpawner(TabName, FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& SpawnTabArgs)
-				{
-					auto RoomManagerTab = SNew(SDockTab)
-						.TabRole(ETabRole::NomadTab)
-						[
-							SNew(SRoomManager) //pass the selected rooms
-						.RoomFirst(SelectionOrder[0].Get())
-						.RoomSecond(SelectionOrder[1].Get())
-						];
-					
-					return RoomManagerTab;
-				}))
-				.SetDisplayName(FText::FromString(RoomManagerTabName.ToString()));
-			}
+		//Create the content for the window
+		TSharedRef<SRoomManager> RoomManagerContent = SNew(SRoomManager)
+		.RoomFirst(SelectionOrder[0].Get())
+		.RoomSecond(SelectionOrder[1].Get());
+
+		// Create and open the standalone window
+		TSharedRef<SWindow> RoomManagerWindow = SNew(SWindow)
+		.Title(FText::FromString(TEXT("Room Manager")))
+		.ClientSize(FVector2D(1920,1080))
+		.SupportsMaximize(true)
+		.SupportsMinimize(true)
+		[
+			RoomManagerContent
+		];
+
+		FSlateApplication::Get().AddWindow(RoomManagerWindow);
+
 		
-		FGlobalTabmanager::Get()->TryInvokeTab(RoomManagerTabName);
 	}
 	return FReply::Handled();
 }
@@ -527,7 +545,6 @@ void SProGenWidget::RetrieveProGenActor()
 		{
 			if (PluginSetting->ProGenActor.Get())
 			{
-				ProceduralGen = Cast<AProceduralGen>(PluginSetting->ProGenActor.Get()->GetDefaultObject());
 				for (auto RoomDesign : ProceduralGen->RoomDesigns)
 				{
 					ARoomActor* RoomActor = Cast<ARoomActor>(RoomDesign->GetDefaultObject());

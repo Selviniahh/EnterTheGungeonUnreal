@@ -5,7 +5,7 @@
 
 #include "Components/BoxComponent.h"
 #include "Door/DoorActor.h"
-#include "Test/MakeAllCorridorScenarioTest.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/Test/MakeAllCorridorScenarioTest.h"
 
 class UMakeAllCorridorScenarioTest;
 
@@ -461,7 +461,7 @@ ARoomActor* AProceduralGen::SpawnFirstBranchRoom(Direction Direction, FVector Sp
 	}
 
 	InitAndSpawnRoom(NextRoom, NextRoomLocation, Rotation, false, true);
-	SpawnedRooms.Add(LastSpawnedRoom);
+	SpawnedRooms.Add(LastSpawnedRoom); 
 
 	SpawnCounter++;
 	return NextRoom;
@@ -476,6 +476,14 @@ void AProceduralGen::InitWorldTiles()
 	for (int i = 0; i < MapSizeX; ++i)
 		Tiles[i].SetNum(MapSizeY);
 
+	//TODO: Idea in here to specify exactly the center of the map worked good but everything messed up when rooms spawned. Handle this case later 
+	//Calculate half sizes for centering
+	float HalfMapWidth = (MapSizeX * TileSizeX) / 2;
+	float HalfMapHeight = (MapSizeY * TileSizeY) / 2;
+
+	//Calculate the starting position (bottom left corner of the map)
+	FVector StartPosition = MapCenter - FVector(HalfMapWidth,HalfMapHeight,0);
+	
 	for (int x = 0; x < MapSizeX; ++x)
 		for (int y = 0; y < MapSizeY; ++y)
 		{
@@ -955,6 +963,7 @@ void AProceduralGen::ForEachTileInRoom(const ARoomActor* Room, const FVector& Sp
 	FVector WorldLoc = SpawnLoc + RelativeLoc;
 	FVector BoxExtends = Room->BoxComponent->GetUnscaledBoxExtent();
 
+	//TODO: I don't have any idea what's going on here I guess I have to fix all these bullshits with proper transformation math for entire class
 	if (Room->IsHorizontalStraightCorr)
 	{
 		int X = BoxExtends.X;
@@ -1215,6 +1224,11 @@ bool AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor
 
 void AProceduralGen::VisualizeTiles()
 {
+	//Since I calling world in editor, I need to access world first
+	UWorld* World = GetWorld();
+	if (!World)
+		World = GEditor->GetEditorWorldContext().World();
+	
 	for (int X = 0; X < MapSizeX; ++X)
 	{
 		for (int Y = 0; Y < MapSizeY; ++Y)
@@ -1223,7 +1237,7 @@ void AProceduralGen::VisualizeTiles()
 			FColor Color = VisualizeOverlaps ? FColor::Yellow : FColor::Magenta;
 			if (Condition)
 			{
-				DrawDebugBox(GetWorld(), Tiles[X][Y].Location + TileBoxExtends, TileBoxExtends, Color, true);
+				DrawDebugBox(World, Tiles[X][Y].Location + TileBoxExtends, TileBoxExtends, Color, true);
 			}
 		}
 	}
@@ -1235,7 +1249,7 @@ void AProceduralGen::VisualizeTiles()
 		{
 			FColor Color = (i == MoveOverlapRoomLocationTiles.Num() - 1) ? FColor::Red : FColor::White;
 			const FIntPoint& Tile = MoveOverlapRoomLocationTiles[i];
-			DrawDebugBox(GetWorld(), Tiles[Tile.X][Tile.Y].Location + TileBoxExtends, TileBoxExtends, Color, true);
+			DrawDebugBox(World, Tiles[Tile.X][Tile.Y].Location + TileBoxExtends, TileBoxExtends, Color, true);
 		}
 	}
 }

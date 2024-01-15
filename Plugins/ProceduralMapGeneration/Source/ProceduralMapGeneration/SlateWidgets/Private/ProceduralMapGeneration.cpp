@@ -1,26 +1,24 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "ProceduralMapGeneration.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/ProceduralMapGeneration.h"
 
 #include "ContentBrowserModule.h"
 #include "Async/Async.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
 #include "Kismet/GameplayStatics.h"
-#include "ProceduralMapGeneration/Public/Slate Widget/GlobalInputListener.h"
-#include "ProceduralMapGeneration/Public/Slate Widget/ProGenWidget.h"
-#include "Slate Widget/PluginSettings.h"
-#include "Widgets/Docking/SDockTab.h"
-#include "Slate Widget/PluginSettings.h"
-
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/GlobalInputListener.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/PluginSettings.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/ProGenWidget.h"
 #define LOCTEXT_NAMESPACE "FProceduralMapGenerationModule"
 
+class SProGenWidget;
 struct FStreamableManager;
 
 void FProceduralMapGenerationModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-	RegisterWindow();
+	// RegisterWindow();
 	InitCBMenuExtension();
 	// FSlateApplication::Get().RegisterInputPreProcessor(TSharedPtr<IInputProcessor>(MakeShareable<new FMyInputProcessor()>));
 	TSharedPtr<IInputProcessor> InputProcessor = MakeShared<FMyInputProcessor>();
@@ -70,20 +68,13 @@ void FProceduralMapGenerationModule::AddCBMenuEntry(FMenuBuilder& MenuBuilder)
 //Will be invoked when the option itself is clicked. This function will just invoke the given name tab. But before trying to invoke, registering that tab is required. Below the function
 void FProceduralMapGenerationModule::OnProGenButtonClicked()
 {
-	FGlobalTabmanager::Get()->TryInvokeTab(FName("ProGen"));
+	OnSpawnProGenTab();
 }
 
 
 //Register the window tab with given TabId. The bound delegate itself will be finally actual content of the window. 
 
-void FProceduralMapGenerationModule::RegisterWindow()
-{
-	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FName("ProGen"),
-	FOnSpawnTab::CreateRaw(this, &FProceduralMapGenerationModule::OnSpawnProGenTab))
-	.SetDisplayName(FText::FromString(TEXT("Procedural Map Generation")));
-}
-
-TSharedRef<SDockTab> FProceduralMapGenerationModule::OnSpawnProGenTab(const FSpawnTabArgs& SpawnTabArgs)
+TSharedRef<SWindow> FProceduralMapGenerationModule::OnSpawnProGenTab()
 {
 	const UPluginSettings* PluginSettings = GetDefault<UPluginSettings>();
 	FStreamableManager& StreamableManager = UAssetManager::GetStreamableManager();
@@ -92,13 +83,9 @@ TSharedRef<SDockTab> FProceduralMapGenerationModule::OnSpawnProGenTab(const FSpa
 		PluginSettings->SceneCapMaterial.ToSoftObjectPath(),
 	};
 
-	// Create an empty tab that will be populated later
-	TSharedRef<SDockTab> Tab = SNew(SDockTab)
-	.TabRole(ETabRole::NomadTab);
 
 	//Set plugin settings properties
-	if (!PluginSettings) return Tab;
-	StreamableManager.RequestAsyncLoad(AssetsPathToLoad, [this, PluginSettings, Tab]()
+	StreamableManager.RequestAsyncLoad(AssetsPathToLoad, [this, PluginSettings]()
 	{
 		if (UMaterialInterface* Material = Cast<UMaterialInterface>(PluginSettings->SceneCapMaterial.Get()))
 		{
@@ -106,22 +93,29 @@ TSharedRef<SDockTab> FProceduralMapGenerationModule::OnSpawnProGenTab(const FSpa
 			if (UClass* SceneCapClass = Cast<UClass>(PluginSettings->SceneCapActor.Get()))
 			{
 				AActor* SceneCapActor = GetSceneCapActor(SceneCapClass);
-				
-				// Create the widget and set it as the content of the tab
+
 				TSharedRef<SProGenWidget> ProGenWidget = SNew(SProGenWidget)
-							.Material(Material)
-							.SceneCapActor(SceneCapActor);
+				.Material(Material)
+				.SceneCapActor(SceneCapActor);
 
 				// Make sure to run this on the game thread, as we are modifying the UI
-				Async(EAsyncExecution::TaskGraphMainThread, [Tab, ProGenWidget]()
+				Async(EAsyncExecution::TaskGraphMainThread, [ProGenWidget]()
 				{
-					Tab->SetContent(ProGenWidget);
+					auto ProGenWindow =  SNew(SWindow)
+						.Title(FText::FromString(TEXT("Procedural Map Generation")))
+						.ClientSize(FVector2D(1920, 1080))
+						.SupportsMaximize(true)
+						.SupportsMinimize(true)
+					[
+						ProGenWidget
+					];
+
+					FSlateApplication::Get().AddWindow(ProGenWindow);
 				});
 			}
 		}
 	});
-
-	return Tab;
+	return SNew(SWindow);
 }
 
 
@@ -141,7 +135,7 @@ AActor* FProceduralMapGenerationModule::GetSceneCapActor(UClass* SceneCapClass)
 	UGameplayStatics::GetAllActorsOfClass(World, ObjectClass, SceneCapActors);
 	if (SceneCapActors.IsEmpty())
 	{
-		AActor* SceneCapActorInst = World->SpawnActor<AActor>(ObjectClass, FVector(0, 0, 1848), FRotator(-90, 0, -90)); 
+		AActor* SceneCapActorInst = World->SpawnActor<AActor>(ObjectClass, FVector(0, 0, 1848), FRotator(-90, 0, -90));
 		PluginSettings->SceneCapActorInst = SceneCapActorInst;
 		return SceneCapActorInst;
 	}

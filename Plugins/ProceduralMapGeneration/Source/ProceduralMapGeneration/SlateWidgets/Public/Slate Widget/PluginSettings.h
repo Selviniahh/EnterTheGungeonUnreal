@@ -41,9 +41,19 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category= "My Plugin")
 	TSoftClassPtr<AProceduralGen> ProGenActor;
 
+	UPROPERTY(Config, EditAnywhere, Category= "My Plugin")
+	TSoftClassPtr<AActor> TilePlaneActor;
+	
+	UPROPERTY(Config, EditAnywhere, Category= "My Plugin")
+	TSoftObjectPtr<UMaterialInterface> TileMaterial;
+
+	UPROPERTY(Config, EditAnywhere, Category= "My Plugin")
+	TSoftObjectPtr<UMaterialInterface> TileHoverMaterial;
+
+	UPROPERTY(Config, EditAnywhere, Category= "My Plugin")
+	TSoftObjectPtr<UMaterialInterface> TileSelectionMaterial;
+
 	UPROPERTY()
 	mutable TWeakObjectPtr<AActor> SceneCapActorInst;
-
-
-
+	mutable TWeakObjectPtr<AProceduralGen> ProGenInst;
 };

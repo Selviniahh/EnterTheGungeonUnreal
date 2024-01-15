@@ -1,11 +1,12 @@
-﻿#include "ProceduralMapGeneration/Public/Slate Widget/GlobalInputListener.h"
+﻿#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/GlobalInputListener.h"
 
 TMap<FKey, bool> FMyInputProcessor::KeyPressedMap;
-
+float FMyInputProcessor::MovementSpeed = 500.0f;
 
 bool FMyInputProcessor::HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)
 {
 	FKey Key = InKeyEvent.GetKey();
+	
 	PressedKey = Key;
 
 	if (KeyPressedMap.Contains(Key))
@@ -28,9 +29,29 @@ auto FMyInputProcessor::Tick(const float DeltaTime, FSlateApplication& SlateApp,
 {
 }
 
+bool FMyInputProcessor::HandleMouseWheelOrGestureEvent(FSlateApplication& SlateApp, const FPointerEvent& InWheelEvent, const FPointerEvent* InGestureEvent)
+{
+	float ScrollData = InWheelEvent.GetWheelDelta(); //-1 or 1 
+
+	SpeedAdjustFactor = (MovementSpeed < 101) ? 20.f : 100.f;
+	
+	if (MovementSpeed == 100.f && ScrollData > 0)
+	{
+		SpeedAdjustFactor = 100.f;
+	}
+	MovementSpeed += ScrollData * SpeedAdjustFactor;
+	
+	//Clamp the speed
+	MovementSpeed = FMath::Clamp(MovementSpeed,20,1000);
+	
+	UE_LOG(LogTemp, Log, TEXT("Scrolled: %f"), MovementSpeed);
+	return IInputProcessor::HandleMouseWheelOrGestureEvent(SlateApp, InWheelEvent, InGestureEvent);
+}
+
 bool FMyInputProcessor::IsKeyPressed(const FKey& Key)
 {
 	return KeyPressedMap.Contains(Key) && KeyPressedMap[Key];
+	
 }
 
 void FMyInputProcessor::FillMap()
@@ -41,6 +62,7 @@ void FMyInputProcessor::FillMap()
 	KeyPressedMap.Add(EKeys::D, false);
 	KeyPressedMap.Add(EKeys::Q, false);
 	KeyPressedMap.Add(EKeys::E, false);
+	KeyPressedMap.Add(EKeys::LeftShift, false);
 }
 
 bool FMyInputProcessor::HandleKeyUpEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)

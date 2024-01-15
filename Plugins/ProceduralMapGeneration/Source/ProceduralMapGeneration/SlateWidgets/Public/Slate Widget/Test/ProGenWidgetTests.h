@@ -31,9 +31,9 @@ public:
 	const UPluginSettings* PluginSettings;
 	
 	void Initialize(ARoomActor* First, ARoomActor* Second);
-
 #pragma region OverlapTest
-	void MakeOverlapTest();
+	ARoomActor* MakeOverlapTest();
+	//Not implemented yet
 	FVector DetermineSecondRoomSpawnLocation();
 #pragma endregion 
 };

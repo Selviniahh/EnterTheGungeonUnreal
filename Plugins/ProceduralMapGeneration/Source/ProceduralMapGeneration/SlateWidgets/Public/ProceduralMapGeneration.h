@@ -13,9 +13,8 @@ public:
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
-	void RegisterWindow();
 	void InitCBMenuExtension();
-	TSharedRef<SDockTab> OnSpawnProGenTab(const FSpawnTabArgs& SpawnTabArgs);
+	TSharedRef<SWindow> OnSpawnProGenTab();
 	TSharedRef<FExtender> CustomCBMenuExtender(const TArray<FString>& SelectedPaths);
 	void AddCBMenuEntry(FMenuBuilder& MenuBuilder);
 	void OnProGenButtonClicked();
