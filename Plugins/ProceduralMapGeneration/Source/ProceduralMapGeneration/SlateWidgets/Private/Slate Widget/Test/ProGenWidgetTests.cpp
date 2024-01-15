@@ -1,11 +1,11 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ProGenWidgetTests.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/Test/ProGenWidgetTests.h"
 
 #include "Components/BoxComponent.h"
 #include "ProceduralMapGeneration/Procedural Generation/RoomActor.h"
-#include "Slate Widget/PluginSettings.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/PluginSettings.h"
 
 void UProGenWidgetTests::Initialize(ARoomActor* First, ARoomActor* Second)
 {
@@ -13,16 +13,20 @@ void UProGenWidgetTests::Initialize(ARoomActor* First, ARoomActor* Second)
 	
 	this->FirstRoom = First;
 	this->SecondRoom = Second;
-	AProceduralGen* ProGeneration = CastChecked<AProceduralGen>(PluginSettings->ProGenActor.Get()->GetDefaultObject());
-	this->ProGen = ProGeneration;
+	ProGen = PluginSettings->ProGenInst.Get();
+	ProGen->InitWorldTiles();
+	ProGen->TileBoxExtends = FVector(ProGen->TileSizeX / 2, ProGen->TileSizeY / 2, ProGen->TileSizeY / 2);
 }
 
-void UProGenWidgetTests::MakeOverlapTest()
+ARoomActor* UProGenWidgetTests::MakeOverlapTest()
 {
 	UWorld* World = GEditor->GetEditorWorldContext().World();
-	if (!World) return;
+	if (!World) return nullptr;
 
-	FirstRoom = World->SpawnActor<ARoomActor>(FirstRoom->GetClass(),FVector(0,0,0),ProGen->DefaultRotation);
+	//Spawn the selected first room always at the center
+	FVector SpawnLoc = ProGen->Tiles[ProGen->MapSizeX /2][ProGen->MapSizeY /2].Location;
+	FirstRoom = World->SpawnActor<ARoomActor>(FirstRoom->GetClass(),SpawnLoc,ProGen->DefaultRotation);
+	FirstRoom->Location = SpawnLoc;
 
 	FVector BoxComp = FirstRoom->BoxComponent->GetScaledBoxExtent() * 2;
 	double MaxDouble = FMath::Max3(BoxComp.X, BoxComp.Y, BoxComp.Z);
@@ -30,7 +34,13 @@ void UProGenWidgetTests::MakeOverlapTest()
 	//TODO: I need to set render target exactly center of the room not the one at room's specified origin. Calculate the box comp center and set it to render target's location
 	PluginSettings->SceneCapActorInst->SetActorLocation(FirstRoom->GetActorLocation() + FVector(0,0,MaxDouble));
 
-	//now it's time to make box overlap  
+	//now it's time to make box overlap
+	ProGen->VisualizeOverlaps = true;
+	ProGen->SetTilesBlocked(FirstRoom,SpawnLoc,ProGen->DefaultRotation);
+	ProGen->SetSocketExclusion(FirstRoom,SpawnLoc);
+	ProGen->VisualizeTiles();
+
+	return FirstRoom;
 }
 
 FVector UProGenWidgetTests::DetermineSecondRoomSpawnLocation()

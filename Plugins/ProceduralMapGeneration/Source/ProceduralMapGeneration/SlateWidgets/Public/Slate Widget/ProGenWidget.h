@@ -26,14 +26,15 @@ public:
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
 	virtual ~SProGenWidget() override;
+	static void HandleRenderViewMovement(float InDeltaTime, AActor* SceneCapActor, USceneCaptureComponent2D* SceneCapComponent, FVector& CurrentVelocity);
 	TSharedRef<SHorizontalBox> ConstructTextInput(const FText& Text, const FText& HintText, const FSlateFontInfo& PropertyTextFont, const FOnTextChanged& OnTextChangedDelegate);
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 	
 	TSharedPtr<FSlateMaterialBrush> MaterialBrush; // Member variable
 	const UPluginSettings* PluginSetting;
 	AActor* SceneCapInst;
-	FVector CurrentVelocity; // Member variable to store current velocity
-
+	FVector CurrentInputVelocity; // Member variable to store current velocity
+	USceneCaptureComponent2D* SceneCapComp;
 
 #pragma region ListView
 	TSharedRef<SListView<TWeakObjectPtr<ARoomActor>>> ConstructListView();

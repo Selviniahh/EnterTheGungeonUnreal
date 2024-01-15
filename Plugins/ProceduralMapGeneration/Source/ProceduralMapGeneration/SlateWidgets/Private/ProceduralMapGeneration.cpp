@@ -1,18 +1,18 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "ProceduralMapGeneration.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/ProceduralMapGeneration.h"
 
 #include "ContentBrowserModule.h"
 #include "Async/Async.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
 #include "Kismet/GameplayStatics.h"
-#include "ProceduralMapGeneration/Public/Slate Widget/GlobalInputListener.h"
-#include "ProceduralMapGeneration/Public/Slate Widget/ProGenWidget.h"
-#include "Slate Widget/PluginSettings.h"
-
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/GlobalInputListener.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/PluginSettings.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/ProGenWidget.h"
 #define LOCTEXT_NAMESPACE "FProceduralMapGenerationModule"
 
+class SProGenWidget;
 struct FStreamableManager;
 
 void FProceduralMapGenerationModule::StartupModule()

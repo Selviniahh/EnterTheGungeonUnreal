@@ -1,7 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ProceduralMapGeneration/Public/Slate Widget/PopUpButton.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/PopUpButton.h"
+
 #include "SlateOptMacros.h"
 #include "Brushes/SlateColorBrush.h"
 

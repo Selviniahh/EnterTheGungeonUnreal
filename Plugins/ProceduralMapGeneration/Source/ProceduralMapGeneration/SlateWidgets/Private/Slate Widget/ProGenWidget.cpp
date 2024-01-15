@@ -1,23 +1,24 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ProceduralMapGeneration/Public/Slate Widget/ProGenWidget.h"
-
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/ProGenWidget.h"
 #include "EngineUtils.h"
-#include "ProceduralMapGeneration/Public/Slate Widget/GlobalInputListener.h"
-#include "ProceduralMapGeneration/Public/Slate Widget/PluginSettings.h"
-#include "ProceduralMapGeneration/Public/Slate Widget/PopUpButton.h"
 #include "SlateOptMacros.h"
 #include "Brushes/SlateColorBrush.h"
+#include "Components/SceneCaptureComponent2D.h"
 #include "Engine/AssetManager.h"
 #include "Materials/MaterialInterface.h"
 #include "ProceduralMapGeneration/Procedural Generation/ProceduralGen.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "ProceduralMapGeneration/Procedural Generation/RoomActor.h"
-#include "Slate Widget/RoomManager.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/GlobalInputListener.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/PluginSettings.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/PopUpButton.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/RoomManager.h"
 #include "Widgets/Views/SListView.h"
 #include "Styling/SlateBrush.h"
 
+class SRoomManager;
 struct FStreamableManager;
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -46,9 +47,8 @@ void SProGenWidget::Construct(const FArguments& InArgs)
 	PluginSetting = GetDefault<UPluginSettings>();
 	RetrieveProGenActor();
 	
-	
-	//Assign plugin settings
-	PluginSetting = GetDefault<UPluginSettings>();
+	AProceduralGen* ProceduralGen = Cast<AProceduralGen>(PluginSetting->ProGenActor.Get()->GetDefaultObject());
+	PluginSetting->ProGenInst = ProceduralGen;
 
 	//Init button slate
 	TSharedRef<SPopUpButton> PopUpButton = SNew(SPopUpButton);
@@ -59,6 +59,12 @@ void SProGenWidget::Construct(const FArguments& InArgs)
 	{
 		RowStyle.Add(RoomActor.Get()->GetName(),DefaultTableRowStyle);
 	}
+
+	//Access Scene capture component. THe reason not creating actor from C++, Scene capture component details are not exposed in BP editor
+	SceneCapInst = PluginSetting->SceneCapActorInst.Get();
+	TArray<USceneCaptureComponent2D*> SceneCapCompArray;
+	SceneCapInst->GetComponents(SceneCapCompArray);
+	SceneCapComp = SceneCapCompArray[0];
 	
 	ChildSlot
 	[
@@ -124,10 +130,10 @@ void SProGenWidget::Construct(const FArguments& InArgs)
 
 SProGenWidget::~SProGenWidget()
 {
-	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(RoomManagerTabName);
+	
 }
 
-void SProGenWidget::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+void SProGenWidget::HandleRenderViewMovement(const float InDeltaTime, AActor* SceneCapActor, USceneCaptureComponent2D* SceneCapComponent, FVector& CurrentVelocity)
 {
 	TMap<FKey, bool> KeyMap = FMyInputProcessor::KeyPressedMap;
 	FKey MyKey = FMyInputProcessor::PressedKey;
@@ -156,10 +162,27 @@ void SProGenWidget::Tick(const FGeometry& AllottedGeometry, const double InCurre
 		// Smoothly interpolate to the target velocity
 		CurrentVelocity = FMath::VInterpTo(CurrentVelocity, TargetVelocity, InDeltaTime, 10.0f);
 
-		// Apply the current velocity to update position
-		FVector NewLocation = SceneCapActor->GetActorLocation() + CurrentVelocity * InDeltaTime;
-		SceneCapActor->SetActorLocation(NewLocation);
+		//Ortho camera movement
+		if (KeyMap[EKeys::Q] || KeyMap[EKeys::E])
+		{
+			SceneCapComponent->OrthoWidth =  SceneCapComponent->OrthoWidth + TargetVelocity.Z / 100;
+			UE_LOG(LogTemp, Display, TEXT("orto: %s"), *TargetVelocity.ToString());
+
+		}
+		//Location movement 
+		else
+		{
+			// Apply the current velocity to update position
+			FVector NewLocation = SceneCapActor->GetActorLocation() + CurrentVelocity * InDeltaTime;
+			NewLocation.Z = SceneCapActor->GetActorLocation().Z;
+			SceneCapActor->SetActorLocation(NewLocation);	
+		}
 	}
+}
+
+void SProGenWidget::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+{
+	HandleRenderViewMovement(InDeltaTime,SceneCapActor,SceneCapComp,CurrentInputVelocity);
 }
 
 TSharedRef<SListView<TWeakObjectPtr<ARoomActor>>> SProGenWidget::ConstructListView()
@@ -522,7 +545,6 @@ void SProGenWidget::RetrieveProGenActor()
 		{
 			if (PluginSetting->ProGenActor.Get())
 			{
-				ProceduralGen = Cast<AProceduralGen>(PluginSetting->ProGenActor.Get()->GetDefaultObject());
 				for (auto RoomDesign : ProceduralGen->RoomDesigns)
 				{
 					ARoomActor* RoomActor = Cast<ARoomActor>(RoomDesign->GetDefaultObject());
