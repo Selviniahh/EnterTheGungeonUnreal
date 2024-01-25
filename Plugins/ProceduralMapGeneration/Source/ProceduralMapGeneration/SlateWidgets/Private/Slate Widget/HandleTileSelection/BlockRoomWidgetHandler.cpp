@@ -110,7 +110,6 @@ void UBlockRoomWidgetHandler::ChangeSelectedRoom(ARoomActor* FirstRoom)
 					ExclusionTiles.Add(SelectedIndex);
 				}
 
-
 				//Set the exclusion tiles. Exit exclusion set as empty as we don't need anymore configuring exclusions right inside editor UI 
 				DefaultRoomActor->ExitExclusions.Empty();
 				DefaultRoomActor->EnterExclusions = ExclusionTiles;
@@ -151,13 +150,18 @@ void UBlockRoomWidgetHandler::ChangeSelectedRoom(ARoomActor* FirstRoom)
 				break;
 			}
 		}
-
-		
 	}
 }
 
 FReply UBlockRoomWidgetHandler::SpawnAllTiles(ARoomActor* FirstRoom)
 {
+	//If spawnedTiles are not empty, that means start Exclusion button double clicked before saving it. Respawning tiles shouldn't be allowed 
+	if (!SpawnedTiles.IsEmpty())
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString("Tiles already spawned"));
+		return FReply::Unhandled();
+	}
+	
 	UWorld* World = GEditor->GetEditorWorldContext().World();
 	if (!World) return FReply::Unhandled();
 
@@ -178,7 +182,7 @@ FReply UBlockRoomWidgetHandler::SpawnAllTiles(ARoomActor* FirstRoom)
 	return FReply::Handled();
 }
 
-void UBlockRoomWidgetHandler::HandleTileSelection(ARoomActor* FirstRoom)
+bool UBlockRoomWidgetHandler::HandleTileSelection(ARoomActor* FirstRoom)
 {
 	//Init raycast parameters
 	int RaycastLength = 1000;
@@ -237,6 +241,7 @@ void UBlockRoomWidgetHandler::HandleTileSelection(ARoomActor* FirstRoom)
 				}
 			}
 		}
+		return true;
 	}
 	else
 	{
@@ -251,7 +256,37 @@ void UBlockRoomWidgetHandler::HandleTileSelection(ARoomActor* FirstRoom)
 		}
 		LastHitTile = nullptr;
 		TileUnhoverMat = nullptr;
+		return false;
 	}
+}
+
+FReply UBlockRoomWidgetHandler::TestOverlapWithSecondSelectedRoom(ARoomActor* FirstRoom, ARoomActor* SecondRoom)
+{
+	//If tiles are not destroyed, destroy all of them first
+	if (!BlockRoomWidgetHandler->SpawnedTiles.IsEmpty())
+	{
+		for (auto& SpawnedTile : BlockRoomWidgetHandler->SpawnedTiles)
+		{
+			if (SpawnedTile)
+				SpawnedTile->Destroy();
+		}
+	}
+
+	//Spawn second room
+	UWorld* World = GEditor->GetEditorWorldContext().World();
+	SecondRoom =  World->SpawnActor<ARoomActor>(SecondRoom->GetClass(), FirstRoom->DoorSocketExit->GetComponentLocation(), PluginSetting->ProGenInst->DefaultRotation);
+	if (PluginSetting->ProGenInst->IsColliding(SecondRoom,FirstRoom->DoorSocketExit->GetComponentLocation(),SecondRoom->GetActorRotation()))
+	{
+		//Handle this case later on 
+		UE_LOG(LogTemp, Display, TEXT("Really overlapping"));
+		return FReply::Unhandled();
+	}
+	else
+	{
+		return FReply::Handled();
+	}
+
+	return FReply::Handled();
 }
 
 UBlockRoomWidgetHandler::~UBlockRoomWidgetHandler()

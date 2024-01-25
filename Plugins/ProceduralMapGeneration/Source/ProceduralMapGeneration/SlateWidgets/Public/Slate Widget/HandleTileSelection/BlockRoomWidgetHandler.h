@@ -25,7 +25,8 @@ public:
 	void OpenSelectedRoomBP(const ARoomActor* FirstRoom);
 	void ChangeSelectedRoom(ARoomActor* FirstRoom);
 	FReply SpawnAllTiles(ARoomActor* FirstRoom);
-	void HandleTileSelection(ARoomActor* FirstRoom);
+	bool HandleTileSelection(ARoomActor* FirstRoom);
+	FReply TestOverlapWithSecondSelectedRoom(ARoomActor* FirstRoom, ARoomActor* SecondRoom);
 	virtual ~UBlockRoomWidgetHandler() override;
 
 	//Variables

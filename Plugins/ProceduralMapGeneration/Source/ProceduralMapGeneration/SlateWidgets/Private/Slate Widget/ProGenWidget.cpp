@@ -44,7 +44,7 @@ void SProGenWidget::Construct(const FArguments& InArgs)
 
 
 	//Access to the progen actor if progen instance is dragged to the scene
-	PluginSetting = GetDefault<UPluginSettings>();
+	PluginSetting = GetMutableDefault<UPluginSettings>();
 	RetrieveProGenActor();
 	
 	AProceduralGen* ProceduralGen = Cast<AProceduralGen>(PluginSetting->ProGenActor.Get()->GetDefaultObject());
@@ -87,9 +87,10 @@ void SProGenWidget::Construct(const FArguments& InArgs)
 		  .Padding(FMargin(0, 10, 0, 15))
 		[
 			SNew(STextBlock)
-		.Text(FText::FromString(TEXT("Procedural Map Generation")))
-		.Justification(ETextJustify::Center)
-		.Font(TitleTextFont) // Set font size to 24 and use bold weight
+			.Text(FText::FromString(TEXT("Procedural Map Generation")))
+			.Justification(ETextJustify::Center)
+			.Font(TitleTextFont) // Set font size to 24 and use bold weight
+			.OnDoubleClicked(this, &SProGenWidget::DoubleClicked)
 		]
 
 		// HorizontalBox Slot
@@ -183,6 +184,13 @@ void SProGenWidget::HandleRenderViewMovement(const float InDeltaTime, AActor* Sc
 void SProGenWidget::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
 	HandleRenderViewMovement(InDeltaTime,SceneCapActor,SceneCapComp,CurrentInputVelocity);
+}
+
+FReply SProGenWidget::DoubleClicked(const FGeometry& Geo, const FPointerEvent& PointerEvent) const
+{
+	UE_LOG(LogTemp, Display, TEXT("DoubleClicked: %s"));
+
+	return FReply::Handled();
 }
 
 TSharedRef<SListView<TWeakObjectPtr<ARoomActor>>> SProGenWidget::ConstructListView()
@@ -558,6 +566,18 @@ void SProGenWidget::RetrieveProGenActor()
 			}
 		});
 	}
+	TestVariable = 500;
+	PluginSetting->SaveData(TEXT("sa"),TestVariable);
+	TestVariable = 31;
+	PluginSetting->LoadData(TEXT("sa"), TestVariable);
+	
+	//After loading Rooms, fill the test case map for each room
+	for (auto ProGenRoom : ProGenRooms)
+	{
+		PluginSetting->AllTestCases.Add(ProGenRoom->GetClass()->GetName(), ETestCase::Undefined);
+		PluginSetting->IsRoomsGenerated = true;
+	}
+
 }
 #pragma region unmanaged
 

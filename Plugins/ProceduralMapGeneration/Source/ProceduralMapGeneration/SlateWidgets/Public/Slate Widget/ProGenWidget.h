@@ -31,11 +31,13 @@ public:
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 	
 	TSharedPtr<FSlateMaterialBrush> MaterialBrush; // Member variable
-	const UPluginSettings* PluginSetting;
+	mutable  UPluginSettings* PluginSetting;
 	AActor* SceneCapInst;
 	FVector CurrentInputVelocity; // Member variable to store current velocity
 	USceneCaptureComponent2D* SceneCapComp;
 
+	FReply DoubleClicked(const FGeometry& Geo, const FPointerEvent& PointerEvent) const;
+	
 #pragma region ListView
 	TSharedRef<SListView<TWeakObjectPtr<ARoomActor>>> ConstructListView();
 	void HighlightAvailableRoomRows(TWeakObjectPtr<ARoomActor> RoomActor);
@@ -72,4 +74,6 @@ public:
 	//Settings for scene capture orientation
 	int Multiplayer = 444;
 	int InterpSpeed = 444;
+
+	int TestVariable = 1;
 };

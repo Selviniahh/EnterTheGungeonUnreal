@@ -70,14 +70,15 @@ void AProceduralGen::GenerateMap()
 {
 	SCOPE_CYCLE_COUNTER(STAT_GenerateMap);
 	InitWorldTiles();
-	SpawnTestCollisionObjects();
+	SpawnTestCollisionObjects(); //If any
 	SpawnFirstRoom();
 
+	//Entire main logic is this while loop.
 	while (SpawnedRoomCount < NumberOfRooms)
 	{
 		RoomSpawning(LastSpawnedRoom->ExitSocketDirection);
 
-		if (LastSpawnedRoom->NoExit)
+		if (LastSpawnedRoom->NoExit) //TODO: I don't remember what's the reason this if block written BY ME
 		{
 			UE_LOG(LogTemp, Display, TEXT("Aborted all room spawning due to NoExit room encountered"));
 			NumberOfRooms = -1;
@@ -266,9 +267,12 @@ void AProceduralGen::MakeSideBranchFromLargeRoom()
 void AProceduralGen::UnBlockLastRoomItsCorridorAndDestroy()
 {
 	SCOPE_CYCLE_COUNTER(STAT_UnBlockLastRoomItsCorridorAndDestroy);
+
+	//Unblock last spawned room
 	for (auto BlockedTile : SpawnedRooms.Last()->BlockedRoomTiles)
 		Tiles[BlockedTile.X][BlockedTile.Y].Blocked = false;
 
+	//Unblock the tiles
 	for (auto Corridor : SpawnedRooms.Last()->OwnerCorridors)
 	{
 		if (!Corridor)

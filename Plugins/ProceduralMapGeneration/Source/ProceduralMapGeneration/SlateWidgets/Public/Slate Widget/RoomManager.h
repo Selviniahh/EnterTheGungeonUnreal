@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
 
+class SAllCorridorTestWidget;
+class SBlockRoomWidget;
 class UPluginSettings;
 class UProGenWidgetTests;
 class UMakeAllCorridorScenarioTest;
@@ -25,7 +27,7 @@ public:
 	virtual ~SRoomManager() override;
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 	
-
+	bool IsFirstRoomSpawned;
 	ARoomActor* FirstRoom;
 	ARoomActor* SecondRoom;
 	AActor* SceneCapInst;
@@ -49,11 +51,12 @@ public:
 	const UPluginSettings* PluginSetting;
 	USceneCaptureComponent2D* SceneCapComp;
 	TSharedPtr<FButtonStyle> ButtonStyle;
+	TSharedPtr<SBlockRoomWidget> BlockRoomWidget;
+	TSharedPtr<SAllCorridorTestWidget> AllCorridorTestWidget;
 	
 #pragma region VisualizeBlocked
 	void OnVisBlockedHovered(TSharedPtr<STextBlock>* MemberTextBlock);
 	void OnVisBlockedUnHovered(TSharedPtr<STextBlock>* MemberTextBlock);
-	void OnPressed(TSharedPtr<STextBlock>* MemberTextBlock);
 	FReply OnButtonVisBlockedClicked();
 	FReply OnButtonOpenTileSelectorWidget();
 #pragma endregion

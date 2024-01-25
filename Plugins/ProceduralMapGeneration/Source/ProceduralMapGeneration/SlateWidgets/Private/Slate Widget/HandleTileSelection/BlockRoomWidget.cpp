@@ -4,25 +4,19 @@
 #include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/HandleTileSelection/BlockRoomWidget.h"
 #include "SlateMaterialBrush.h"
 #include "SlateOptMacros.h"
-#include "AssetRegistry/AssetRegistryModule.h"
-#include "Components/BoxComponent.h"
-#include "Components/SceneCaptureComponent2D.h"
-#include "Engine/SceneCapture2D.h"
-#include "Kismet/GameplayStatics.h"
-#include "Materials/MaterialInstanceDynamic.h"
 #include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/PluginSettings.h"
 #include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/ProGenWidget.h"
 #include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/HandleTileSelection/BlockRoomWidgetHandler.h"
+
 #include "UObject/UObjectGlobals.h"
-#include "Widgets/SViewport.h"
-#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/GlobalInputListener.h"
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SBlockRoomWidget::Construct(const FArguments& InArgs)
 {
 	FirstRoom = InArgs._FirstRoom;
+	SecondRoom = InArgs._SecondRoom;
 	PluginSetting = GetDefault<UPluginSettings>();
-	
+
 	if (UMaterialInterface* Material = PluginSetting->SceneCapMaterial.Get())
 		SceneCapImgBrush = MakeShared<FSlateMaterialBrush>(*Material, FVector2D(100, 100)); // Initialize member variable
 
@@ -96,12 +90,13 @@ void SBlockRoomWidget::Construct(const FArguments& InArgs)
 			  .VAlign(VAlign_Fill)
 			  .Padding(FMargin(0, 15, 0, 0))
 			[
+				//Save the exclusions
 				ConstructButtonAndItsTextBox(PropertyTextFont, "Save exclusions", "Click me", [this]() -> FReply
 				{
 					//If tile not selected, warn the user  
 					if (BlockRoomWidgetHandler->SelectedActors.IsEmpty())
 					{
-						FMessageDialog::Open(EAppMsgType::Ok,FText::FromString("no tile selected"));
+						FMessageDialog::Open(EAppMsgType::Ok, FText::FromString("no tile selected"));
 						return FReply::Unhandled();
 					}
 
@@ -114,7 +109,90 @@ void SBlockRoomWidget::Construct(const FArguments& InArgs)
 				})
 			]
 
-			// Additional buttons and textboxes can be added here, each in its own SVerticalBox::Slot()
+			// 4. slot 
+			+ SVerticalBox::Slot()
+			  .AutoHeight()
+			  .HAlign(HAlign_Fill)
+			  .VAlign(VAlign_Fill)
+			  .Padding(FMargin(0, 15, 0, 0))
+			[
+				ConstructButtonAndItsTextBox(PropertyTextFont, "Test overlap with second selected room", "Click me", [this, PropertyTextFont]() -> FReply
+				{
+					FReply Reply = BlockRoomWidgetHandler->TestOverlapWithSecondSelectedRoom(FirstRoom, SecondRoom);
+					IsReplyHandled = Reply.IsEventHandled();
+					IsTestOverlapBtnClicked = true;
+
+					return FReply::Handled();
+				})
+			]
+
+			// 5. slot. Signify if there's overlap or not with the second selected room after the above test overlap with second selected room button is clicked 
+			+ SVerticalBox::Slot()
+			  .AutoHeight()
+			  .VAlign(VAlign_Center)
+			  .HAlign(HAlign_Left)
+			  .Padding(FMargin(0, 15, 0, 0))
+			[
+				SNew(STextBlock)
+			   .Justification(ETextJustify::Center)
+			   	.Text_Lambda([this]()
+				                {
+					                return IsReplyHandled
+						                       ? FText::FromString("There's no overlap. If you content with the tile blocking and exclusion, check the checkbox")
+						                       : FText::FromString("There's overlap");
+				                })
+
+			   .Font(PropertyTextFont)
+			   .RenderOpacity(0.5)
+			   .Visibility_Lambda([this]() { return IsTestOverlapBtnClicked ? EVisibility::Visible : EVisibility::Hidden; })
+			   .ColorAndOpacity_Lambda([this]() { return IsReplyHandled ? FSlateColor(FLinearColor::Green) : FSlateColor(FLinearColor::Red); })
+			]
+
+			// 6. slot for checkbox to signify this room's overlap check is completely done. When checkbox selected, set the room's test case to RoomBlockValidated
+			+ SVerticalBox::Slot()
+			  .AutoHeight()
+			  .VAlign(VAlign_Center)
+			  .HAlign(HAlign_Left)
+			  .Padding(FMargin(15, 15, 0, 0))
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				  .VAlign(VAlign_Center)
+				  .HAlign(HAlign_Left)
+				[
+					SNew(STextBlock)
+					.Text(FText::FromString("Everything Checks out"))
+					.Font(PropertyTextFont)
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				  .VAlign(VAlign_Center)
+				  .HAlign(HAlign_Left)
+				  .Padding(15)
+				[
+					SNew(SCheckBox)
+					.IsChecked(ECheckBoxState::Unchecked) //TODO: I am unsure to allow user to click this checkbox or disable it and check it myself if the button clicked and there's no overlap
+					.OnCheckStateChanged_Lambda([this](ECheckBoxState CheckBoxState)
+					{
+						FString ClassName = FirstRoom->GetClass()->GetName(); //It has to be L"Room23" or something like that
+
+						if (CheckBoxState == ECheckBoxState::Checked)
+						{
+							PluginSetting->AllTestCases[ClassName] = RoomBlockValidated;
+						}
+						else
+						{
+							PluginSetting->AllTestCases[ClassName] = Undefined;
+						}
+
+						CheckBoxState == ECheckBoxState::Checked ? PluginSetting->AllTestCases[ClassName] = RoomBlockValidated :
+						PluginSetting->AllTestCases[ClassName] = Undefined;
+						PluginSetting->SaveData(FString("AllTestCases"),PluginSetting->AllTestCases);
+
+					})
+				]
+			]
 		]
 	];
 }
@@ -185,12 +263,13 @@ SBlockRoomWidget::~SBlockRoomWidget()
 {
 	for (auto& SpawnedTile : BlockRoomWidgetHandler->SpawnedTiles)
 	{
-		if (SpawnedTile)
+		if (SpawnedTile->IsValidLowLevelFast())
 			SpawnedTile->Destroy();
 	}
+	SecondRoom->Destroy();
 }
 
-TSharedRef<STextBlock> SBlockRoomWidget::ConstructTextBlock(FSlateFontInfo FontInfo, FText Text, TSharedPtr<STextBlock>& MemberTextBlock)
+TSharedRef<STextBlock> SBlockRoomWidget::ConstructTextBlock(FSlateFontInfo FontInfo, FText Text, TSharedPtr<STextBlock>& MemberTextBlock, const FSlateColor* Color)
 {
 	MemberTextBlock = SNew(STextBlock)
 	   .Justification(ETextJustify::Center)
@@ -198,6 +277,10 @@ TSharedRef<STextBlock> SBlockRoomWidget::ConstructTextBlock(FSlateFontInfo FontI
 	   .Font(FontInfo)
 	   .RenderOpacity(0.5);
 
+	if (Color)
+	{
+		MemberTextBlock.Get()->SetColorAndOpacity(*Color);
+	}
 	return MemberTextBlock.ToSharedRef();
 }
 

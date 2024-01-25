@@ -105,7 +105,7 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TEnumAsByte<Direction> ExitSocketDirection;
-
+	
 	UFUNCTION(BlueprintCallable)
 	void VisualizeAllBlocked();
 

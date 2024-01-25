@@ -43,12 +43,13 @@ struct FRoomConnection
 	FString RoomName;
 };
 
+//TODO: There's a major discrepancy. There's EDirection2 and EDirection same direction enum but different names. Remove either of them and leave single direction enum for both room and this class 
 UENUM()
 enum EDirection2 : uint8
 {
 	Dir_Left,
 	Dir_Right,
-	Dir_Up,
+	Dir_Up, 
 	Dir_Down,
 	Dir_None
 };
@@ -402,7 +403,7 @@ public:
 		return FVector(X * TileSizeX, Y * TileSizeY, 0);
 	}
 	
-	/*Convert given relative index points to world location */
+	/*Convert given relative index points to world location. Z AXIS IGNORED */
 	inline FIntPoint WorldToIndex(const FVector& WorldLocation) const
 	{
 		int TileX = FMath::RoundToInt(WorldLocation.X / TileSizeX);
