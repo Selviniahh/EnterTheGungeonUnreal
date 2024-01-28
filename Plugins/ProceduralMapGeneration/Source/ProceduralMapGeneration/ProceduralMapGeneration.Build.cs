@@ -25,7 +25,7 @@ public class ProceduralMapGeneration : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", "UnrealEd", "InputCore", "SideScrolling2D", "Paper2D", "DeveloperSettings"
+				"Core", "UnrealEd", "InputCore", "SideScrolling2D", "Paper2D", "DeveloperSettings", "EditorSubsystem"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

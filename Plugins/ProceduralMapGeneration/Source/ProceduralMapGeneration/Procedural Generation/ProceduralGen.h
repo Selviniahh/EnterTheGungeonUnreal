@@ -142,6 +142,9 @@ public:
 
 	Direction NextRoomExitTag;
 	Direction NextRoomEnterTag;
+
+	UPROPERTY()
+	UWorld* World;
 	
 	/*Add all the rooms to be randomly select and spawned.*/
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="General Map settings", meta=(DisplayPriority = 2))
@@ -550,6 +553,7 @@ public:
 		return EDirection2::Dir_None;
 	}
 
+	//TODO: Later on change this name to Expection 
 	static inline bool LastCorrException(EDirection2 CurrDir, EDirection2 NextRoomEnterDir)
 	{
 		if (CurrDir == Dir_Down && NextRoomEnterDir == Dir_Up) return true;

@@ -29,6 +29,18 @@ public:
 	TArray<FIntPoint> VerticalUpToVerticalUp = {FIntPoint(0,-1),FIntPoint(0,-1), FIntPoint(0,-1), FIntPoint(0,-1),
 		FIntPoint(0,-1), FIntPoint(0,-1), FIntPoint(0,-1),FIntPoint(0,-1), FIntPoint(0,-1), FIntPoint(0,-1)};
 
+	TArray<FIntPoint> DownDown = {FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1)
+	,FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1)
+	,FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1)};
+
+	TArray<FIntPoint> DownDown2 = {FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1)
+	,FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1)
+	,FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1)};
+
+	TArray<FIntPoint> DownDown3 = {FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1)
+	,FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1)
+	,FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1),FIntPoint(0,1)};
+
 	TArray<FIntPoint> VerticalUpTurnRightToVerticalUp = {FIntPoint(0,-1),FIntPoint(1,0),FIntPoint(1,0),FIntPoint(1,0)
 	,FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(1,0),FIntPoint(1,0),FIntPoint(1,0),FIntPoint(1,0),FIntPoint(0,-1),
 		FIntPoint(0,-1),FIntPoint(0,-1)};
@@ -46,15 +58,16 @@ public:
 	TArray<ARoomActor*> FirstSecRoom;
 
 	TArray<FVector> CenterOfEachChunk;
+	TArray<FVector> CurrChunkActorLocs;
 	FIntPoint LargestExtends = FIntPoint(0,0);
 
 	UPROPERTY()
 	UWorld* World;
 
-	void MakePathScenario(const FVector& FirstRoomLoc, const FVector& NextRoomLocation, TArray<FIntPoint>& CurrentPattern);
+	void MakePathScenario(const FVector& FirstRoomLoc, FVector& NextRoomLocation, TArray<FIntPoint>& CurrentPattern);
 	void SpawnSecondRoom(const FVector& NextRoomLocation, ARoomActor*& NextRoom);
 	void SpawnFirstRoom(const FVector& FirstRoomLoc);
-	bool MakeGivenPathFinding(TArray<FIntPoint>& CurrentPattern, ARoomActor* NextRoom);
+	bool MakeGivenPathFinding(TArray<FIntPoint>& CurrentPattern, ARoomActor* NextRoom, const FVector& NextRoomLoc, const FVector& FirstRoomLoc);
 	FTileStruct* FillGivenCorrPattern(TArray<FTileStruct*>& RoomList, TArray<FIntPoint>& CurrentPattern);
 
 

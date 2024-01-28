@@ -23,32 +23,41 @@ void UCorridorTestHandler::Initialize(ARoomActor* FirstSelectedRoom, ARoomActor*
 
 void UCorridorTestHandler::Start()
 {
+	//TODO: Not that hard to implement I just need to return the current direction pairs right here and loop those 
 	TArray<TArray<FIntPoint>> AllScenarios;
 	AllScenarios.Add(VerticalUpToVerticalUp);
 	AllScenarios.Add(VerticalUpTurnRightToVerticalUp);
 	AllScenarios.Add(VerticalUpTurnLeftToVerticalUp);
+	AllScenarios.Add(DownDown);
+	AllScenarios.Add(DownDown2);
+	AllScenarios.Add(DownDown3);
 
 	InitWorldChunks(AllScenarios);
 
 	for (auto AllScenario : AllScenarios)
 	{
-		FVector FirstRoomLoc;
+		FVector InitialFirstRoomLoc;
 		FIntPoint Result = FIntPoint(0,0);
 		for (auto Pattern : AllScenario)
 		{
 			Result += Pattern;
 		}
 		
-		FirstRoomLoc = CenterOfEachChunk[0];
+		InitialFirstRoomLoc = CenterOfEachChunk[0];
 		CenterOfEachChunk.RemoveAt(0);
 		
 		//TODO: I really need to study so much time on these stuffs
 		FVector FirstRoomExitRelativeLoc = FirstSecRoom[0]->DoorSocketExit->GetRelativeLocation();
-		FVector New = Setting->ProGenInst->SwapZYaxis(FirstRoomExitRelativeLoc, FirstRoomLoc);
-		FVector NextRoomLoc = New + Setting->ProGenInst->IndexToWorld(Result.X,Result.Y);
+		// FVector FirstRoomLoc = Setting->ProGenInst->SwapZYaxis(FirstRoomExitRelativeLoc, InitialFirstRoomLoc);
+		FVector NextRoomOffset = Setting->ProGenInst->IndexToWorld(Result.X,Result.Y);
+		//NOTE: I Guess I don't need these stuff here
+		// FVector NextRoomLoc = New + Setting->ProGenInst->IndexToWorld(Result.X,Result.Y);
 		// FVector NextRoomLoc = Setting->ProGenInst->SwapZYaxis(FirstSecRoom[0]->DoorSocketExit->GetRelativeLocation(),FirstRoomLoc) + Setting->ProGenInst->IndexToWorld(Result.X,Result.Y);
 		// FVector NextRoomLoc = FirstRoomLoc + ProGen->IndexToWorld(Result.X,Result.Y);
-		MakePathScenario(FirstRoomLoc,New, AllScenario);
+
+		//I has to assign this room here first
+		Setting->ProGenInst->LastSpawnedRoom = FirstSecRoom[0];
+		MakePathScenario(InitialFirstRoomLoc, NextRoomOffset, AllScenario);
 	}
 
 }
@@ -115,16 +124,20 @@ void UCorridorTestHandler::InitWorldChunks(TArray<TArray<FIntPoint>>& AllScenari
 	FVector Center = FVector(0,0,0);
 	for (auto Chunk : CenterOfEachChunk)
 		Center += Chunk;
+	
 	Center = Center / CenterOfEachChunk.Num();
 	Setting->SceneCapActorInst.Get()->SetActorLocation(Center);
 	Setting->SceneCapActorInst.Get()->SetActorLocation(FVector(Center.X, Center.Y, 500));
 }
 
-void UCorridorTestHandler::MakePathScenario(const FVector& FirstRoomLoc, const FVector& NextRoomLocation, TArray<FIntPoint>& CurrentPattern)
+void UCorridorTestHandler::MakePathScenario(const FVector& FirstRoomLoc, FVector& NextRoomLocation, TArray<FIntPoint>& CurrentPattern)
 {
 	SpawnFirstRoom(FirstRoomLoc);
 	ARoomActor* NextRoom;
+	
+	NextRoomLocation += FirstSecRoom[0]->DoorSocketExit->GetComponentLocation();
 	SpawnSecondRoom(NextRoomLocation, NextRoom);
+	MakeGivenPathFinding(CurrentPattern, NextRoom, NextRoomLocation, FirstRoomLoc);
 }
 
 void UCorridorTestHandler::SpawnFirstRoom(const FVector& FirstRoomLoc)
@@ -134,6 +147,8 @@ void UCorridorTestHandler::SpawnFirstRoom(const FVector& FirstRoomLoc)
 	const FRotator Rotation(0.0f, 0.0f, -90.0f);
 	// FVector FirstRoomLoc = ProGen->Tiles[ProGen->MapSizeX / 2][ProGen->MapSizeY / 2].Location + ProGen->ZOffset; //TODO: Later decide how to determine first room loc when you spawn all the other scenarios
 	ARoomActor* FirstLocalRoom = World->SpawnActor<ARoomActor>(FirstSecRoom[0]->GetClass(), FirstRoomLoc, Rotation);
+	CurrChunkActorLocs.Add(FirstRoomLoc);
+	FirstSecRoom[0] = FirstLocalRoom;
 	LargestExtends = FIntPoint(FirstLocalRoom->BoxComponent->GetScaledBoxExtent().X, FirstLocalRoom->BoxComponent->GetScaledBoxExtent().Z); //TODO: If I were doing this in side scrolling, this axises would be highly inverted. I don't have any idea how but later make these stuff based on criterias to determine only option based on the rotation of the actor etc, (Top down is different side scrolling is different in this case)
 	
 	//TODO: You know this 2 line has to gone. 
@@ -150,7 +165,7 @@ void UCorridorTestHandler::SpawnFirstRoom(const FVector& FirstRoomLoc)
 		Setting->ProGenInst->IsEndSocketOverlapping(FirstLocalRoom, FirstRoomLoc);
 }
 
-bool UCorridorTestHandler::MakeGivenPathFinding(TArray<FIntPoint>& CurrentPattern, ARoomActor* NextRoom)
+bool UCorridorTestHandler::MakeGivenPathFinding(TArray<FIntPoint>& CurrentPattern, ARoomActor* NextRoom, const FVector& NextRoomLoc, const FVector& FirstRoomLoc)
 {
 	auto SetFirstCorrRotation = [&](FTileStruct* Start)
 	{
@@ -162,21 +177,28 @@ bool UCorridorTestHandler::MakeGivenPathFinding(TArray<FIntPoint>& CurrentPatter
 			Start->Rotation = FRotator(0, 90, -90); //(Pitch=0.000000,Yaw=90.000000,Roll=-90.000000)
 		}
 	};
+
+	//TODO: his is required for a reason I don't know as well I have to find it's reason and fix this shit 
+	int Offset = -1;
 	
 	//Pathfinding logic is here
 	FRoomConnection Connection = Setting->ProGenInst->CalculatePathInfo(NextRoom);
+	Connection.StartPoint = FirstRoomLoc;
+	Connection.EndPoint = NextRoomLoc;
 
-	TArray<int> Row = {-1, 0, 0, 1};
-	TArray<int> Col = {0, -1, 1, 0};
+	//TODO: Later on disable this shit. If necessary
+	Connection.PathStartOffset = FIntPoint(0,0);
+	Connection.PathEndOffset = FIntPoint(0,0);
+	
 	TArray<FTileStruct*> OpenList;
 	
-	FIntPoint LastRoomEnd = Setting->ProGenInst->WorldToIndex(Setting->ProGenInst->LastSpawnedRoom->DoorSocketExit->GetComponentLocation());
-	FIntPoint OverlappedRoomLoc = Setting->ProGenInst->WorldToIndex(NextRoom->DoorSocketEnter->GetComponentLocation());
+	FIntPoint FirstRoomEnd = Setting->ProGenInst->WorldToIndex(FirstSecRoom[0]->DoorSocketExit->GetComponentLocation());
+	// FIntPoint OverlappedRoomLoc = Setting->ProGenInst->WorldToIndex(NextRoom->DoorSocketEnter->GetComponentLocation());
 
-	int StartX = Connection.PathStartOffset.X + LastRoomEnd.X;
-	int StartY = Connection.PathStartOffset.Y + LastRoomEnd.Y;
-	int GoalX = Connection.PathEndOffset.X + OverlappedRoomLoc.X;
-	int GoalY = Connection.PathEndOffset.Y + OverlappedRoomLoc.Y;
+	int StartX = Connection.PathStartOffset.X + FirstRoomEnd.X + Offset;
+	int StartY = Connection.PathStartOffset.Y + FirstRoomEnd.Y;
+	int GoalX = Connection.PathEndOffset.X + Setting->ProGenInst->WorldToIndex(NextRoomLoc).X + Offset;
+	int GoalY = Connection.PathEndOffset.Y + Setting->ProGenInst->WorldToIndex(NextRoomLoc).Y;
 
 	FTileStruct* Start = &Setting->ProGenInst->Tiles[StartX][StartY];
 	SetFirstCorrRotation(Start);
@@ -215,13 +237,14 @@ void UCorridorTestHandler::SpawnSecondRoom(const FVector& NextRoomLocation, ARoo
 {
 	const FRotator Rotation(0.0f, 0.0f, -90.0f);
 	NextRoom = FirstSecRoom[1];
-
 	//TODO: You know this 2 line has to gone. 
 	Setting->ProGenInst->NextRoomExitTag = NextRoom->ExitSocketDirection;
 	Setting->ProGenInst->NextRoomEnterTag = NextRoom->EnterSocketDirection; //Just useful to spawning corridors. Nothing to do with rooms
 
 	//First cover horizontal up to horizontal up
+	
 	NextRoom = World->SpawnActor<ARoomActor>(NextRoom->GetClass(), NextRoomLocation, Rotation);
+	NextRoom = FirstSecRoom[1];  //IDK what I am doing here 
 	FIntPoint BoxExtend = FIntPoint(NextRoom->BoxComponent->GetScaledBoxExtent().X, NextRoom->BoxComponent->GetScaledBoxExtent().Y);
 	LargestExtends = FIntPoint(FMath::Max(BoxExtend.X, LargestExtends.X), FMath::Max(BoxExtend.Y, LargestExtends.Y));
 	

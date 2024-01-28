@@ -475,6 +475,11 @@ void AProceduralGen::InitWorldTiles()
 {
 	SCOPE_CYCLE_COUNTER(STAT_InitWorldTiles);
 
+	//Init world
+	World = GetWorld();
+	if (!World)
+		World = GEditor->GetEditorWorldContext().World();
+	
 	//resize tiles array
 	Tiles.SetNum(MapSizeX);
 	for (int i = 0; i < MapSizeX; ++i)
@@ -506,7 +511,7 @@ void AProceduralGen::SpawnTestCollisionObjects()
 	FRotator Rotation(0.0f, 0.0f, -90.0f);
 	for (int i = 0; i < BlockRoomLocations.Num(); ++i)
 	{
-		ARoomActor* TestRoom = GetWorld()->SpawnActor<ARoomActor>(BlockRoom, BlockRoomLocations[i], Rotation);
+		ARoomActor* TestRoom = World->SpawnActor<ARoomActor>(BlockRoom, BlockRoomLocations[i], Rotation);
 		SetTilesBlocked(TestRoom, BlockRoomLocations[i], Rotation);
 		SetSocketExclusion(TestRoom, BlockRoomLocations[i]);
 	}
@@ -533,7 +538,7 @@ void AProceduralGen::SpawnFirstRoom()
 	NextRoomEnterTag = NextRoom->EnterSocketDirection; //Just useful to spawning corridors. Nothing to do with rooms
 
 	FVector FirstRoomStartLoc = Tiles[MapSizeX / 2][MapSizeY / 2].Location + ZOffset;
-	ARoomActor* FirstRoom = GetWorld()->SpawnActor<ARoomActor>(NextRoom->GetClass(), FirstRoomStartLoc, Rotation);
+	ARoomActor* FirstRoom = World->SpawnActor<ARoomActor>(NextRoom->GetClass(), FirstRoomStartLoc, Rotation);
 	SetTilesBlocked(FirstRoom, FirstRoomStartLoc, Rotation);
 	SetSocketExclusion(FirstRoom, FirstRoomStartLoc);
 	LastSpawnedRoom = FirstRoom;
@@ -588,8 +593,8 @@ void AProceduralGen::SpawnOverlappedRoom(const FRotator& Rotation, FVector NextR
 
 void AProceduralGen::SpawnDoors(const FRotator& Rotation, const FVector& NextRoomLocation, ARoomActor*& NextRoom, const bool OnlySpawnEnterDoor)
 {
-	ADoorActor* EnterDoor = GetWorld()->SpawnActor<ADoorActor>(NextRoom->EnterDoor, NextRoomLocation + ZOffset, Rotation);
-	if (!OnlySpawnEnterDoor) GetWorld()->SpawnActor<ADoorActor>(NextRoom->ExitDoor, NextRoom->DoorSocketExit->GetComponentLocation() + ZOffset, Rotation);
+	ADoorActor* EnterDoor = World->SpawnActor<ADoorActor>(NextRoom->EnterDoor, NextRoomLocation + ZOffset, Rotation);
+	if (!OnlySpawnEnterDoor) World->SpawnActor<ADoorActor>(NextRoom->ExitDoor, NextRoom->DoorSocketExit->GetComponentLocation() + ZOffset, Rotation);
 	NextRoom->SetEnterDoorActor(EnterDoor);
 }
 
@@ -615,7 +620,7 @@ void AProceduralGen::SpawnNoExitDoor(ARoomActor* LargeRoom, const FName& SceneTa
 
 	if (auto DoorPair = DoorMap.Find(TagDirection))
 	{
-		GetWorld()->SpawnActor<ADoorActor>(DoorPair->Key, SocketLocation + ZOffset, DoorPair->Value);
+		World->SpawnActor<ADoorActor>(DoorPair->Key, SocketLocation + ZOffset, DoorPair->Value);
 	}
 }
 
@@ -634,7 +639,7 @@ bool AProceduralGen::IsEndSocketOverlapping(ARoomActor* NextRoom, const FVector&
 		int CurrentY = Index.Y + Tile.Y;
 
 		if (IsValid(CurrentX, CurrentY) && VisualizeEndSocketOverlapCheck)
-			DrawDebugBox(GetWorld(), Tiles[CurrentX][CurrentY].Location + TileBoxExtends, TileBoxExtends, FColor::Magenta, true);
+			DrawDebugBox(World, Tiles[CurrentX][CurrentY].Location + TileBoxExtends, TileBoxExtends, FColor::Magenta, true);
 
 		if (IsValid(CurrentX, CurrentY) && Tiles[CurrentX][CurrentY].Blocked)
 		{
@@ -818,7 +823,7 @@ void AProceduralGen::SocketExclusionForLargeRoom(ARoomActor* Room)
 
 										if (IsValid(CurrentX, CurrentY) && VisualizeAllExclusions)
 										{
-											DrawDebugBox(GetWorld(), Tiles[CurrentX][CurrentY].Location + FVector(TileSizeX / 2, TileSizeY / 2, 0), FVector(TileSizeX / 2, TileSizeY / 2, 0), FColor::Purple, true);
+											DrawDebugBox(World, Tiles[CurrentX][CurrentY].Location + FVector(TileSizeX / 2, TileSizeY / 2, 0), FVector(TileSizeX / 2, TileSizeY / 2, 0), FColor::Purple, true);
 										}
 									}
 								}
@@ -860,7 +865,7 @@ void AProceduralGen::SetExclusion(ARoomActor* Room, const FIntPoint& Index, cons
 		}
 
 		if (IsValid(CurrentX, CurrentY) && VisualizeAllExclusions)
-			DrawDebugBox(GetWorld(), Tiles[CurrentX][CurrentY].Location + TileBoxExtends, TileBoxExtends, FColor::Purple, true);
+			DrawDebugBox(World, Tiles[CurrentX][CurrentY].Location + TileBoxExtends, TileBoxExtends, FColor::Purple, true);
 	}
 }
 
@@ -1157,7 +1162,7 @@ bool AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor
 		TArray<ARoomActor*> SpawnedTurnedCorr;
 		for (auto TurnCorr : TurnCorridorStruct)
 		{
-			ARoomActor* TurnCorridor = GetWorld()->SpawnActor<ARoomActor>(TurnCorridorClass, TurnCorr.Location, TurnCorr.Rotation);
+			ARoomActor* TurnCorridor = World->SpawnActor<ARoomActor>(TurnCorridorClass, TurnCorr.Location, TurnCorr.Rotation);
 			SpawnedTurnedCorr.Add(TurnCorridor);
 		}
 		for (auto TurnCorr : SpawnedTurnedCorr)
@@ -1188,7 +1193,7 @@ bool AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor
 
 	for (auto TurnCorr : TurnCorridorStruct)
 	{
-		ARoomActor* TurnCorridor = GetWorld()->SpawnActor<ARoomActor>(TurnCorridorClass, TurnCorr.Location, TurnCorr.Rotation);
+		ARoomActor* TurnCorridor = World->SpawnActor<ARoomActor>(TurnCorridorClass, TurnCorr.Location, TurnCorr.Rotation);
 		TurnCorridors.Add(TurnCorridor);
 		TurnCorridor->IsCorridor = true;
 		SetTilesBlocked(TurnCorridor, SpawnLoc, TurnCorr.Rotation);
@@ -1199,7 +1204,7 @@ bool AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor
 	//Spawn straight corridors at the end
 	for (int i = 0; i < SpawnLocations.Num(); ++i)
 	{
-		ARoomActor* NormalCorr = GetWorld()->SpawnActor<ARoomActor>(StraightCorrClass, SpawnLocations[i], SpawnRotations[i]);
+		ARoomActor* NormalCorr = World->SpawnActor<ARoomActor>(StraightCorrClass, SpawnLocations[i], SpawnRotations[i]);
 		NormalCorr->IsCorridor = true;
 		NormalCorr->IfCorridorOwnerRoom = OverlappedRoom;
 		if (SpawnRotations[i] == FRotator(0, -90, -90)) //TODO: I donno this but I am sure this has to gone sooner or later
@@ -1229,10 +1234,6 @@ bool AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor
 void AProceduralGen::VisualizeTiles()
 {
 	//Since I calling world in editor, I need to access world first
-	UWorld* World = GetWorld();
-	if (!World)
-		World = GEditor->GetEditorWorldContext().World();
-	
 	for (int X = 0; X < MapSizeX; ++X)
 	{
 		for (int Y = 0; Y < MapSizeY; ++Y)
@@ -1392,7 +1393,7 @@ int AProceduralGen::MakeCorridorPathVisualization(ARoomActor* OverlappedRoom, FT
 		}
 		if (VisualizeCorridorPath)
 		{
-			DrawDebugBox(GetWorld(), Tiles[PathNode->X][PathNode->Y].Location + FVector(TileSizeX / 2, TileSizeY / 2, 0), FVector(TileSizeX / 2, TileSizeY / 2, TileSizeY), FColor::Red, true, -1, 0, 0);
+			DrawDebugBox(World, Tiles[PathNode->X][PathNode->Y].Location + FVector(TileSizeX / 2, TileSizeY / 2, 0), FVector(TileSizeX / 2, TileSizeY / 2, TileSizeY), FColor::Red, true, -1, 0, 0);
 		}
 		PrevNode = PathNode;
 		PathNode = PathNode->Parent;
@@ -1555,10 +1556,10 @@ bool AProceduralGen::FindCorridorPath(int StartX, int StartY, int GoalX, int Goa
 void AProceduralGen::VisualizeBeginEndTiles(ARoomActor* NextRoom, const FRoomConnection& Connection)
 {
 	FIntPoint StartIndex = WorldToIndex(LastSpawnedRoom->DoorSocketExit->GetComponentLocation());
-	DrawDebugBox(GetWorld(), Tiles[StartIndex.X + Connection.PathStartOffset.X][StartIndex.Y + Connection.PathStartOffset.Y].Location + FVector(TileSizeX / 2, TileSizeY / 2, 0), FVector(TileSizeX / 2, TileSizeY / 2, TileSizeY / 2), FColor::Cyan,
+	DrawDebugBox(World, Tiles[StartIndex.X + Connection.PathStartOffset.X][StartIndex.Y + Connection.PathStartOffset.Y].Location + FVector(TileSizeX / 2, TileSizeY / 2, 0), FVector(TileSizeX / 2, TileSizeY / 2, TileSizeY / 2), FColor::Cyan,
 	             true);
 	FIntPoint EndIndex = WorldToIndex(NextRoom->DoorSocketEnter->GetComponentLocation());
-	DrawDebugBox(GetWorld(), Tiles[EndIndex.X + Connection.PathEndOffset.X][EndIndex.Y + Connection.PathEndOffset.Y].Location + FVector(TileSizeX / 2, TileSizeY / 2, 0), FVector(TileSizeX / 2, TileSizeY / 2, TileSizeY / 2), FColor::Cyan, true);
+	DrawDebugBox(World, Tiles[EndIndex.X + Connection.PathEndOffset.X][EndIndex.Y + Connection.PathEndOffset.Y].Location + FVector(TileSizeX / 2, TileSizeY / 2, 0), FVector(TileSizeX / 2, TileSizeY / 2, TileSizeY / 2), FColor::Cyan, true);
 }
 
 void AProceduralGen::ResetAllVisited()

@@ -1,6 +1,8 @@
 ﻿#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/GlobalInputListener.h"
 
+//Static stuff initialization
 TMap<FKey, bool> FMyInputProcessor::KeyPressedMap;
+bool FMyInputProcessor::IsAltUp = true;
 float FMyInputProcessor::MovementSpeed = 500.0f;
 
 bool FMyInputProcessor::HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)
@@ -14,7 +16,6 @@ bool FMyInputProcessor::HandleKeyDownEvent(FSlateApplication& SlateApp, const FK
 		KeyPressedMap[InKeyEvent.GetKey()] = true;
 	}
 	
-
 	// Return false to allow the event to continue through the Slate event pipeline
 	return IInputProcessor::HandleKeyDownEvent(SlateApp, InKeyEvent);
 }
@@ -51,7 +52,6 @@ bool FMyInputProcessor::HandleMouseWheelOrGestureEvent(FSlateApplication& SlateA
 bool FMyInputProcessor::IsKeyPressed(const FKey& Key)
 {
 	return KeyPressedMap.Contains(Key) && KeyPressedMap[Key];
-	
 }
 
 void FMyInputProcessor::FillMap()
@@ -71,6 +71,8 @@ bool FMyInputProcessor::HandleKeyUpEvent(FSlateApplication& SlateApp, const FKey
 	{
 		KeyPressedMap[InKeyEvent.GetKey()] = false;
 	}
+
+	IsAltUp = (InKeyEvent.GetKey() == EKeys::LeftAlt);
 	
 	return IInputProcessor::HandleKeyUpEvent(SlateApp, InKeyEvent);
 }

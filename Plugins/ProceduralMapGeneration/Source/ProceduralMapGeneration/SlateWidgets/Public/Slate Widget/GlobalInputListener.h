@@ -5,6 +5,7 @@ class FMyInputProcessor : public IInputProcessor
 public:
 	inline static FKey PressedKey = FKey();
 	inline static FKey PressedMouseKey = FKey();
+	static bool IsAltUp;
 	static TMap<FKey, bool> KeyPressedMap;
 
 	virtual bool HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent) override;

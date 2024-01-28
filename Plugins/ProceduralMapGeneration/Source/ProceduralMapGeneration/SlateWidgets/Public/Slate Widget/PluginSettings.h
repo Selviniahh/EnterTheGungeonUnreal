@@ -72,9 +72,6 @@ public:
 	UPROPERTY()
 	mutable TWeakObjectPtr<AActor> SceneCapActorInst;
 	mutable TWeakObjectPtr<AProceduralGen> ProGenInst;
-
-	//1. First Room Exit Dir, 2. Second room Enter Dir  
-	TMap<TPair<EDirection2,EDirection2>, TArray<FIntPoint>> CorridorTestScenarios;
 	
 	//TODO: Delete this later on
 	bool IsRoomsGenerated = false;
