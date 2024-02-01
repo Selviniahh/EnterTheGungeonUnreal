@@ -1164,6 +1164,7 @@ bool AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor
 		{
 			ARoomActor* TurnCorridor = World->SpawnActor<ARoomActor>(TurnCorridorClass, TurnCorr.Location, TurnCorr.Rotation);
 			SpawnedTurnedCorr.Add(TurnCorridor);
+			AllSpawnedCorridors.Add(TurnCorridor);
 		}
 		for (auto TurnCorr : SpawnedTurnedCorr)
 		{
@@ -1176,6 +1177,7 @@ bool AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor
 					for (auto TurnCorridor : SpawnedTurnedCorr)
 					{
 						TurnCorridor->Destroy();
+						//TODO: I didn't called called destroy for AllSpawnedCorridors later on come check here
 					}
 					return false;
 				}
@@ -1199,6 +1201,7 @@ bool AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor
 		SetTilesBlocked(TurnCorridor, SpawnLoc, TurnCorr.Rotation);
 		OverlappedRoom->OwnerCorridors.Add(TurnCorridor);
 		TurnCorridor->IfCorridorOwnerRoom = OverlappedRoom;
+		AllSpawnedCorridors.Add(TurnCorridor);
 	}
 
 	//Spawn straight corridors at the end
@@ -1213,6 +1216,7 @@ bool AProceduralGen::SpawnCorridors(const int GoalX, const int GoalY, ARoomActor
 		}
 		SetTilesBlocked(NormalCorr, SpawnLocations[i], SpawnRotations[i]);
 		OverlappedRoom->OwnerCorridors.Add(NormalCorr);
+		AllSpawnedCorridors.Add(NormalCorr);
 	}
 
 	//Destroy overlapped ones

@@ -165,7 +165,7 @@ FReply UBlockRoomWidgetHandler::SpawnAllTiles(ARoomActor* FirstRoom)
 	UWorld* World = GEditor->GetEditorWorldContext().World();
 	if (!World) return FReply::Unhandled();
 
-	AProceduralGen* ProGen = CastChecked<AProceduralGen>(PluginSetting->ProGenActor.Get()->GetDefaultObject());
+	AProceduralGen* ProGen = CastChecked<AProceduralGen>(PluginSetting->ProGenClass.Get()->GetDefaultObject());
 	AActor* TileActor = CastChecked<AActor>(PluginSetting->TilePlaneActor.Get()->GetDefaultObject());
 
 	//important to first init world tiles
@@ -285,8 +285,6 @@ FReply UBlockRoomWidgetHandler::TestOverlapWithSecondSelectedRoom(ARoomActor* Fi
 	{
 		return FReply::Handled();
 	}
-
-	return FReply::Handled();
 }
 
 UBlockRoomWidgetHandler::~UBlockRoomWidgetHandler()

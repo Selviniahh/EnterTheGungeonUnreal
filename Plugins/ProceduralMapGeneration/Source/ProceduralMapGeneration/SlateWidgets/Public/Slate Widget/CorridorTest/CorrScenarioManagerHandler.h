@@ -21,7 +21,7 @@ class PROCEDURALMAPGENERATION_API UCorrScenarioManagerHandler : public UObject
 	
 public:
 	bool HandleTileSelection(ARoomActor* RoomToIgnore);
-	void Initialize(ARoomActor* InFirstRoom, ARoomActor* InSecondRoom);
+	void Initialize(ARoomActor* InFirstRoom, ARoomActor* InSecondRoom, const TArray<ARoomActor*>& PreviousSpawnedRooms);
 	AActor* MakeRayCast(AActor* RoomToIgnore);
 	ARoomActor* SpawnAndVisualizeRoom(ARoomActor*& Room, const FVector& SpawnLoc);
 	void SpawnTiles();
@@ -29,6 +29,7 @@ public:
 	void Destruct();
 	void UndoTiles();
 	void SaveGivenPaths();
+	void DestroyPreviousExistingActors(const TArray<ARoomActor*>& PreviousSpawnedRooms);
 	
 	//For tile selection
 	UPROPERTY()
@@ -47,6 +48,8 @@ public:
 	UWorld* World;
 	UPROPERTY()
 	TArray<ARoomActor*> SpawnedRooms;
+	UPROPERTY()
+	TArray<ARoomActor*> PrevSpawnedRooms;
 	UPROPERTY()
 	const UPluginSettings* PlugSetting;
 	UPROPERTY()

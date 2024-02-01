@@ -18,14 +18,6 @@ class PROCEDURALMAPGENERATION_API UCorridorTestHandler : public UObject
 {
 	GENERATED_BODY()
 public:
-	UCorridorTestHandler();
-	void Initialize(ARoomActor* FirstSelectedRoom, ARoomActor* SecondSelectedRoom);
-	void Start();
-	void InitWorldChunks(TArray<TArray<FIntPoint>>& AllScenarios);
-
-	UPROPERTY()
-	const UPluginSettings* Setting;
-	
 	TArray<FIntPoint> VerticalUpToVerticalUp = {FIntPoint(0,-1),FIntPoint(0,-1), FIntPoint(0,-1), FIntPoint(0,-1),
 		FIntPoint(0,-1), FIntPoint(0,-1), FIntPoint(0,-1),FIntPoint(0,-1), FIntPoint(0,-1), FIntPoint(0,-1)};
 
@@ -43,7 +35,8 @@ public:
 
 	TArray<FIntPoint> VerticalUpTurnRightToVerticalUp = {FIntPoint(0,-1),FIntPoint(1,0),FIntPoint(1,0),FIntPoint(1,0)
 	,FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(1,0),FIntPoint(1,0),FIntPoint(1,0),FIntPoint(1,0),FIntPoint(0,-1),
-		FIntPoint(0,-1),FIntPoint(0,-1)};
+		FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(1,0),FIntPoint(1,0),FIntPoint(1,0)
+	,FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(0,-1)};
 
 	TArray<FIntPoint> VerticalUpTurnLeftToVerticalUp = {FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(-1,0),FIntPoint(-1,0),FIntPoint(-1,0),FIntPoint(0,-1),
 	FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(-1,0),FIntPoint(-1,0),FIntPoint(-1,0),FIntPoint(-1,0),FIntPoint(0,-1),FIntPoint(0,-1),FIntPoint(0,-1)};
@@ -57,31 +50,47 @@ public:
 	UPROPERTY()
 	TArray<ARoomActor*> FirstSecRoom;
 
+	UPROPERTY()
+	TArray<ARoomActor*> SpawnedRooms;
+
 	TArray<FVector> CenterOfEachChunk;
-	TArray<FVector> CurrChunkActorLocs;
-	FIntPoint LargestExtends = FIntPoint(0,0);
 
 	UPROPERTY()
 	UWorld* World;
 
+	UPROPERTY()
+	const UPluginSettings* Setting;
+	
+	UCorridorTestHandler();
+	void Initialize(ARoomActor* FirstSelectedRoom, ARoomActor* SecondSelectedRoom);
+	void Start();
+	void InitWorldChunks(TArray<TArray<FIntPoint>>& AllScenarios);
 	void MakePathScenario(const FVector& FirstRoomLoc, FVector& NextRoomLocation, TArray<FIntPoint>& CurrentPattern);
-	void SpawnSecondRoom(const FVector& NextRoomLocation, ARoomActor*& NextRoom);
-	void SpawnFirstRoom(const FVector& FirstRoomLoc);
-	bool MakeGivenPathFinding(TArray<FIntPoint>& CurrentPattern, ARoomActor* NextRoom, const FVector& NextRoomLoc, const FVector& FirstRoomLoc);
-	FTileStruct* FillGivenCorrPattern(TArray<FTileStruct*>& RoomList, TArray<FIntPoint>& CurrentPattern);
-
-
-	FVector RoundBoxExtentToNearestTileSize(const FIntPoint& BoxExtent)
+	ARoomActor* SpawnSecondRoom(const FVector& NextRoomLocation, ARoomActor*& NextRoom) const;
+	ARoomActor* SpawnFirstRoom(const FVector& FirstRoomLoc);
+	static bool MakeGivenPathFinding(TArray<FIntPoint>& CurrentPattern, ARoomActor* FirstRoomOne, ARoomActor* SecondRoomOne, const FVector& NextRoomLoc, const FVector& FirstRoomLoc);
+	static FTileStruct* FillGivenCorrPattern(TArray<FTileStruct*>& RoomList, TArray<FIntPoint>& CurrentPattern, UPluginSettings* PlugSetting);
+	void DestroySpawnedRooms();
+	
+	int RoundMaxBoxExtentToNearestTileSize(int& MaxExtend) const
 	{
-		int X = FMath::RoundToInt(static_cast<float>(BoxExtent.X * 2) / Setting->ProGenInst->TileSizeX) * Setting->ProGenInst->TileSizeX;
-		int Y = FMath::RoundToInt(static_cast<float>(BoxExtent.Y * 2) / Setting->ProGenInst->TileSizeY) * Setting->ProGenInst->TileSizeY;
-		return FVector(X, Y, 0);
+		return MaxExtend = FMath::RoundToInt(static_cast<float>(MaxExtend) / Setting->ProGenInst->TileSizeX) * Setting->ProGenInst->TileSizeX;
 	}
 
+	/*If the found location is not placed at tile size's exponents, round it*/
 	void RoundNearestTilePos(FVector& VectorToRound)
 	{
 		int X = FMath::RoundToInt(static_cast<float>(VectorToRound.X) / Setting->ProGenInst->TileSizeX) * Setting->ProGenInst->TileSizeX;
 		int Y = FMath::RoundToInt(static_cast<float>(VectorToRound.Y) / Setting->ProGenInst->TileSizeY) * Setting->ProGenInst->TileSizeY;
 		VectorToRound = FVector(X, Y, 0);
+	}
+
+	static inline EDirection2 DetermineFirstDirection(const TArray<FIntPoint>& CurrentPattern)
+	{
+		if (CurrentPattern[1] - CurrentPattern[0] == FIntPoint(0,-1)) return Dir_Up;
+		if (CurrentPattern[1] - CurrentPattern[0] == FIntPoint(0,1)) return Dir_Down;
+		if (CurrentPattern[1] - CurrentPattern[0] == FIntPoint(1,0)) return Dir_Right;
+		if (CurrentPattern[1] - CurrentPattern[0] == FIntPoint(-1,0)) return Dir_Left;
+		return Dir_None;
 	}
 };

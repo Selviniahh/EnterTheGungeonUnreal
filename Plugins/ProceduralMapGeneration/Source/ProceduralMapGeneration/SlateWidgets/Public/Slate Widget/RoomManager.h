@@ -51,8 +51,8 @@ public:
 	const UPluginSettings* PluginSetting;
 	USceneCaptureComponent2D* SceneCapComp;
 	TSharedPtr<FButtonStyle> ButtonStyle;
-	TSharedPtr<SBlockRoomWidget> BlockRoomWidget;
-	TSharedPtr<SAllCorridorTestWidget> AllCorridorTestWidget;
+	// TSharedPtr<SBlockRoomWidget> BlockRoomWidget;
+	// TSharedPtr<SAllCorridorTestWidget> AllCorridorTestWidget;
 	
 #pragma region VisualizeBlocked
 	void OnVisBlockedHovered(TSharedPtr<STextBlock>* MemberTextBlock);

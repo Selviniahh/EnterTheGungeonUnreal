@@ -22,9 +22,9 @@ public:
 	void Start();
 	void SpawnSecondRoom(const FVector& NextRoomLocation, ARoomActor*& NextRoom);
 	void SpawnFirstRoom(const FVector& FirstRoomLoc);
-	FTileStruct* FillGivenCorrPattern(TArray<FTileStruct*>& RoomList, TArray<FIntPoint>& CurrentPattern);
 	void MakePathScenario(const FVector& FirstRoomLoc, const FVector& NextRoomLocation, TArray<FIntPoint>& CurrentPattern);
-	bool MakeGivenPathFinding(TArray<FIntPoint>& CurrentPattern, ARoomActor* NextRoom);
+	FTileStruct* FillGivenCorrPattern(TArray<FTileStruct*>& RoomList, TArray<FIntPoint>& CurrentPattern, AProceduralGen* ProceduralGen);
+	bool MakeGivenPathFinding(TArray<FIntPoint>& CurrentPattern, ARoomActor* NextRoom, AProceduralGen* ProceduralGen);
 	void InitWorldChunks(TArray<TArray<FIntPoint>>& AllScenarios);
 	
 	FVector RoundBoxExtentToNearestTileSize(const FIntPoint& BoxExtent)

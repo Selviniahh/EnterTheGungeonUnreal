@@ -19,7 +19,7 @@ public:
 	SLATE_ARGUMENT(ARoomActor*, FirstRoom);
 	SLATE_ARGUMENT(ARoomActor*, SecondRoom);
 	SLATE_END_ARGS()
-
+	
 	//Variables
 	ARoomActor* FirstRoom;
 	ARoomActor* SecondRoom;
@@ -31,11 +31,15 @@ public:
 	FVector CurrentInputVelocity;
 	AActor* SceneCapInst;
 	USceneCaptureComponent2D* SceneCapComp;
-	
+
+	virtual void OnFocusLost(const FFocusEvent& InFocusEvent) override;
 	FReply Click();
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
+	virtual ~SAllCorridorTestWidget() override;
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
+	
+	
 
 	TSharedRef<SVerticalBox> ConstructButtonAndItsTextBox(const FSlateFontInfo& PropertyTextFont, const FString& TextBoxText, const FString& ButtonText, const TFunction<FReply()>& ButtonClick);
 	TSharedRef<SWidget> ConstructTextBlock(FSlateFontInfo FontInfo, FText Text, const FSlateColor* Color = nullptr);

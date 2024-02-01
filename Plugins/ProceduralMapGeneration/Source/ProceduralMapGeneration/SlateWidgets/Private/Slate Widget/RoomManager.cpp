@@ -82,7 +82,7 @@ void SRoomManager::Construct(const FArguments& InArgs)
 					  .VAlign(VAlign_Center)
 					  .HAlign(HAlign_Center)
 					[
-						ConstructTextBlock(PropertyTextFont, FText::FromString("Make Overlap Check"), LocalTextBlock) //Let's see how it will be null init
+						ConstructTextBlock(PropertyTextFont, FText::FromString("Make Block Check"), LocalTextBlock) //Let's see how it will be null init
 					]
 
 					//2. Slot: Spawn Selected Room button
@@ -113,7 +113,7 @@ void SRoomManager::Construct(const FArguments& InArgs)
 						.OnHovered(this, &SRoomManager::OnVisBlockedHovered, &TextBlock2)
 						.OnUnhovered(this, &SRoomManager::OnVisBlockedUnHovered, &TextBlock2)
 						[
-							ConstructTextBlock(PropertyTextFont, FText::FromString("Make Test"), TextBlock2)
+							ConstructTextBlock(PropertyTextFont, FText::FromString("Start Test"), TextBlock2)
 						]
 					]
 
@@ -175,55 +175,35 @@ void SRoomManager::Construct(const FArguments& InArgs)
 						.OnHovered(this, &SRoomManager::OnVisBlockedHovered, &TextBlock)
 						.OnUnhovered(this, &SRoomManager::OnVisBlockedUnHovered, &TextBlock)
 						.OnClicked(FOnClicked::CreateLambda([this]() -> FReply
-						             {
-							             //TODO: Destroy any spawned room first.
-							             for (auto SpawnedRoom : AllSpawnedRooms)
-							             {
-								             SpawnedRoom->Destroy();
-							             }
-
-
-							             //Init the widget window first
-							             AllCorridorTestWidget = SNew(SAllCorridorTestWidget)
-										.FirstRoom(FirstRoom).SecondRoom(SecondRoom);
-
-							             //Fill the widget window with content
-							             TSharedRef<SWindow> CorridorTestWidget = SNew(SWindow)
+				             {
+					             //TODO: Destroy any spawned room first.
+					             for (auto SpawnedRoom : AllSpawnedRooms)
+					             {
+						             SpawnedRoom->Destroy();
+					             }
+					
+					             //Init the widget window first
+					             TSharedRef<SAllCorridorTestWidget> AllCorridorTestWidget = SNew(SAllCorridorTestWidget)
+								.FirstRoom(FirstRoom).SecondRoom(SecondRoom);
+					             //Fill the widget window with content
+					             TSharedRef<SWindow> CorridorTestWidget = SNew(SWindow)
 								.Title(FText::FromString("All Corridor scenarios Test"))
 								.ClientSize(FVector2D(1920, 1080))
 								.SupportsMaximize(true)
 								.SupportsMinimize(true)
-							             [
-								             AllCorridorTestWidget.ToSharedRef()
-							             ];
-
-							             FSlateApplication::Get().AddWindow(CorridorTestWidget);
-
-							             return FReply::Handled();
-						             }))
+					             [
+						             AllCorridorTestWidget
+					             ];
+							
+					             FSlateApplication::Get().AddWindow(CorridorTestWidget);
+							
+					             return FReply::Handled();
+				             }))
 						[
 							ConstructTextBlock(PropertyTextFont, FText::FromString("Make corridor test with selected two rooms"), TextBlock)
 						]
 					]
-
-					//TODO: I disabled all the stuff in here later on come here back and decide
-					// + SHorizontalBox::Slot()
-					//   .AutoWidth()
-					//   .VAlign(VAlign_Center)
-					//   .HAlign(HAlign_Center)
-					//   .Padding(FMargin(10, 0, 0, 0))
-					// [
-					// 	SNew(SButton)
-					// 	.OnClicked(this, &SRoomManager::OnButtonOpenTileSelectorWidget)
-					// 	.OnHovered(this, &SRoomManager::OnVisBlockedHovered, &TextBlock2)
-					// 	.OnUnhovered(this, &SRoomManager::OnVisBlockedUnHovered, &TextBlock2)
-					// 	[
-					// 		ConstructTextBlock(PropertyTextFont, FText::FromString("Make Test"), TextBlock2)
-					// 	]
-					// ]
-
-					// 4. Slot: CheckBox to signify if block selection is correctly configured
-
+					
 					+ SHorizontalBox::Slot()
 					  .AutoWidth()
 					  .VAlign(VAlign_Center)
@@ -298,7 +278,7 @@ FReply SRoomManager::OnButtonOpenTileSelectorWidget()
 		return FReply::Unhandled();
 	}
 	//Init the widget
-	BlockRoomWidget = SNew(SBlockRoomWidget)
+	TSharedRef<SBlockRoomWidget> BlockRoomWidget = SNew(SBlockRoomWidget)
 	.FirstRoom(AllSpawnedRooms[0])
 	.SecondRoom(AllRoomTests->SecondRoom);
 
@@ -309,7 +289,7 @@ FReply SRoomManager::OnButtonOpenTileSelectorWidget()
 	.SupportsMaximize(true)
 	.SupportsMinimize(true)
 	[ //It's content
-		BlockRoomWidget.ToSharedRef()
+		BlockRoomWidget
 	];
 
 	FSlateApplication::Get().AddWindow(RoomManagerWindow);

@@ -1,30 +1,49 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
-
+//NOTE: CorrScenarioManagerWiddget will invoke this class
 
 #include "../../../Public/Slate Widget/CorridorTest/CorrScenarioManagerHandler.h"
+
+#include "Features/EditorFeatures.h"
+#include "Kismet/GameplayStatics.h"
 #include "ProceduralMapGeneration/Procedural Generation/RoomActor.h"
 #include "ProceduralMapGeneration/SlateWidgets/Public/ProGenSubsystem.h"
 #include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/PluginSettings.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/CorridorTest/CorridorTestHandler.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/Test/MakeAllCorridorScenarioTest.h"
 
-void UCorrScenarioManagerHandler::Initialize(ARoomActor* InFirstRoom, ARoomActor* InSecondRoom)
+void UCorrScenarioManagerHandler::Initialize(ARoomActor* InFirstRoom, ARoomActor* InSecondRoom, const TArray<ARoomActor*>& PreviousSpawnedRooms)
 {
+	PlugSetting = GetDefault<UPluginSettings>();
+	DestroyPreviousExistingActors(PreviousSpawnedRooms);
+	
 	FirstRoom = InFirstRoom;
 	SecondRoom = InSecondRoom;
-	PlugSetting = GetDefault<UPluginSettings>();
+	PrevSpawnedRooms = PreviousSpawnedRooms;
 
 	PropertyTextFont = FCoreStyle::Get().GetFontStyle(FName("EmbossedText"));
 	PropertyTextFont.Size = 12;
 
 	World = GEditor->GetEditorWorldContext().World();
-	FlushPersistentDebugLines(World);
 
 	//Access Scene capture component. THe reason not creating actor from C++, Scene capture component details are not exposed in BP editor
 	SceneCapInst = PlugSetting->SceneCapActorInst.Get();
 	TArray<USceneCaptureComponent2D*> SceneCapCompArray;
 	SceneCapInst->GetComponents(SceneCapCompArray);
 
+	//Revert back MapSize to original values
+	PlugSetting->ProGenClass.LoadSynchronous();
+	auto CDOProGen = Cast<AProceduralGen>(PlugSetting->ProGenClass->GetDefaultObject());
+	PlugSetting->ProGenInst->MapSizeX = CDOProGen->MapSizeX;
+	PlugSetting->ProGenInst->MapSizeY = CDOProGen->MapSizeY;
+	PlugSetting->ProGenInst->InitWorldTiles();
+	
+	// PlugSetting->ProGenInst->InitWorldTiles();
+	
 	FVector CenterLocation = PlugSetting->ProGenInst->Tiles[PlugSetting->ProGenInst->MapSizeX / 2][PlugSetting->ProGenInst->MapSizeY / 2].Location;
+	
+
 	SpawnAndVisualizeRoom(FirstRoom, CenterLocation);
+	SceneCapInst->SetActorLocation(FVector(CenterLocation.X, CenterLocation.Y, 500));
 
 	if (PlugSetting->TilePlaneActor.IsPending())
 		PlugSetting->TilePlaneActor.LoadSynchronous();
@@ -43,6 +62,7 @@ void UCorrScenarioManagerHandler::Initialize(ARoomActor* InFirstRoom, ARoomActor
 	{
 		TileUnhoverMat = MeshComponent->GetMaterial(0);
 	}
+
 }
 
 bool UCorrScenarioManagerHandler::HandleTileSelection(ARoomActor* RoomToIgnore)
@@ -115,6 +135,8 @@ bool UCorrScenarioManagerHandler::HandleTileSelection(ARoomActor* RoomToIgnore)
 
 AActor* UCorrScenarioManagerHandler::MakeRayCast(AActor* RoomToIgnore)
 {
+	if (!SceneCapInst) return nullptr;
+	
 	//Init raycast parameters
 	int RaycastLength = 1000;
 	FHitResult OutHit;
@@ -171,6 +193,14 @@ FReply UCorrScenarioManagerHandler::HandleSecondRoomSpawning(const bool IsButton
 {
 	if ((FSlateApplication::Get().GetModifierKeys().IsAltDown() && DoOnce) || IsButtonClicked) //Is alt down
 	{
+		//Revert back the MapSize
+		PlugSetting->ProGenClass.LoadSynchronous();
+		auto CDOProGen = Cast<AProceduralGen>(PlugSetting->ProGenClass->GetDefaultObject());
+		PlugSetting->ProGenInst->MapSizeX = CDOProGen->MapSizeX;
+		PlugSetting->ProGenInst->MapSizeY = CDOProGen->MapSizeY;
+		PlugSetting->ProGenInst->InitWorldTiles();
+		PlugSetting->ProGenInst->LastSpawnedRoom = FirstRoom;
+		
 		DoOnce = false;
 
 		if (SelectedTiles.IsEmpty())
@@ -213,8 +243,8 @@ FReply UCorrScenarioManagerHandler::HandleSecondRoomSpawning(const bool IsButton
 		//If the last selected tile is not matching with the second room's enter socket direction
 		if (!PlugSetting->ProGenInst->LastCorrException(NormalDirToEDirection2(SecondRoom->EnterSocketDirection), AllDirections.Last()))
 		{
-			FMessageDialog::Open(EAppMsgType::Ok,FText::FromString("Last selected tile doesn't match with expected direction. Expected Direction: "
-														   + UEnum::GetValueAsString(SecondRoom->EnterSocketDirection)));
+			FString ExpectedLastTileDirection = UEnum::GetValueAsString(PlugSetting->ProGenInst->ExpectedDirection(SecondRoom->EnterSocketDirection));
+			FMessageDialog::Open(EAppMsgType::Ok,FText::FromString("Last selected tile doesn't match with expected direction. Move last tile to : " + ExpectedLastTileDirection + "and try again"));
 			return FReply::Unhandled();
 		}
 		
@@ -225,12 +255,22 @@ FReply UCorrScenarioManagerHandler::HandleSecondRoomSpawning(const bool IsButton
 		FIntPoint FirstRoomEndSocIndex = PlugSetting->ProGenInst->WorldToIndex(FirstRoomEndSoc);
 		for (auto Tile : SelectedTiles)
 		{
-			FVector TileLoc = Tile->GetActorLocation();
 			FIntPoint Index = PlugSetting->ProGenInst->WorldToIndex(Tile->GetActorLocation());
-			FIntPoint Result = FirstRoomEndSocIndex - Index;
-			SelectedTilePoints.Add(Result);
+			// FIntPoint Result = FirstRoomEndSocIndex - Index;
+			SelectedTilePoints.Add(Index);
 		}
 	}
+
+	
+	
+	if (!SelectedTilePoints.IsEmpty())
+	{
+		
+		
+		// UMakeAllCorridorScenarioTest::MakeGivenPathFinding(SelectedTilePoints,SecondRoom, PlugSetting->ProGenInst.Get());
+		UCorridorTestHandler::MakeGivenPathFinding(SelectedTilePoints,FirstRoom,SecondRoom,SecondRoom->GetActorLocation(),FirstRoom->GetActorLocation());
+	}
+	
 	return FReply::Handled();
 }
 
@@ -243,6 +283,7 @@ void UCorrScenarioManagerHandler::Destruct()
 		Tile->Destroy();
 
 	PlugSetting->ProGenInst->InitWorldTiles();
+	FlushPersistentDebugLines(World);
 }
 
 void UCorrScenarioManagerHandler::UndoTiles()
@@ -257,9 +298,21 @@ void UCorrScenarioManagerHandler::UndoTiles()
 }
 
 //TODO: Add your own subsystem ideology right here
+
 void UCorrScenarioManagerHandler::SaveGivenPaths()
 {
 	UProGenSubsystem* ProGenSubsystem = GEditor->GetEditorSubsystem<UProGenSubsystem>();
 	auto ScenarioDirectionPair = TPair<TEnumAsByte<Direction>, TEnumAsByte<Direction>>(FirstRoom->EnterSocketDirection, SecondRoom->ExitSocketDirection);
 	ProGenSubsystem->CorridorTestScenarios.Add(ScenarioDirectionPair,SelectedTilePoints);
+}
+
+void UCorrScenarioManagerHandler::DestroyPreviousExistingActors(const TArray<ARoomActor*>& PreviousSpawnedRooms)
+{
+	for (ARoomActor* SpawnedCorridor : PlugSetting->ProGenInst->AllSpawnedCorridors)
+		SpawnedCorridor->Destroy();
+	
+	for (auto Room : PreviousSpawnedRooms)
+		Room->Destroy();
+	
+	FlushPersistentDebugLines(GEditor->GetEditorWorldContext().World());
 }

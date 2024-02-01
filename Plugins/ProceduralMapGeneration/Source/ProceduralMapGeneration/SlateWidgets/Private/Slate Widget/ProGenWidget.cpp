@@ -47,7 +47,7 @@ void SProGenWidget::Construct(const FArguments& InArgs)
 	PluginSetting = GetMutableDefault<UPluginSettings>();
 	RetrieveProGenActor();
 	
-	AProceduralGen* ProceduralGen = Cast<AProceduralGen>(PluginSetting->ProGenActor.Get()->GetDefaultObject());
+	AProceduralGen* ProceduralGen = Cast<AProceduralGen>(PluginSetting->ProGenClass.Get()->GetDefaultObject());
 	PluginSetting->ProGenInst = ProceduralGen;
 
 	//Init button slate
@@ -549,9 +549,9 @@ void SProGenWidget::RetrieveProGenActor()
 	else
 	{
 		FStreamableManager& StreamableManager = UAssetManager::GetStreamableManager();
-		StreamableManager.RequestAsyncLoad(PluginSetting->ProGenActor.ToSoftObjectPath(),[&]
+		StreamableManager.RequestAsyncLoad(PluginSetting->ProGenClass.ToSoftObjectPath(),[&]
 		{
-			if (PluginSetting->ProGenActor.Get())
+			if (PluginSetting->ProGenClass.Get())
 			{
 				for (auto RoomDesign : ProceduralGen->RoomDesigns)
 				{

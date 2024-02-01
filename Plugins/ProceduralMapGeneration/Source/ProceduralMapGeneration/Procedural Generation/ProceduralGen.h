@@ -286,6 +286,8 @@ public:
 	UPROPERTY()
 	ARoomActor* CastedTurnCorridor;
 
+	UPROPERTY()
+	TArray<ARoomActor*> AllSpawnedCorridors;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Corridor path finding", meta=(DisplayPriority = 1))
 	bool ApplyTurnPenalty = true;

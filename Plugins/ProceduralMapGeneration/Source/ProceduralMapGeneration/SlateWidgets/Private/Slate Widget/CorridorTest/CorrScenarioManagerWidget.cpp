@@ -13,14 +13,15 @@ void SCorrScenarioManagerWidget::Construct(const FArguments& InArgs)
 {
 	FirstRoom = InArgs._FirstRoom;
 	SecondRoom = InArgs._SecondRoom;
+	SpawnedRooms = InArgs._SpawnedRooms;
 	PlugSetting = GetDefault<UPluginSettings>();
 
 	if (UMaterialInterface* Material = PlugSetting->SceneCapMaterial.Get())
 		SceneCapImgBrush = MakeShared<FSlateMaterialBrush>(*Material, FVector2D(100, 100)); // Initialize member variable
 
 	CorrScenarioHandler = NewObject<UCorrScenarioManagerHandler>();
-	CorrScenarioHandler->Initialize(FirstRoom, SecondRoom);
-
+	CorrScenarioHandler->Initialize(FirstRoom, SecondRoom, SpawnedRooms);
+	
 	ChildSlot
 	[
 		// Parent Horizontal Box
@@ -33,7 +34,7 @@ void SCorrScenarioManagerWidget::Construct(const FArguments& InArgs)
 		  .FillWidth(1.0)
 		[
 			SNew(SImage)
-			.Image(SceneCapImgBrush.Get()) // Initialize member variable
+			.Image(SceneCapImgBrush.Get())
 		]
 
 		// Vertical Box Slot for Buttons and TextBoxes
@@ -49,7 +50,7 @@ void SCorrScenarioManagerWidget::Construct(const FArguments& InArgs)
 			                      .Padding(FMargin(15, 5, 15, 5))
 			[
 				HorizontalField(
-					{ //TODO: TOmorrow when alt selected also do that operation right here 
+					{ 
 						ConstructTextBlock(CorrScenarioHandler->PropertyTextFont, FText::FromString("Spawn The Second Room at selected tile")),
 						ConstructButton(FText::FromString("Spawn Room"), [this]()
 						{
@@ -64,7 +65,7 @@ void SCorrScenarioManagerWidget::Construct(const FArguments& InArgs)
 			[
 				HorizontalField(
 					{
-						ConstructTextBlock(CorrScenarioHandler->PropertyTextFont, FText::FromString("Unto all the spawned tiles")),
+						ConstructTextBlock(CorrScenarioHandler->PropertyTextFont, FText::FromString("Undo all the spawned tiles")),
 						ConstructButton(FText::FromString("Undo tiles"), [this]()
 						{
 							CorrScenarioHandler->UndoTiles();
@@ -79,7 +80,7 @@ void SCorrScenarioManagerWidget::Construct(const FArguments& InArgs)
 			[
 				HorizontalField(
 					{
-						ConstructTextBlock(CorrScenarioHandler->PropertyTextFont, FText::FromString("Unto all the spawned tiles")),
+						ConstructTextBlock(CorrScenarioHandler->PropertyTextFont, FText::FromString("Undo all the spawned tiles")),
 						ConstructButton(FText::FromString("Save given path"), [this]()
 						{
 							// CorrScenarioHandler->UndoTiles();
@@ -94,7 +95,7 @@ void SCorrScenarioManagerWidget::Construct(const FArguments& InArgs)
 			[
 				HorizontalField(
 					{
-						ConstructTextBlock(CorrScenarioHandler->PropertyTextFont, FText::FromString("Unto all the spawned tiles")),
+						ConstructTextBlock(CorrScenarioHandler->PropertyTextFont, FText::FromString("Undo all the spawned tiles")),
 						ConstructButton(FText::FromString("Save given path"), [this]()
 						{
 							CorrScenarioHandler->SaveGivenPaths();

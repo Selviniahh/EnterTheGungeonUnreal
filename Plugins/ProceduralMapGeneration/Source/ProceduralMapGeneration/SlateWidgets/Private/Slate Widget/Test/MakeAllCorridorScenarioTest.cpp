@@ -138,45 +138,43 @@ void UMakeAllCorridorScenarioTest::SpawnSecondRoom(const FVector& NextRoomLocati
 	ProGen->SetSocketExclusion(NextRoom, NextRoomLocation);
 }
 
-bool UMakeAllCorridorScenarioTest::MakeGivenPathFinding(TArray<FIntPoint>& CurrentPattern, ARoomActor* NextRoom)
+bool UMakeAllCorridorScenarioTest::MakeGivenPathFinding(TArray<FIntPoint>& CurrentPattern, ARoomActor* NextRoom, AProceduralGen* ProceduralGen)
 {
 	auto SetFirstCorrRotation = [&](FTileStruct* Start)
 	{
-		if (ProGen->LastSpawnedRoom->ExitSocketDirection == HorizontalRight || ProGen->LastSpawnedRoom->ExitSocketDirection == HorizontalLeft)
+		if (ProceduralGen->LastSpawnedRoom->ExitSocketDirection == HorizontalRight || ProceduralGen->LastSpawnedRoom->ExitSocketDirection == HorizontalLeft)
 			Start->Rotation = FRotator(0, 0, -90);
 
-		else if (ProGen->LastSpawnedRoom->ExitSocketDirection == VerticalUp || ProGen->LastSpawnedRoom->ExitSocketDirection == VerticalDown)
+		else if (ProceduralGen->LastSpawnedRoom->ExitSocketDirection == VerticalUp || ProceduralGen->LastSpawnedRoom->ExitSocketDirection == VerticalDown)
 		{
 			Start->Rotation = FRotator(0, 90, -90); //(Pitch=0.000000,Yaw=90.000000,Roll=-90.000000)
 		}
 	};
 	
 	//Pathfinding logic is here
-	FRoomConnection Connection = ProGen->CalculatePathInfo(NextRoom);
+	FRoomConnection Connection = ProceduralGen->CalculatePathInfo(NextRoom);
 
-	TArray<int> Row = {-1, 0, 0, 1};
-	TArray<int> Col = {0, -1, 1, 0};
 	TArray<FTileStruct*> OpenList;
 	
-	FIntPoint LastRoomEnd = ProGen->WorldToIndex(ProGen->LastSpawnedRoom->DoorSocketExit->GetComponentLocation());
-	FIntPoint OverlappedRoomLoc = ProGen->WorldToIndex(NextRoom->DoorSocketEnter->GetComponentLocation());
+	FIntPoint LastRoomEnd = ProceduralGen->WorldToIndex(ProceduralGen->LastSpawnedRoom->DoorSocketExit->GetComponentLocation());
+	FIntPoint OverlappedRoomLoc = ProceduralGen->WorldToIndex(NextRoom->DoorSocketEnter->GetComponentLocation());
 
 	int StartX = Connection.PathStartOffset.X + LastRoomEnd.X;
 	int StartY = Connection.PathStartOffset.Y + LastRoomEnd.Y;
 	int GoalX = Connection.PathEndOffset.X + OverlappedRoomLoc.X;
 	int GoalY = Connection.PathEndOffset.Y + OverlappedRoomLoc.Y;
 
-	FTileStruct* Start = &ProGen->Tiles[StartX][StartY];
+	FTileStruct* Start = &ProceduralGen->Tiles[StartX][StartY];
 	SetFirstCorrRotation(Start);
 	OpenList.Add(Start);
 
 	while (OpenList.Num() > 0)
 	{
-		FTileStruct* Current = FillGivenCorrPattern(OpenList, CurrentPattern);
+		FTileStruct* Current = FillGivenCorrPattern(OpenList, CurrentPattern, ProceduralGen);
 		if (Current->X == GoalX && Current->Y == GoalY)
 		{
-			ProGen->MakeCorridorPathVisualization(ProGen->LastSpawnedRoom, Current);
-			ProGen->SpawnCorridors(GoalX, GoalY, ProGen->LastSpawnedRoom, false);
+			ProceduralGen->MakeCorridorPathVisualization(ProceduralGen->LastSpawnedRoom, Current);
+			ProceduralGen->SpawnCorridors(GoalX, GoalY, ProceduralGen->LastSpawnedRoom, false);
 			return true;
 		}
 	}
@@ -191,7 +189,7 @@ void UMakeAllCorridorScenarioTest::MakePathScenario(const FVector& FirstRoomLoc,
 	ARoomActor* NextRoom;
 	SpawnSecondRoom(NextRoomLocation, NextRoom);
 	
-	if (MakeGivenPathFinding(CurrentPattern, NextRoom)) return;
+	MakeGivenPathFinding(CurrentPattern, NextRoom, ProGen);
 }
 
 void UMakeAllCorridorScenarioTest::SpawnFirstRoom(const FVector& FirstRoomLoc)
@@ -217,7 +215,7 @@ void UMakeAllCorridorScenarioTest::SpawnFirstRoom(const FVector& FirstRoomLoc)
 		ProGen->IsEndSocketOverlapping(FirstRoom, FirstRoomLoc);
 }
 
-FTileStruct* UMakeAllCorridorScenarioTest::FillGivenCorrPattern(TArray<FTileStruct*>& RoomList, TArray<FIntPoint>& CurrentPattern)
+FTileStruct* UMakeAllCorridorScenarioTest::FillGivenCorrPattern(TArray<FTileStruct*>& RoomList, TArray<FIntPoint>& CurrentPattern, AProceduralGen* ProceduralGen)
 {
 	//For now let's just go 10 times up
 	FIntPoint CurrentPatternIndex = CurrentPattern[0];
@@ -225,9 +223,9 @@ FTileStruct* UMakeAllCorridorScenarioTest::FillGivenCorrPattern(TArray<FTileStru
 
 	FIntPoint NewIndex = FIntPoint(RoomList.Top()->X + CurrentPatternIndex.X, RoomList.Top()->Y + CurrentPatternIndex.Y); //Go up each iteration 
 	FTileStruct* LastTile = RoomList.Top();
-	FTileStruct* Neighbour = &ProGen->Tiles[NewIndex.X][NewIndex.Y];
+	FTileStruct* Neighbour = &ProceduralGen->Tiles[NewIndex.X][NewIndex.Y];
 	Neighbour->Parent = LastTile;
-	ProGen->DeterminePathDirection(LastTile, NewIndex.X, NewIndex.Y, Neighbour);
+	ProceduralGen->DeterminePathDirection(LastTile, NewIndex.X, NewIndex.Y, Neighbour);
 	RoomList.Add(Neighbour);
 	return Neighbour;
 }

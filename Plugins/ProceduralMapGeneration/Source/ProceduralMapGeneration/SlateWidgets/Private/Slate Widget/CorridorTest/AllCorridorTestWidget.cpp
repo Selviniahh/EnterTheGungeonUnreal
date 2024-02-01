@@ -1,8 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
-
+//NOTE: RoomManager class will initialize this class
 
 #include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/CorridorTest//AllCorridorTestWidget.h"
-#include "SlateMaterialBrush.h"
+#include "SlateMaterialBrush.h" 
 #include "SlateOptMacros.h"
 #include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/PluginSettings.h"
 #include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/ProGenWidget.h"
@@ -34,6 +34,7 @@ void SAllCorridorTestWidget::Construct(const FArguments& InArgs)
 	SceneCapInst = PluginSetting->SceneCapActorInst.Get();
 	TArray<USceneCaptureComponent2D*> SceneCapCompArray;
 	SceneCapInst->GetComponents(SceneCapCompArray);
+	
 	ChildSlot
 	[
 		// Parent Horizontal Box
@@ -63,10 +64,10 @@ void SAllCorridorTestWidget::Construct(const FArguments& InArgs)
 			[
 				HorizontalField(
 					{
-						ConstructTextBlock(PropertyTextFont, FText::FromString("Start All Corridor Scenarios")),
+						ConstructTextBlock(PropertyTextFont, FText::FromString("Start All Corridor Scenarios")), 
 						ConstructButton(FText::FromString("Start Test"), [this]()
 						{
-							CorrTestHandler->Start();
+							CorrTestHandler->Start(); //TODO: IDK Why yet but it makes couple second bottlenecks. Somehow fix it
 							return FReply::Handled();
 						}),
 					})
@@ -87,7 +88,8 @@ void SAllCorridorTestWidget::Construct(const FArguments& InArgs)
 							//Initialize the window for corridor scenarios manager
 							TSharedRef<SCorrScenarioManagerWidget> CorridorScenarioManagerWidget = SNew(SCorrScenarioManagerWidget)
 							.FirstRoom(FirstRoom)
-							.SecondRoom(SecondRoom);
+							.SecondRoom(SecondRoom)
+							.SpawnedRooms(CorrTestHandler->SpawnedRooms);
 							//TODO: Later on add other slate stuffs to pass here
 							
 							TSharedRef<SWindow> CorrScenarioManager = SNew(SWindow)
@@ -100,7 +102,6 @@ void SAllCorridorTestWidget::Construct(const FArguments& InArgs)
 							];
 
 							FSlateApplication::Get().AddWindow(CorrScenarioManager);
-							
 							return FReply::Handled();
 						}),
 					})
@@ -163,6 +164,8 @@ void SAllCorridorTestWidget::Construct(const FArguments& InArgs)
 	];
 	SceneCapComp = SceneCapCompArray[0];
 }
+
+//Destroy all the necessary actors when the widget closed 
 
 void SAllCorridorTestWidget::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
@@ -281,6 +284,17 @@ TSharedRef<SButton> SAllCorridorTestWidget::ConstructButton(const FText& Text, c
 TSharedRef<SCheckBox> SAllCorridorTestWidget::ConstructCheckBox()
 {
 	return SNew(SCheckBox); //REMIND: Pass an enum that when checked or unchecked it will change it's room's enum for now it's ok to stay empty like this  
+}
+
+SAllCorridorTestWidget::~SAllCorridorTestWidget()
+{
+	
+	CorrTestHandler->DestroySpawnedRooms();
+}
+
+void SAllCorridorTestWidget::OnFocusLost(const FFocusEvent& InFocusEvent)
+{
+	SCompoundWidget::OnFocusLost(InFocusEvent);
 }
 
 FReply SAllCorridorTestWidget::Click()

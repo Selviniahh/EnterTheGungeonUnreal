@@ -17,6 +17,7 @@ public:
 	SLATE_BEGIN_ARGS(SCorrScenarioManagerWidget) {}
 	SLATE_ARGUMENT(ARoomActor*, FirstRoom);
 	SLATE_ARGUMENT(ARoomActor*, SecondRoom);
+	SLATE_ARGUMENT(TArray<ARoomActor*>, SpawnedRooms);
 	SLATE_END_ARGS()
 
 
@@ -27,6 +28,7 @@ public:
 	TSharedPtr<FSlateBrush> SceneCapImgBrush;
 	FVector CurrentInputVelocity;
 	USceneCaptureComponent2D* SceneCapComp;
+	TArray<ARoomActor*> SpawnedRooms;
 
 	//For tile selection
 	FVector RayCastEndLoc;

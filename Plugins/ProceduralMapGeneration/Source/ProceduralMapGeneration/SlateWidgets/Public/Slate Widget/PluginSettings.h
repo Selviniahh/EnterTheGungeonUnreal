@@ -51,7 +51,7 @@ public:
 	TSoftClassPtr<AActor> SceneCapActor;
 
 	UPROPERTY(Config, EditAnywhere, Category= "My Plugin")
-	TSoftClassPtr<AProceduralGen> ProGenActor;
+	TSoftClassPtr<AProceduralGen> ProGenClass;
 
 	UPROPERTY(Config, EditAnywhere, Category= "My Plugin")
 	TSoftClassPtr<AActor> TilePlaneActor;
