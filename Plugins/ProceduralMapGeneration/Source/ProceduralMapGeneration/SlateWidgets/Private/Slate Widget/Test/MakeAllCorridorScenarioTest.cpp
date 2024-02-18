@@ -21,6 +21,7 @@ void UMakeAllCorridorScenarioTest::Initialize(AProceduralGen* InProceduralGenIns
 	ProGen = InProceduralGenInstance;
 }
 
+//TODO: I Guess I will need to entirely delete here
 void UMakeAllCorridorScenarioTest::Start()
 {
 	TArray<TArray<FIntPoint>> AllScenarios;

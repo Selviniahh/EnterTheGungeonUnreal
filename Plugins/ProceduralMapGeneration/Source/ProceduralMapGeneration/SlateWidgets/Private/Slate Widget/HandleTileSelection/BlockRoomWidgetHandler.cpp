@@ -187,6 +187,7 @@ bool UBlockRoomWidgetHandler::HandleTileSelection(ARoomActor* FirstRoom)
 	//Init raycast parameters
 	int RaycastLength = 1000;
 	FHitResult OutHit;
+	if (!SceneCapInst->IsValidLowLevelFast()) return false;
 	FVector StartLocation = SceneCapInst->GetActorLocation();
 	FVector EndLocation = StartLocation + (SceneCapInst->GetActorForwardVector() * RaycastLength);
 	FCollisionQueryParams Params;

@@ -7,6 +7,7 @@
 #include "UObject/Object.h"
 #include "CorrScenarioManagerHandler.generated.h"
 
+class UProGenSubsystem;
 enum class EDirection : uint8;
 enum EDirection2 : uint8;
 class UPluginSettings;
@@ -28,8 +29,8 @@ public:
 	FReply HandleSecondRoomSpawning(bool IsButtonClicked = false);
 	void Destruct();
 	void UndoTiles();
-	void SaveGivenPaths();
 	void DestroyPreviousExistingActors(const TArray<ARoomActor*>& PreviousSpawnedRooms);
+	void SaveGivenCorrPaths();
 	
 	//For tile selection
 	UPROPERTY()
@@ -64,6 +65,9 @@ public:
 	TArray<FVector> SpawnedLocations;
 	TArray<FIntPoint> SelectedTilePoints;
 	bool DoOnce = true;
+
+	UPROPERTY()
+	UProGenSubsystem* ProGenSubsystem;
 	
 	//Declare 3x3 grid of tiles
 	TArray<FIntPoint> SpawnTileOffsets = {FIntPoint(0,0), FIntPoint(0,1), FIntPoint(-1,1), FIntPoint(-1,0),
@@ -97,4 +101,8 @@ public:
 			return Dir_Down;
 		return Dir_None;
 	}
+
+	TSharedPtr<FSlateBrush>GetDirectionMaps(TEnumAsByte<Direction> Direction, TSharedPtr<FSlateBrush>& Image) const;
+
+	
 };

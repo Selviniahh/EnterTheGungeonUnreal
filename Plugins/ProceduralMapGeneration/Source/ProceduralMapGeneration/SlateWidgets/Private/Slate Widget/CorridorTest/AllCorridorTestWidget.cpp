@@ -58,20 +58,21 @@ void SAllCorridorTestWidget::Construct(const FArguments& InArgs)
 		[
 			SNew(SVerticalBox) // This Vertical Box will contain all the buttons and textboxes
 
-			//NOTE: 1. Start all corridor scenarios 
-			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Fill)
-			                      .Padding(FMargin(15, 5, 15, 5))
-			[
-				HorizontalField(
-					{
-						ConstructTextBlock(PropertyTextFont, FText::FromString("Start All Corridor Scenarios")), 
-						ConstructButton(FText::FromString("Start Test"), [this]()
-						{
-							CorrTestHandler->Start(); //TODO: IDK Why yet but it makes couple second bottlenecks. Somehow fix it
-							return FReply::Handled();
-						}),
-					})
-			]
+			//NOTE: 1. Start all corridor scenarios
+			//REMIND: This not working so I decided to discard all 
+			// + SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Fill)
+			//                       .Padding(FMargin(15, 5, 15, 5))
+			// [
+			// 	HorizontalField(
+			// 		{
+			// 			ConstructTextBlock(PropertyTextFont, FText::FromString("Start All Corridor Scenarios")), 
+			// 			ConstructButton(FText::FromString("Start Test"), [this]()
+			// 			{
+			// 				CorrTestHandler->Start(); //TODO: IDK Why yet but it makes couple second bottlenecks. Somehow fix it
+			// 				return FReply::Handled();
+			// 			}),
+			// 		})
+			// ]
 
 			//NOTE: 2. Initialize Corridor Scenario manager widget
 			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Fill)

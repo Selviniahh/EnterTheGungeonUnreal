@@ -76,6 +76,7 @@ struct FPathNode
 	}
 };
 
+//REMIND: This struct in total 104 bytes.
 //Merged Path Into Tile
 USTRUCT()
 struct FTileStruct
@@ -353,7 +354,7 @@ public:
 	bool FindCorridorPath(int StartX, int StartY, int GoalX, int GoalY, FIntPoint StartOffset, FIntPoint EndOffset, bool SpawnCorr, int MaxIterationAmount, ARoomActor* OverlappedRoom);
 
 	void VisualizeBeginEndTiles(ARoomActor* NextRoom, const FRoomConnection& Connection);
-	void RoomSpawning(Direction EndSocketDirection);
+	bool RoomSpawning(Direction EndSocketDirection);
 	bool CanMakeCorridorPathBeforeSpawning(ARoomActor*& NextRoom, const FVector& NextRoomLocation);
 	static TSharedPtr<TArray<ARoomActor*>> GetBPSpecificBranchRooms(ARoomActor*& NextRoom, const FString& SocketName);
 	void InitAndSpawnRoom(ARoomActor*& NextRoom, const FVector& NextRoomLocation, const FRotator& Rotation, const bool IsOverlapped, bool AddLargeRoomTempArray = false);
@@ -376,7 +377,7 @@ public:
 	void SpawnNonOverlappedRoom(const FRotator& Rotation, const FVector& NextRoomLocation, ARoomActor*& NextRoom);
 	void SpawnDoors(const FRotator& Rotation, const FVector& NextRoomLocation, ARoomActor*& NextRoom, bool OnlySpawnEnterDoor);
 	void SpawnNoExitDoor(ARoomActor* LargeRoom, const FName& SceneTag, const FVector& SocketLocation);
-	void SpawnOverlappedRoom(const FRotator& Rotation, FVector NextRoomLocation, ARoomActor*& NextRoom);
+	bool SpawnOverlappedRoom(const FRotator& Rotation, FVector NextRoomLocation, ARoomActor*& NextRoom);
 	
 	/*Room actors are 90 degree rotated to be top down in BP. Therefore swapping is required*/
 	static void SwapInvZYaxis(FVector& VectorToSwap);
@@ -506,6 +507,8 @@ public:
 		{
 			if (NextDir == Dir_Right) return Dir_Right;
 			if (NextDir == Dir_Down) return Dir_Left;
+			if (NextDir == Dir_Up) return Dir_Down;
+			if (NextDir == Dir_Down) return Dir_Up;
 		}
 		return Dir_None;
 	}

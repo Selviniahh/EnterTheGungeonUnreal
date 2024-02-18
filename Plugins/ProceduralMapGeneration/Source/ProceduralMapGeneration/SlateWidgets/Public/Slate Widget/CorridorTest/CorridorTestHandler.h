@@ -1,5 +1,5 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
-
+//REMIND: TEMPORARY NOT USED
 #pragma once
 
 #include "CoreMinimal.h"
@@ -71,6 +71,7 @@ public:
 	static bool MakeGivenPathFinding(TArray<FIntPoint>& CurrentPattern, ARoomActor* FirstRoomOne, ARoomActor* SecondRoomOne, const FVector& NextRoomLoc, const FVector& FirstRoomLoc);
 	static FTileStruct* FillGivenCorrPattern(TArray<FTileStruct*>& RoomList, TArray<FIntPoint>& CurrentPattern, UPluginSettings* PlugSetting);
 	void DestroySpawnedRooms();
+	static int GetScenariosResultLength(TArray<FIntPoint> Scenario);
 	
 	int RoundMaxBoxExtentToNearestTileSize(int& MaxExtend) const
 	{
@@ -85,6 +86,7 @@ public:
 		VectorToRound = FVector(X, Y, 0);
 	}
 
+	//TODO: Fix this shit tomorrow
 	static inline EDirection2 DetermineFirstDirection(const TArray<FIntPoint>& CurrentPattern)
 	{
 		if (CurrentPattern[1] - CurrentPattern[0] == FIntPoint(0,-1)) return Dir_Up;

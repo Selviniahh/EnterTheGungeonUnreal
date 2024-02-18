@@ -1,4 +1,5 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
+//NOTE: Widget spawns the second room, it displays direction images too 
 
 #include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/CorridorTest/CorrScenarioManagerWidget.h"
 #include "SlateMaterialBrush.h"
@@ -59,13 +60,13 @@ void SCorrScenarioManagerWidget::Construct(const FArguments& InArgs)
 					})
 			]
 
-			//NOTE: 2. Undo all the tile selection etc
+			//NOTE: 2. Undo all the spawned tiles and corridors
 			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Fill)
 			                      .Padding(FMargin(15, 5, 15, 5))
 			[
 				HorizontalField(
 					{
-						ConstructTextBlock(CorrScenarioHandler->PropertyTextFont, FText::FromString("Undo all the spawned tiles")),
+						ConstructTextBlock(CorrScenarioHandler->PropertyTextFont, FText::FromString("Undo all the spawned tiles and corridors")),
 						ConstructButton(FText::FromString("Undo tiles"), [this]()
 						{
 							CorrScenarioHandler->UndoTiles();
@@ -74,33 +75,16 @@ void SCorrScenarioManagerWidget::Construct(const FArguments& InArgs)
 					})
 			]
 
-			//NOTE: 3. Undo all the tile selection etc
+			//NOTE: 3. Save the given path
 			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Fill)
 			                      .Padding(FMargin(15, 5, 15, 5))
 			[
 				HorizontalField(
 					{
-						ConstructTextBlock(CorrScenarioHandler->PropertyTextFont, FText::FromString("Undo all the spawned tiles")),
-						ConstructButton(FText::FromString("Save given path"), [this]()
-						{
-							// CorrScenarioHandler->UndoTiles();
-							return FReply::Handled();
-						}),
-					})
-			]
-
-			//NOTE: 4. Save all the tile selection
-			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Fill).VAlign(VAlign_Fill)
-			                      .Padding(FMargin(15, 5, 15, 5))
-			[
-				HorizontalField(
-					{
-						ConstructTextBlock(CorrScenarioHandler->PropertyTextFont, FText::FromString("Undo all the spawned tiles")),
-						ConstructButton(FText::FromString("Save given path"), [this]()
-						{
-							CorrScenarioHandler->SaveGivenPaths();
-							return FReply::Handled();
-						}),
+						ConstructTextBlock(CorrScenarioHandler->PropertyTextFont, FText::FromString("Directions"),nullptr,
+							FText::FromString("First room's exit socket direction, Second room's enter direction (the one you'll spawn now )")),
+						ConstructImage(FirstRoom->ExitSocketDirection, FirstImage, FText::FromString("First room's exit socket direction")),
+						ConstructImage(SecondRoom->EnterSocketDirection, SecImage, FText::FromString("Second room's enter direction (the one you'll spawn now )")),
 					})
 			]
 		]
@@ -115,7 +99,6 @@ void SCorrScenarioManagerWidget::Tick(const FGeometry& AllottedGeometry, const d
 	CorrScenarioHandler->HandleTileSelection(FirstRoom);
 	CorrScenarioHandler->HandleSecondRoomSpawning();
 	if (FMyInputProcessor::IsAltUp) CorrScenarioHandler->DoOnce = true;
-	UE_LOG(LogTemp, Display, TEXT("EXPR: %d"), CorrScenarioHandler->SpawnedLocations.Num());
 
 }
 
@@ -125,7 +108,7 @@ SCorrScenarioManagerWidget::~SCorrScenarioManagerWidget()
 	CorrScenarioHandler->Destruct();
 }
 
-TSharedRef<SWidget> SCorrScenarioManagerWidget::ConstructTextBlock(FSlateFontInfo FontInfo, FText Text, const FSlateColor* Color)
+TSharedRef<SWidget> SCorrScenarioManagerWidget::ConstructTextBlock(FSlateFontInfo FontInfo, FText Text, const FSlateColor* Color, const FText& ToolTipText)
 {
 	TSharedRef<STextBlock> TextBlock = SNew(STextBlock)
 	   .Justification(ETextJustify::Center)
@@ -149,6 +132,7 @@ TSharedRef<SWidget> SCorrScenarioManagerWidget::ConstructTextBlock(FSlateFontInf
 	                    {
 		                    TextBlock->SetRenderOpacity(0.5); // Unhover: decrease opacity
 	                    })
+	.ToolTipText(ToolTipText)
 	[
 		TextBlock
 	];
@@ -171,6 +155,25 @@ TSharedRef<SButton> SCorrScenarioManagerWidget::ConstructButton(const FText& Tex
 	Button->SetOnHovered(FSimpleDelegate::CreateLambda([Button]() { Button.Get().SetRenderOpacity(1); }));
 	Button->SetOnUnhovered(FSimpleDelegate::CreateLambda([Button]() { Button.Get().SetRenderOpacity(0.5); }));
 	return Button;
+}
+
+TSharedRef<SWidget> SCorrScenarioManagerWidget::ConstructImage(const TEnumAsByte<Direction> Direction, TSharedPtr<FSlateBrush>& Image, const FText& Text)
+{
+	Image = CorrScenarioHandler->GetDirectionMaps(Direction, Image);
+
+	TSharedRef<SImage> RefImage = SNew(SImage)
+		.Image(Image.Get());
+
+	TSharedRef<SButton> ImageBlock = SNew(SButton)
+	.ButtonStyle(FCoreStyle::Get(), "NoBorder")
+	.ToolTip(SNew(SToolTip).Text(Text))
+	.ToolTipText(Text)
+	.Content()
+	[
+		RefImage
+	];
+	
+	return 	ImageBlock;
 }
 
 TSharedRef<SHorizontalBox> SCorrScenarioManagerWidget::HorizontalField(std::initializer_list<TSharedRef<SWidget>> Content)

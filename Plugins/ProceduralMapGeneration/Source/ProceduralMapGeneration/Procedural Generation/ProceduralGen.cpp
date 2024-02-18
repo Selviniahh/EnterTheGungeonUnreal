@@ -1,6 +1,7 @@
 ﻿//TODO: Expose a Vector variable that will make entire map centered at that location. 
 //TODO: Consider changing UnscaledBoxExtent to ScaledBoxExtent. 
 //TODO: WHat's the reason RoomConnections must be array rather than a variable. As soon as the room is overlapped.First I need to spawn that room and make a corridor. ASAP. Otherwise, it could make lots and lots of complications
+//TODO: Make MapSizeX and MapSizeY one variable as they cannot be different than each other anymore
 #include "ProceduralGen.h"
 
 #include "Components/BoxComponent.h"
@@ -76,7 +77,7 @@ void AProceduralGen::GenerateMap()
 	//Entire main logic is this while loop.
 	while (SpawnedRoomCount < NumberOfRooms)
 	{
-		RoomSpawning(LastSpawnedRoom->ExitSocketDirection);
+		if (RoomSpawning(LastSpawnedRoom->ExitSocketDirection)) continue;
 
 		if (LastSpawnedRoom->NoExit) //TODO: I don't remember what's the reason this if block written BY ME
 		{
@@ -97,7 +98,7 @@ void AProceduralGen::GenerateMap()
 	}
 }
 
-void AProceduralGen::RoomSpawning(const Direction EndSocketDirection)
+bool AProceduralGen::RoomSpawning(const Direction EndSocketDirection)
 {
 	SCOPE_CYCLE_COUNTER(STAT_RoomSpawning);
 	const FRotator Rotation(0.0f, 0.0f, -90.0f);
@@ -117,8 +118,10 @@ void AProceduralGen::RoomSpawning(const Direction EndSocketDirection)
 	}
 	else
 	{
-		SpawnOverlappedRoom(Rotation, NextRoomLocation, NextRoom);
+		return SpawnOverlappedRoom(Rotation, NextRoomLocation, NextRoom);
 	}
+
+	return true;
 }
 
 bool AProceduralGen::CanMakeCorridorPathBeforeSpawning(ARoomActor*& NextRoom, const FVector& NextRoomLocation)
@@ -139,7 +142,7 @@ bool AProceduralGen::CanMakeCorridorPathBeforeSpawning(ARoomActor*& NextRoom, co
 	ResetAllVisited();
 	if (!FindCorridorPath(StartIndex.X, StartIndex.Y, EndIndex.X, EndIndex.Y, Connection.PathStartOffset, Connection.PathEndOffset, false, Connection.MaxCheckAmount, NextRoom))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Couldn't find a valid path for overlapped %s room."), *NextRoom->GetName());
+		// UE_LOG(LogTemp, Error, TEXT("Couldn't find a valid path for overlapped %s room."), *NextRoom->GetName());
 		UnBlockTiles(BlockedTiles);
 		return false;
 	}
@@ -465,7 +468,7 @@ ARoomActor* AProceduralGen::SpawnFirstBranchRoom(Direction Direction, FVector Sp
 	}
 
 	InitAndSpawnRoom(NextRoom, NextRoomLocation, Rotation, false, true);
-	SpawnedRooms.Add(LastSpawnedRoom); 
+	SpawnedRooms.Add(LastSpawnedRoom);
 
 	SpawnCounter++;
 	return NextRoom;
@@ -475,15 +478,26 @@ void AProceduralGen::InitWorldTiles()
 {
 	SCOPE_CYCLE_COUNTER(STAT_InitWorldTiles);
 
+	Tiles.Empty();
+
 	//Init world
 	World = GetWorld();
-	if (!World)
-		World = GEditor->GetEditorWorldContext().World();
-	
+	if (!World) World = GEditor->GetEditorWorldContext().World();
+
+	//REMIND: Previous unefficient way of initializing tiles array took 45 second and 21GB ram on slate 
 	//resize tiles array
-	Tiles.SetNum(MapSizeX);
+	// Tiles.SetNum(MapSizeX);
+	// for (int i = 0; i < MapSizeX; ++i)
+	// 	Tiles[i].SetNum(MapSizeY);
+
+	//REMIND: This one took 25 seconds
+	Tiles.Reserve(MapSizeX);
 	for (int i = 0; i < MapSizeX; ++i)
-		Tiles[i].SetNum(MapSizeY);
+	{
+		TArray<FTileStruct> TempRow;
+		TempRow.SetNumZeroed(MapSizeY);
+		Tiles.Add(TempRow);
+	}
 
 	//TODO: Idea in here to specify exactly the center of the map worked good but everything messed up when rooms spawned. Handle this case later 
 	//Calculate half sizes for centering
@@ -491,8 +505,8 @@ void AProceduralGen::InitWorldTiles()
 	float HalfMapHeight = (MapSizeY * TileSizeY) / 2;
 
 	//Calculate the starting position (bottom left corner of the map)
-	FVector StartPosition = MapCenter - FVector(HalfMapWidth,HalfMapHeight,0);
-	
+	FVector StartPosition = MapCenter - FVector(HalfMapWidth, HalfMapHeight, 0);
+
 	for (int x = 0; x < MapSizeX; ++x)
 		for (int y = 0; y < MapSizeY; ++y)
 		{
@@ -578,7 +592,7 @@ void AProceduralGen::SpawnNonOverlappedRoom(const FRotator& Rotation, const FVec
 	InitAndSpawnRoom(NextRoom, NextRoomLocation, Rotation, false);
 }
 
-void AProceduralGen::SpawnOverlappedRoom(const FRotator& Rotation, FVector NextRoomLocation, ARoomActor*& NextRoom)
+bool AProceduralGen::SpawnOverlappedRoom(const FRotator& Rotation, FVector NextRoomLocation, ARoomActor*& NextRoom)
 {
 	if (MoveOverlappedRoom(NextRoom, NextRoomLocation)) //TODO: I believe if available space couldn't be found we need to do something in here.
 	{
@@ -588,7 +602,9 @@ void AProceduralGen::SpawnOverlappedRoom(const FRotator& Rotation, FVector NextR
 	{
 		UE_LOG(LogTemp, Error, TEXT("Couldn't find available location in overlapped room %s aborted. If it seem possible to make a path connection, increase MaxOverlappedRoomIterate or decrease BufferSize "), *NextRoom->GetName());
 		SpawnedRoomCount++;
+		return false;
 	}
+	return true;
 }
 
 void AProceduralGen::SpawnDoors(const FRotator& Rotation, const FVector& NextRoomLocation, ARoomActor*& NextRoom, const bool OnlySpawnEnterDoor)
@@ -643,7 +659,7 @@ bool AProceduralGen::IsEndSocketOverlapping(ARoomActor* NextRoom, const FVector&
 
 		if (IsValid(CurrentX, CurrentY) && Tiles[CurrentX][CurrentY].Blocked)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("%s EndSocketOverlap ovelaps. It will act as if overlapped:"), *NextRoom->GetName());
+			// UE_LOG(LogTemp, Warning, TEXT("%s EndSocketOverlap ovelaps. It will act as if overlapped:"), *NextRoom->GetName());
 			return true;
 		}
 	}
@@ -942,7 +958,7 @@ FVector AProceduralGen::CalculateTopLeftCorner(const ARoomActor* Room, const FVe
 {
 	FVector TopLeftCorner;
 	//TODO: NOte that still I don't cover the rotations turn corridor might have, it's best to cover all of them once I learn little math 
-	if (Rotation == FRotator(-0.000000,90.000000,-90.000000)) //This means only vertical corridor. //TODO: LATER calculate everything taking rotation in account. To do that, I need to learn lots of cool math quats etc 
+	if (Rotation == FRotator(-0.000000, 90.000000, -90.000000)) //This means only vertical corridor. //TODO: LATER calculate everything taking rotation in account. To do that, I need to learn lots of cool math quats etc 
 	{
 		FVector BoxCompCenter = Room->BoxComponent->GetComponentLocation();
 		TopLeftCorner.X = BoxCompCenter.X - BoxExtends.Z;
@@ -1305,14 +1321,15 @@ bool AProceduralGen::MoveOverlappedRoom(ARoomActor* NextRoom, FVector& NextRoomL
 	SCOPE_CYCLE_COUNTER(STAT_MoveOverlappedRoom);
 	TSet<FIntPoint> VisitedTiles;
 	int Attempts = 0;
-
+	int InnerAttempts = 0;
+	
 	// Get the starting point from the NextRoomLocation's tile indexes
 	FIntPoint StartIndex = WorldToIndex(NextRoomLocation);
 	int StartX = StartIndex.X;
 	int StartY = StartIndex.Y;
-
+	
 	int MaxDistance = FMath::Max(MapSizeX, MapSizeY);
-
+	
 	for (int Dist = 1; Dist <= MaxDistance; ++Dist)
 	{
 		for (int x = StartX - Dist; x <= StartX + Dist; ++x)
@@ -1324,6 +1341,7 @@ bool AProceduralGen::MoveOverlappedRoom(ARoomActor* NextRoom, FVector& NextRoomL
 					(!IsColliding(NextRoom, Tiles[x][y].Location, NextRoom->Rotation)) &&
 					(!IsBufferZoneColliding(NextRoom, Tiles[x][y].Location)))
 				{
+					InnerAttempts++;
 					if (CanMakeCorridorPathBeforeSpawning(NextRoom, Tiles[x][y].Location))
 					{
 						NextRoomLocation = Tiles[x][y].Location;
@@ -1331,19 +1349,16 @@ bool AProceduralGen::MoveOverlappedRoom(ARoomActor* NextRoom, FVector& NextRoomL
 					}
 				}
 				++Attempts;
-				VisitedTiles.Add(FIntPoint(x, y));
-				MoveOverlapRoomLocationTiles.Add(FIntPoint(x, y));
+				UE_LOG(LogTemp, Display, TEXT("total attemps: %i"), Attempts);
+				UE_LOG(LogTemp, Display, TEXT("Inner attemps: %i"), InnerAttempts);
 
-				if (Attempts >= MaxMoveOverlappedRoomIterate)
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Exceeded maximum attempts to find a valid spot for %s "), *NextRoom->GetName());
-					return false; // This will exit the function early.
-				}
+				VisitedTiles.Add(FIntPoint(x, y));
+				MoveOverlapRoomLocationTiles.Add(FIntPoint(x, y)); //if VisualizeOverlappedRoomTiles then make it work but before I need to compare their timings 
 			}
 		}
 	}
 	UE_LOG(LogTemp, Display, TEXT("Nothing has been found"));
-	return false; //TODO: I Think I need to create a dialog box telling that there is no available space for overlapped room
+	return false;
 }
 
 bool AProceduralGen::IsBufferZoneColliding(ARoomActor* Room, FVector SpawnLoc)
@@ -1546,14 +1561,14 @@ bool AProceduralGen::FindCorridorPath(int StartX, int StartY, int GoalX, int Goa
 		}
 	}
 
-	if (SafeCheck >= MaxIterationAmount)
-		UE_LOG(LogTemp, Error, TEXT("Room %s No corridor path found Number of iteration is : %d, %d. If iteration is high, end path couldn't found. If iteration is small, (0-10 begin path not found"), *OverlappedRoom->GetName(), SafeCheck,
-	       SecondCounter);
-
-	if (SafeCheck < MaxIterationAmount)
-		UE_LOG(LogTemp, Error, TEXT("Room %s No available path found. Iterated 4 times just 4 direction. Make sure Path Start is not overlapping. Disable Overlap Visualization and enable Start&End visualiztion"), *OverlappedRoom->GetName());
-
-	UE_LOG(LogTemp, Error, TEXT("Safecheck: %i"), SafeCheck);
+	// if (SafeCheck >= MaxIterationAmount)
+	// 	UE_LOG(LogTemp, Error, TEXT("Room %s No corridor path found Number of iteration is : %d, %d. If iteration is high, end path couldn't found. If iteration is small, (0-10 begin path not found"), *OverlappedRoom->GetName(), SafeCheck,
+	//        SecondCounter);
+	//
+	// if (SafeCheck < MaxIterationAmount)
+	// 	UE_LOG(LogTemp, Error, TEXT("Room %s No available path found. Iterated 4 times just 4 direction. Make sure Path Start is not overlapping. Disable Overlap Visualization and enable Start&End visualiztion"), *OverlappedRoom->GetName());
+	//
+	// UE_LOG(LogTemp, Error, TEXT("Safecheck: %i"), SafeCheck);
 	return false;
 }
 

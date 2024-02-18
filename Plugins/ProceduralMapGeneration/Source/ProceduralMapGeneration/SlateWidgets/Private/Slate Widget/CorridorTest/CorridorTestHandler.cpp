@@ -1,8 +1,12 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 //NOTE: AllCorridorTestWidget will invoke this class
+//NOTE: It's name si All Corridor Scenarios Test 
+//REMIND: TEMPORARY NOT USED
+
 
 #include "ProceduralMapGeneration/SlateWidgets/Public/Slate Widget/CorridorTest/CorridorTestHandler.h"
 #include "Components/BoxComponent.h"
+#include "ProceduralMapGeneration/SlateWidgets/Public/ProGenSubsystem.h"
 
 UCorridorTestHandler::UCorridorTestHandler()
 {
@@ -23,24 +27,37 @@ void UCorridorTestHandler::Initialize(ARoomActor* FirstSelectedRoom, ARoomActor*
 
 void UCorridorTestHandler::Start()
 {
-	//TODO: Not that hard to implement I just need to return the current direction pairs right here and loop those 
+	//TODO: Based on the first and sec room, I didn't do yet but filter the scenarios for only first and sec room directions and return those scenarios
+	UProGenSubsystem* ProGenSubsystem = GEditor->GetEditorSubsystem<UProGenSubsystem>();
+	Setting->LoadData("CorridorTestScenarios", ProGenSubsystem->CorridorTestScenarios);
+	
 	TArray<TArray<FIntPoint>> AllScenarios;
-	AllScenarios.Add(VerticalUpToVerticalUp);
-	AllScenarios.Add(VerticalUpTurnRightToVerticalUp);
-	AllScenarios.Add(VerticalUpTurnLeftToVerticalUp);
-	AllScenarios.Add(DownDown);
-	AllScenarios.Add(DownDown2);
-	AllScenarios.Add(DownDown3);
+	
+	auto Key = TPair<TEnumAsByte<Direction>,TEnumAsByte<Direction>>(FirstRoom->ExitSocketDirection, SecondRoom->EnterSocketDirection);
+	for (auto& Scenario : ProGenSubsystem->CorridorTestScenarios)
+	{
+		if (Scenario.Key == Key)
+		{
+			AllScenarios = Scenario.Value;
+		}
+	}
 
+	if (AllScenarios.IsEmpty())
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString("There's no saved scenarios. Click corridor scenarios button and save some scenarios first!"));
+		return;
+	}
+	
 	InitWorldChunks(AllScenarios);
 
 	for (auto AllScenario : AllScenarios)
 	{
 		FVector InitialFirstRoomLoc;
 		FIntPoint Result = FIntPoint(0,0);
-		for (auto Pattern : AllScenario)
+
+		for (int i = 1; i < AllScenario.Num(); i++)
 		{
-			Result += Pattern;
+			Result += AllScenario[i] - AllScenario[i - 1];
 		}
 		
 		InitialFirstRoomLoc = CenterOfEachChunk[0];
@@ -61,7 +78,6 @@ void UCorridorTestHandler::InitWorldChunks(TArray<TArray<FIntPoint>>& AllScenari
 	int MaxRoomEndSocketOffset = 0;
 	int MaxCorrBoxExtent = 0;
 	int LongestScenarioLength = 0;
-	int Offset = 4;
 
 	//Find the longest extends of the rooms and end socket relative among all the rooms
 	for (auto RoomActor : FirstSecRoom)
@@ -92,10 +108,11 @@ void UCorridorTestHandler::InitWorldChunks(TArray<TArray<FIntPoint>>& AllScenari
 	//Find the longest length of the scenarios 
 	for (auto Scenario : AllScenarios)
 	{
-		LongestScenarioLength = FMath::Max(LongestScenarioLength, Scenario.Num());
+		// LongestScenarioLength = FMath::Max(LongestScenarioLength, Scenario.Num());
+		LongestScenarioLength = FMath::Max(LongestScenarioLength,GetScenariosResultLength(Scenario));
 	}
 	
-	int ChunkDimension = (MaxRoomBoxExtent * 2) + ((LongestScenarioLength * 16) * 2) + MaxRoomEndSocketOffset;
+	int ChunkDimension = (MaxRoomBoxExtent * 2) + ((LongestScenarioLength * MaxCorrBoxExtent) * 2) + MaxRoomEndSocketOffset; //TODO: Inspect why *2 in second paranthesis
 	int ChunksPerRow = FMath::CeilToInt(FMath::Sqrt(static_cast<float>(TotalChunkCount))); //If there's 10 scenario then sqrt of 10 is 3.16. So 4x4 chunks will be created
 
 	//TODO: Here's the causing the performance problem. If ChunkDimension is high, this will cause the performance impact
@@ -103,10 +120,19 @@ void UCorridorTestHandler::InitWorldChunks(TArray<TArray<FIntPoint>>& AllScenari
 	Setting->ProGenInst->MapSizeY = ChunksPerRow * ChunkDimension; // Total height of the map
 
 	//Now say ChunkDimension is 500. So width and height is 500x500. Readjust the Map Size to cover this scenario
+	//REMIND: This line takes 21GB RAM!!!!!!!!!!!!!!!!!!!!
+	double StartTime = FPlatformTime::Seconds();
 	Setting->ProGenInst->InitWorldTiles();
+	size_t sa = sizeof(Setting->ProGenInst);
+	UE_LOG(LogTemp, Warning, TEXT("Size of FTileStruct: %llu bytes"), sizeof(FTileStruct));
+	UE_LOG(LogTemp, Warning, TEXT("Size of FTileStruct: %llu bytes"), sa);
+
+	double EndTime = FPlatformTime::Seconds();
+	double ElapsedTime = EndTime - StartTime;
+	UE_LOG(LogTemp, Warning, TEXT("Elapsed Time: %f"), ElapsedTime);
 	
 	// Clear any existing data
-	CenterOfEachChunk.Empty(); 
+	CenterOfEachChunk.Empty();
 
 	for (int ChunkX = 0; ChunkX < ChunksPerRow; ++ChunkX)
 	{
@@ -227,12 +253,16 @@ bool UCorridorTestHandler::MakeGivenPathFinding(TArray<FIntPoint>& CurrentPatter
 	while (OpenList.Num() > 0)
 	{
 		FTileStruct* Current = FillGivenCorrPattern(OpenList, CurrentPattern, PlugSetting);
-		if (Current->X == GoalX && Current->Y == GoalY)
+		if (Current->X == GoalX && Current->Y == GoalY || CurrentPattern.IsEmpty()) //I added is empty so I can inspact further 
 		{
 			PlugSetting->ProGenInst->VisualizeCorridorPath = true;
 			PlugSetting->ProGenInst->MakeCorridorPathVisualization(PlugSetting->ProGenInst->LastSpawnedRoom, Current);
 			PlugSetting->ProGenInst->NextRoomEnterTag = SecondRoomOne->EnterSocketDirection;
 			PlugSetting->ProGenInst->SpawnCorridors(GoalX, GoalY, PlugSetting->ProGenInst->LastSpawnedRoom, false);
+
+			//For some reason, Vertical Up-> Vertical Down, Current pattern never gets empty but in other directions there's always
+			//One element left in the array. So I have to clear it here
+			CurrentPattern.Empty();
 			return true;
 		}
 	}
@@ -297,4 +327,37 @@ ARoomActor* UCorridorTestHandler::SpawnSecondRoom(const FVector& NextRoomLocatio
 	return NextRoom;
 }
 
+int UCorridorTestHandler::GetScenariosResultLength(TArray<FIntPoint> Scenario)
+{
+	TArray<FIntPoint> Result;
 
+	//subtract each element from the next one so I can get raw direction elements
+	for (int i = 1; i < Scenario.Num(); ++i)
+	{
+		FIntPoint CurrentPatternIndex;
+
+		if (i < Scenario.Num())
+		{
+			CurrentPatternIndex =  Scenario[i] - Scenario[i - 1];
+		}
+		else //REMIND: I guess it will never hit here
+		{
+			CurrentPatternIndex.X = Scenario[Scenario.Last(0).X].X - Scenario[Scenario.Last(1).X].X;
+			CurrentPatternIndex.Y = Scenario[Scenario.Last(0).Y].Y - Scenario[Scenario.Last(1).Y].Y;
+		}
+		Result.Add(CurrentPatternIndex);
+	}
+
+	//Find total distance it will go. For example Destination will be (25,20) which means it will be diagonal right down.  
+	FIntPoint Destination = FIntPoint(0,0);
+	
+	for (int i = 0; i < Result.Num(); ++i)
+	{
+		Destination += Result[i];
+	}
+
+	int X = FMath::Abs(Destination.X);
+	int Y = FMath::Abs(Destination.Y);
+
+	return FMath::Max(X,Y);
+}

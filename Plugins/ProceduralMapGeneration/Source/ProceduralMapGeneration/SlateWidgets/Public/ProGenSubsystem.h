@@ -19,5 +19,5 @@ class PROCEDURALMAPGENERATION_API UProGenSubsystem : public UEditorSubsystem
 
 public:
 	//1. First Room Exit Dir, 2. Second room Enter Dir  
-	TMap<TPair<TEnumAsByte<Direction>, TEnumAsByte<Direction>>, TArray<FIntPoint>> CorridorTestScenarios;
+	TMap<TPair<TEnumAsByte<Direction>, TEnumAsByte<Direction>>, TArray<TArray<FIntPoint>>> CorridorTestScenarios;
 };

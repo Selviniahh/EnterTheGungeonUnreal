@@ -3,6 +3,7 @@
 
 #include "../../../Public/Slate Widget/CorridorTest/CorrScenarioManagerHandler.h"
 
+#include "SkeletalDebugRendering.h"
 #include "Features/EditorFeatures.h"
 #include "Kismet/GameplayStatics.h"
 #include "ProceduralMapGeneration/Procedural Generation/RoomActor.h"
@@ -38,7 +39,11 @@ void UCorrScenarioManagerHandler::Initialize(ARoomActor* InFirstRoom, ARoomActor
 	PlugSetting->ProGenInst->InitWorldTiles();
 	
 	// PlugSetting->ProGenInst->InitWorldTiles();
-	
+
+	//Init the ProGenSubsystem
+	ProGenSubsystem = GEditor->GetEditorSubsystem<UProGenSubsystem>();
+
+	if (PlugSetting->ProGenInst->MapSizeX == 0) return;
 	FVector CenterLocation = PlugSetting->ProGenInst->Tiles[PlugSetting->ProGenInst->MapSizeX / 2][PlugSetting->ProGenInst->MapSizeY / 2].Location;
 	
 
@@ -135,11 +140,11 @@ bool UCorrScenarioManagerHandler::HandleTileSelection(ARoomActor* RoomToIgnore)
 
 AActor* UCorrScenarioManagerHandler::MakeRayCast(AActor* RoomToIgnore)
 {
-	if (!SceneCapInst) return nullptr;
 	
 	//Init raycast parameters
 	int RaycastLength = 1000;
 	FHitResult OutHit;
+	if (!SceneCapInst) return nullptr;
 	FVector StartLocation = SceneCapInst->GetActorLocation();
 	FVector EndLocation = StartLocation + (SceneCapInst->GetActorForwardVector() * RaycastLength);
 	RayCastEndLoc = EndLocation;
@@ -265,8 +270,7 @@ FReply UCorrScenarioManagerHandler::HandleSecondRoomSpawning(const bool IsButton
 	
 	if (!SelectedTilePoints.IsEmpty())
 	{
-		
-		
+		SaveGivenCorrPaths();
 		// UMakeAllCorridorScenarioTest::MakeGivenPathFinding(SelectedTilePoints,SecondRoom, PlugSetting->ProGenInst.Get());
 		UCorridorTestHandler::MakeGivenPathFinding(SelectedTilePoints,FirstRoom,SecondRoom,SecondRoom->GetActorLocation(),FirstRoom->GetActorLocation());
 	}
@@ -282,7 +286,13 @@ void UCorrScenarioManagerHandler::Destruct()
 	for (auto Tile : SpawnedTiles)
 		Tile->Destroy();
 
+	for (auto* Corr : PlugSetting->ProGenInst->AllSpawnedCorridors)
+	{
+		Corr->Destroy();
+	}
+
 	PlugSetting->ProGenInst->InitWorldTiles();
+	SelectedTiles.Empty(); //Extremely important
 	FlushPersistentDebugLines(World);
 }
 
@@ -297,15 +307,6 @@ void UCorrScenarioManagerHandler::UndoTiles()
 	SpawnAndVisualizeRoom(FirstRoom, CenterLocation);
 }
 
-//TODO: Add your own subsystem ideology right here
-
-void UCorrScenarioManagerHandler::SaveGivenPaths()
-{
-	UProGenSubsystem* ProGenSubsystem = GEditor->GetEditorSubsystem<UProGenSubsystem>();
-	auto ScenarioDirectionPair = TPair<TEnumAsByte<Direction>, TEnumAsByte<Direction>>(FirstRoom->EnterSocketDirection, SecondRoom->ExitSocketDirection);
-	ProGenSubsystem->CorridorTestScenarios.Add(ScenarioDirectionPair,SelectedTilePoints);
-}
-
 void UCorrScenarioManagerHandler::DestroyPreviousExistingActors(const TArray<ARoomActor*>& PreviousSpawnedRooms)
 {
 	for (ARoomActor* SpawnedCorridor : PlugSetting->ProGenInst->AllSpawnedCorridors)
@@ -315,4 +316,64 @@ void UCorrScenarioManagerHandler::DestroyPreviousExistingActors(const TArray<ARo
 		Room->Destroy();
 	
 	FlushPersistentDebugLines(GEditor->GetEditorWorldContext().World());
+}
+
+void UCorrScenarioManagerHandler::SaveGivenCorrPaths()
+{
+	//SelectedTilePoints
+	if (!ProGenSubsystem) 	ProGenSubsystem = GEditor->GetEditorSubsystem<UProGenSubsystem>();
+	auto ScenarioDirectionPair = TPair<TEnumAsByte<Direction>, TEnumAsByte<Direction>>(FirstRoom->EnterSocketDirection, SecondRoom->ExitSocketDirection);
+
+	//Load first and add another element to the array
+	PlugSetting->LoadData(FString("CorridorTestScenarios"), ProGenSubsystem->CorridorTestScenarios);
+
+	//Key of the selected room pair
+	auto Key = TPair<TEnumAsByte<Direction>,TEnumAsByte<Direction>>(FirstRoom->ExitSocketDirection, SecondRoom->EnterSocketDirection);
+
+	//If the key is not valid yet, add one
+	if (!ProGenSubsystem->CorridorTestScenarios.Contains(Key)) ProGenSubsystem->CorridorTestScenarios.Add(Key, TArray<TArray<FIntPoint>>());
+	
+	for (auto& Scenario : ProGenSubsystem->CorridorTestScenarios)
+	{
+		if (Scenario.Key == Key)
+		{
+			TArray<TArray<UE::Math::TIntPoint<int>>> sa = Scenario.Value;
+			Scenario.Value.Add(SelectedTilePoints);
+		}
+	}
+
+	// Save the selected tile points to the disk
+	PlugSetting->SaveData(FString("CorridorTestScenarios"), ProGenSubsystem->CorridorTestScenarios);
+}
+
+TSharedPtr<FSlateBrush> UCorrScenarioManagerHandler::GetDirectionMaps(TEnumAsByte<Direction> Direction, TSharedPtr<FSlateBrush>& Image) const
+{
+	FSoftObjectPath DirPath;
+	switch (Direction)
+	{
+	case HorizontalRight:
+		DirPath = PlugSetting->Right;
+		break;
+	case HorizontalLeft:
+		DirPath = PlugSetting->Left;
+		break;
+	case VerticalUp:
+		DirPath = PlugSetting->Up;
+		break;
+	case VerticalDown:
+		DirPath = PlugSetting->Down;
+		break;
+	default: ;
+	}
+
+	Image = MakeShared<FSlateBrush>();
+	if (UTexture2D* TextureRaw = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), nullptr, *DirPath.ToString())))
+	{
+		Image.Get()->SetResourceObject(TextureRaw);
+		Image.Get()->ImageSize = FVector2D(16,16);
+		Image.Get()->DrawAs = ESlateBrushDrawType::Image;
+		Image.Get()->ImageType = ESlateBrushImageType::FullColor;
+	}
+
+	return Image;
 }
