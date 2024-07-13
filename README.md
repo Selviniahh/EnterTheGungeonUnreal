@@ -1,3 +1,1 @@
-# SideScrolling2D
-
-Developed with Unreal Engine 5
+This project is an imitation of the video game Enter The Gungeon. Development of the project paused because the dynamic procedural generation algorithm has not been successfully implemented. However, the main character, most of the enemies, animations, guns, and bullets are ready and playable
